@@ -3,7 +3,10 @@ import { createRoot } from "react-dom/client";
 import { HashRouter } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppRoutes } from "@/routes/AppRoutes";
-import { resumeJobs } from "@/lib/jobs/runner";
+import { scoreJobOutputs } from "@/lib/identity/score-output";
+import { resumeJobs, setScorer } from "@/lib/jobs/runner";
+import { registerImageStudio } from "@/lib/studio/image";
+import { registerVideoStudio, resumeChains } from "@/lib/studio/video";
 import { restoreKey, useKeyStore } from "@/lib/session/key";
 import { applyTheme } from "@/lib/session/theme";
 import { getSettings } from "@/lib/store/settings";
@@ -21,9 +24,15 @@ async function bootstrap() {
   } catch {
     // IndexedDB unavailable (private mode in some browsers): start without a saved key.
   }
+  // Outputs with a cast are scored in the browser; the studios add their
+  // follow-up work (drift retries, Still first, finals' last frames).
+  setScorer(scoreJobOutputs);
+  registerImageStudio();
+  registerVideoStudio();
   // Unfinished jobs pick up where they stopped. Polling needs a key, so jobs
   // are resumed again whenever one is added.
   void resumeJobs().catch(() => undefined);
+  void resumeChains().catch(() => undefined);
   useKeyStore.subscribe((state, previous) => {
     if (state.location !== "none" && previous.location === "none") void resumeJobs().catch(() => undefined);
   });

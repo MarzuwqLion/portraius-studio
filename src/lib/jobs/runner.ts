@@ -20,6 +20,10 @@ export interface JobInput<I = unknown> {
   characterIds: string[];  // cast members in it; their faces are scored after download
   prompt?: string;         // shown in the library and used for alt text
   recipeId?: string;
+  stylised?: boolean;      // a stylised look: identity scoring is skipped
+  request?: unknown;       // the studio's own request, so retries and recipes can rebuild it
+  // Work to start when this job is done, such as Still first's video draft.
+  next?: unknown;
 }
 
 export type StartJob<I> = Pick<NewJob, "kind" | "modelId" | "estimate" | "parentJobId" | "uploads"> & { input: JobInput<I> };
@@ -67,9 +71,23 @@ async function drive(id: string, work: () => Promise<void>): Promise<void> {
   }
 }
 
+// Follow-up work registered by the studios: automatic drift retries, Still
+// first's video draft, a final's missing last frame.
+type DoneListener = (job: Job) => void | Promise<void>;
+const doneListeners = new Set<DoneListener>();
+export function onJobDone(listener: DoneListener): () => void {
+  doneListeners.add(listener);
+  return () => doneListeners.delete(listener);
+}
+
 async function apply(id: string, event: JobEvent): Promise<Job> {
   const job = await applyEvent(id, event);
   if (isFinal(job.status)) await releaseUploads(job);
+  if (job.status === "done" && (event.type === "assets_saved" || event.type === "scores_saved")) {
+    for (const listener of doneListeners) {
+      void Promise.resolve(listener(job)).catch((err) => console.error("after-job work failed", { id, error: (err as Error).message }));
+    }
+  }
   return job;
 }
 
@@ -268,7 +286,15 @@ async function scoringStep(id: string): Promise<void> {
   await apply(id, error ? { type: "step_failed", step: "scoring" } : { type: "scores_saved" });
 }
 
-// ---- Cancel and reload ----
+// ---- Retry, cancel and reload ----
+
+// A new job with the same request, linked to the one it retries.
+export async function retryJob(id: string, changes: { input?: JobInput } = {}): Promise<Job> {
+  const job = await db.jobs.get(id);
+  if (!job) throw new Error("That job is gone.");
+  return startJob({ kind: job.kind, modelId: job.modelId, input: changes.input ?? (job.input as JobInput), parentJobId: job.id });
+}
+
 
 export async function cancelJob(id: string): Promise<void> {
   const job = await apply(id, { type: "cancel_requested" });

@@ -68,7 +68,10 @@ export interface Generation {
   jobId: string;
   characterIds: string[];
   recipeId?: string;
-  identityScore?: number;
+  identityScore?: number;          // the weakest cast member's score (video: median over frames)
+  identityScores?: Record<string, number | null>;  // per character; null when their face wasn't found
+  worstScore?: number;             // video: the lowest single frame
+  scoreNote?: "stylised";          // scoring skipped for a stylised look
   assets: GenerationAsset[];
   prompt?: string;
   createdAt: number;
