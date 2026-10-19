@@ -75,3 +75,40 @@
     background: var(--tint-active);
   }
 }
+
+/* Motion (spec: Visual direction, Motion): a take develops from Studio grey,
+   and grease marks draw on. Reduced motion shows both at once. */
+@layer components {
+  .develop {
+    animation: develop var(--develop-duration) ease-out both;
+  }
+
+  .grease-draw {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: grease-draw var(--mark-duration) ease-out forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .develop,
+    .grease-draw {
+      animation: none;
+      stroke-dashoffset: 0;
+    }
+  }
+}
+
+@keyframes develop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes grease-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
