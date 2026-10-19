@@ -12,7 +12,7 @@ placeholder, and Router answers it with `401 unauthorized`, the same as no key a
 | # | Result | Evidence | What we did |
 | --- | --- | --- | --- |
 | 1 | **Holds.** The browser calls `api.comfy.org` directly. | Catalog list, queued submit, status polls and result reads all worked. Preflight allows `localhost`, `authorization` and every method. | Nothing. No `/router/*` Worker route. |
-| 2 | **Fails in the browser.** | `cloud.comfy.org/api/v2/assets` answers the CORS preflight with `401` and no CORS headers, so the upload dies as `TypeError: Failed to fetch` before it's sent. Whether Cloud accepts a Router key and returns a URL providers can fetch is still untested (needs a working shell key). | STOP AND ASK (see Open). |
+| 2 | **Fails in the browser.** | `cloud.comfy.org/api/v2/assets` answers the CORS preflight with `401` and no CORS headers, so the upload dies as `TypeError: Failed to fetch` before it's sent. Whether Cloud accepts a Router key wasn't tested; it no longer matters for the app. | Asked Marzuwq, who chose the spec's fallback: the Worker's `/upload` on R2 (`proxy/`). `client.uploadAsset` and `deleteAsset` use it when `VITE_MEDIA_HOST=worker`. |
 | 3 | **Partly fails.** | Freepik: `ai-statics.magnific.com` downloads fine (38.6 MB, served as `application/octet-stream`). Seedance: video and last frame are rehosted at `storage.googleapis.com/partner-nodes-assets/...` (V2 signed URLs). A `no-cors` fetch comes back opaque, so the host is reachable, but it sends no CORS headers. Nano Banana returns inline base64 and needs no download. Sync Labs untested (P2, M7). | `hosts.ts`: Magnific goes in `ASSET_HOSTS`; the Seedance bucket goes in `WORKER_FETCH_PREFIXES`, which `download.ts` sends through the Worker's `/fetch`. Downloads now read the type from the bytes when a host sends `application/octet-stream`. |
 | 4 | **Holds.** | `Access-Control-Expose-Headers` lists `X-Comfy-Request-Id`, `X-Comfy-Error-Type`, `Retry-After`, `X-Comfy-Credits-Used`, `X-Comfy-Refusal-Subject` and the concurrency and estimate headers. Read in the browser: request ID on 200 and 404, error type `request_not_found`. | Nothing for request IDs. But Router didn't send `X-Comfy-Credits-Used` on any queued submit or result read (Nano Banana, Seedance, Freepik), so "Spent this session" now stays hidden until Router reports a figure. |
 | 5 | **Holds.** | `@comfyorg/sdk` 0.5.0 lists models, submits, polls and collects in the browser with the `node:crypto` shim. | Nothing. |
@@ -25,8 +25,22 @@ placeholder, and Router answers it with `401 unauthorized`, the same as no key a
 - **Freepik skin enhancer:** about 87 s. Its output is far larger than its input (1.6 MB PNG in, 38.6 MB out), served from Magnific's `magnific-image-upscale-fast` path. For M6, check the output size before saving it and consider re-encoding.
 - **Status polls** never returned `Retry-After`; the 2 s default cadence was fine.
 
+## The Worker
+
+`proxy/` has `/upload`, `/m/:key` and `/fetch`. It has no `/router/*` route, because row 1 holds. Its
+`/fetch` allowlist is the app's own `WORKER_FETCH_PREFIXES`, imported at build time, so the two can't
+drift apart. Upload links are served for 24 hours. The app deletes each upload when its job ends, and
+the bucket's lifecycle rule removes anything older than a day (R2 counts in whole days). The Security
+table's "deleted after 1 hour" is a target for the app's own cleanup, not something R2 enforces.
+
 ## Open
 
-1. **Row 2 (STOP AND ASK):** how video inputs get a public URL. The spec's fallback is the Worker's `/upload` on R2.
-2. **Worker `/fetch`** for `storage.googleapis.com/partner-nodes-assets/` (row 3) is needed whatever row 2 decides. Until it's deployed, Seedance downloads fail with a "needs the download proxy" message.
-3. **Shell key:** replace the placeholder, then run `scripts/m1-checks.ts` for row 7 (`HIGH`), row 9 (`last_frame_url` on a final) and the recorded fixtures, and so `npm run smoke` can run.
+1. **Deploy the Worker** (`proxy/README.md`): turn on R2, `wrangler login`, then create the bucket,
+   add the lifecycle rule and deploy. Until then, Seedance downloads and uploads fail with a "needs the
+   Worker" message.
+2. **`VITE_MEDIA_HOST` default:** Contracts set it to `comfy-assets`, which can't work from a browser.
+   Builds set `VITE_MEDIA_HOST=worker`. Changing the default is a Contracts change, so ask first.
+3. **Shell key:** replace the placeholder, then run `scripts/m1-checks.ts` for row 7 (`HIGH`), row 9
+   (`last_frame_url` on a final) and the recorded fixtures, and so `npm run smoke` can run.
+4. **Provider fetch from R2:** after the deploy, send a Seedance `reference_video` draft pointing at a
+   Worker link to confirm BytePlus can fetch it.

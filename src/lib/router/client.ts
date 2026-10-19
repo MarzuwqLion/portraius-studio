@@ -4,6 +4,7 @@
 import { comfy } from "@comfyorg/sdk";
 import { config } from "@/lib/config";
 import { isAllowedModel } from "@/lib/registry/models";
+import type { AppError } from "@/lib/types/errors";
 import type { JobEstimate } from "@/lib/types/jobs";
 import { RouterHttpError, appError } from "./errors";
 import { COMFY_CLOUD_API_URL } from "./hosts";
@@ -242,7 +243,10 @@ export async function estimate(modelId: string, body: unknown, signal?: AbortSig
   }
 }
 
-// ---- Comfy Cloud asset store (media hosting for inputs that must be URLs) ----
+// ---- Media hosting: public URLs for inputs that providers fetch by link ----
+// M1 found browsers can't reach Comfy Cloud's asset store (no CORS), so the
+// app uploads through the Worker's R2 route (VITE_MEDIA_HOST=worker). The
+// Cloud path still works from Node.
 
 export interface HostedAsset {
   id: string;
@@ -250,11 +254,41 @@ export interface HostedAsset {
   expiresAt: string | null;
 }
 
+async function workerError(response: Response): Promise<AppError> {
+  const body = (await response.json().catch(() => ({}))) as { detail?: string };
+  switch (response.status) {
+    case 401:
+      return appError("unauthorized", "That key wasn't accepted, or it doesn't have Router access.", { action: "check_key" });
+    case 413:
+    case 415:
+      return appError("upload_failed", body.detail ?? "This file can't be uploaded.", { action: "edit_input" });
+    case 429:
+      return appError("rate_limited", "Waiting in line.", { retry: "auto", action: "wait", retryAfter: Number(response.headers.get("Retry-After")) || 60 });
+    default:
+      return appError("upload_failed", "The upload didn't finish. Retry it?", { retry: "manual" });
+  }
+}
+
+function requireWorker(): string {
+  if (!config.workerUrl) throw appError("upload_failed", "Uploads need Portraius Studio's Worker, which isn't set up here.");
+  return config.workerUrl;
+}
+
 export async function uploadAsset(
   file: Blob,
   options: { filePath: string; contentType: string; signal?: AbortSignal },
 ): Promise<HostedAsset> {
   const key = requireKey();
+  if (config.mediaHost === "worker") {
+    const response = await fetch(`${requireWorker()}/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": options.contentType },
+      body: file,
+      signal: options.signal,
+    });
+    if (!response.ok) throw await workerError(response);
+    return (await response.json()) as HostedAsset;
+  }
   // The metadata fields must come before the file part.
   const form = new FormData();
   form.append("content_type", options.contentType);
@@ -273,6 +307,14 @@ export async function uploadAsset(
 
 export async function deleteAsset(id: string): Promise<void> {
   const key = requireKey();
+  if (config.mediaHost === "worker") {
+    const response = await fetch(`${requireWorker()}/m/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (!response.ok && response.status !== 404) throw await workerError(response);
+    return;
+  }
   const response = await fetch(`${COMFY_CLOUD_API_URL}/assets/${encodeURIComponent(id)}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${key}` },

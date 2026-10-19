@@ -2,6 +2,7 @@
 // Development builds only. Runs real Router calls with the visitor's key at the
 // cheapest settings, and records what the browser could and couldn't do.
 // Results never include the key, and signed URLs are cut to origin and path.
+import { config } from "@/lib/config";
 import { MODEL_IDS } from "@/lib/registry/models";
 import * as router from "@/lib/router/client";
 import { downloadAsset } from "@/lib/router/download";
@@ -192,7 +193,7 @@ export async function runDayOneChecks(report: Report): Promise<void> {
     };
   });
 
-  await timed("cloud-upload", "2", "Upload a clip to Comfy Cloud's asset store from the browser", report, async () => {
+  await timed("media-upload", "2", `Upload a clip to the media host (${config.mediaHost}) from the browser`, report, async () => {
     const file = video ?? new Blob(["portraius m1 check"], { type: "text/plain" });
     const hosted = await router.uploadAsset(file, {
       filePath: video ? "portraius-m1-check.mp4" : "portraius-m1-check.txt",

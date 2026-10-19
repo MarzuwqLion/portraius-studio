@@ -39,6 +39,7 @@ function KeySection() {
   const inputId = useId();
   const rememberId = useId();
   const routerHost = new URL(config.routerBaseUrl).host;
+  const workerHost = config.mediaHost === "worker" && config.workerUrl ? new URL(config.workerUrl).host : null;
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -51,7 +52,14 @@ function KeySection() {
   return (
     <Section title="Comfy API key">
       <p className="max-w-[70ch] text-body">
-        Your key stays in this browser and is sent only to <strong>{routerHost}</strong>. Get one with Router access at{" "}
+        Your key stays in this browser and is sent only to <strong>{routerHost}</strong>
+        {workerHost && (
+          <>
+            {" "}
+            and to <strong>{workerHost}</strong>, Portraius Studio's upload Worker, which checks it with Comfy and never stores it
+          </>
+        )}
+        . Get one with Router access at{" "}
         <a href="https://platform.comfy.org" target="_blank" rel="noreferrer" className="font-semibold underline underline-offset-4">
           platform.comfy.org
         </a>
