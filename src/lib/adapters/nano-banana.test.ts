@@ -55,8 +55,12 @@ describe("nanoBanana.buildBody", () => {
 
 describe("nanoBanana.extractAssets", () => {
   it("returns only the final image from a recorded result, skipping the thought image", () => {
-    const assets = nanoBanana.extractAssets(recorded as NanoBananaResult);
-    expect(assets).toEqual([{ kind: "image", base64: "<base64 stripped: 2099612 chars>", mime: "image/png" }]);
+    const parts = (recorded as NanoBananaResult).candidates![0]!.content!.parts!;
+    expect(parts.some((p) => p.thought && p.inlineData)).toBe(true);
+    const final = parts.find((p) => !p.thought && p.inlineData)!;
+    expect(nanoBanana.extractAssets(recorded as NanoBananaResult)).toEqual([
+      { kind: "image", base64: final.inlineData!.data, mime: final.inlineData!.mimeType },
+    ]);
   });
 
   it("reads fileData links when a partner serves the image", () => {

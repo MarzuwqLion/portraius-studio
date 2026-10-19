@@ -109,7 +109,7 @@ describe("a job from submit to done", () => {
     const started = await startJob({ kind: "video", modelId: MODEL_IDS.seedance, input: videoInput });
     const job = await settled(started.id, 5000);
 
-    expect(job).toMatchObject({ status: "done", draftTaskId: "cgt-20261020013238-kgd82" });
+    expect(job).toMatchObject({ status: "done", draftTaskId: seedanceRecorded.id });
     const generation = await db.generations.get(job.generationIds[0]!);
     expect(generation!.assets.map((a) => [a.kind, a.mime])).toEqual([["video", "video/mp4"], ["frame", "image/jpeg"]]);
   });

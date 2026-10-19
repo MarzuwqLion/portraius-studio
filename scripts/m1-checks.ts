@@ -1,6 +1,7 @@
 // One-off M1 checks that need a real key but not a browser (spec: Unknowns
-// rows 2 and 7), plus the recorded fixtures for the M1 adapters.
+// rows 2, 7 and 9), plus recorded fixtures for thinking HIGH and a final.
 // Usage: npx tsx scripts/m1-checks.ts   (reads COMFY_API_KEY from the shell)
+import "./lib/env.ts";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { MODEL_IDS } from "../src/lib/registry/models.ts";
 import * as router from "../src/lib/router/client.ts";
@@ -57,7 +58,7 @@ let draftTaskId: string | undefined;
 
 await step("row7_thinking_high", async () => {
   const run = await runQueued(MODEL_IDS.nanoBanana, nanoBody("HIGH"));
-  fixture("nano-banana-2.1.result", run.data);
+  fixture("nano-banana-2.1.high.result", run.data);
   return { requestId: run.requestId, creditsUsed: run.creditsUsed, trail: run.trail };
 });
 
@@ -79,7 +80,6 @@ await step("seedance_text_draft", async () => {
   };
   const estimate = await router.estimate(MODEL_IDS.seedance, body).catch((err) => ({ error: describeError(err) }));
   const run = await runQueued(MODEL_IDS.seedance, body);
-  fixture("seedance-2.5.draft.result", run.data);
   const data = run.data as { id?: string; content?: { video_url?: string; last_frame_url?: string } };
   draftVideoUrl = data.content?.video_url;
   draftTaskId = data.id;
@@ -106,7 +106,7 @@ await step("seedance_final_from_draft", async () => {
 let hostedUrl: string | undefined;
 let hostedId: string | undefined;
 
-await step("row2_cloud_upload_with_router_key", async () => {
+await step("row2_worker_upload", async () => {
   if (!draftVideoUrl) throw new Error("no draft video to upload");
   const clip = await (await fetch(draftVideoUrl)).blob();
   const hosted = await router.uploadAsset(new Blob([clip], { type: "video/mp4" }), { filePath: "portraius-m1-check.mp4", contentType: "video/mp4" });
@@ -117,7 +117,7 @@ await step("row2_cloud_upload_with_router_key", async () => {
   return { host: u.host, path: u.pathname.slice(0, 40), expiresAt: hosted.expiresAt, clipBytes: clip.size, anonymousStatus: anonymous.status };
 });
 
-await step("row2_seedance_reference_video", async () => {
+await step("row2_seedance_reference_video_from_worker", async () => {
   if (!hostedUrl) throw new Error("no hosted URL");
   const body = {
     content: [
@@ -136,7 +136,7 @@ await step("row2_seedance_reference_video", async () => {
   return { requestId: run.requestId, creditsUsed: run.creditsUsed, gotVideo: Boolean(data.content?.video_url), trail: run.trail };
 });
 
-await step("row2_cleanup", async () => {
+await step("row2_worker_delete", async () => {
   if (hostedId) await router.deleteAsset(hostedId);
   return { deleted: Boolean(hostedId) };
 });

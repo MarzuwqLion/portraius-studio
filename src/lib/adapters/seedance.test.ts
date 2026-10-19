@@ -92,7 +92,7 @@ describe("seedance.extractAssets", () => {
 
 describe("seedance.draftTaskId", () => {
   it("reads the draft's task ID from a recorded draft", () => {
-    expect(seedance.draftTaskId!(draft as SeedanceResult)).toBe("cgt-20261020013238-kgd82");
+    expect(seedance.draftTaskId!(draft as SeedanceResult)).toBe(draft.id);
   });
 
   it("has none for a final", () => {

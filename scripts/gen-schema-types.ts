@@ -3,6 +3,7 @@
 // ETag in .schema-cache/ (gitignored), so an unchanged schema costs one 304.
 // Adapters import these types, so a schema change breaks the build.
 // Usage: npm run gen:schemas   (reads COMFY_API_KEY from the shell)
+import "./lib/env.ts";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import openapiTS, { astToString } from "openapi-typescript";
 import { REGISTRY } from "../src/lib/registry/models.ts";
