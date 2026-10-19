@@ -6,9 +6,14 @@ export const ROUTER_DEFAULT_BASE_URL = "https://api.comfy.org";
 // Comfy Cloud's asset store, the default media host (VITE_MEDIA_HOST=comfy-assets).
 export const COMFY_CLOUD_API_URL = "https://cloud.comfy.org/api/v2";
 
-// Result asset hosts the browser downloads from directly. Filled from the M1
-// download checks (docs/notes/m1-findings.md).
-export const ASSET_HOSTS: readonly string[] = [];
+// Result asset hosts the browser downloads from directly: they send CORS
+// headers (docs/notes/m1-findings.md). Freepik serves from Magnific's CDN.
+export const ASSET_HOSTS: readonly string[] = ["ai-statics.magnific.com"];
+
+// Result asset locations that send no CORS headers, so the browser fetches them
+// through the Worker's /fetch route (Unknowns row 3). Comfy rehosts Seedance
+// results in this bucket.
+export const WORKER_FETCH_PREFIXES: readonly string[] = ["https://storage.googleapis.com/partner-nodes-assets/"];
 
 export function connectSources(options: { routerBaseUrl?: string; workerUrl?: string }): string[] {
   const origins = new Set<string>([ROUTER_DEFAULT_BASE_URL]);
