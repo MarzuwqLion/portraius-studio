@@ -25,6 +25,7 @@ export const nanoBanana: AdapterImpl<GenerateImageInput, NanoBananaResult> = {
         responseModalities: ["TEXT", "IMAGE"],
         imageConfig: { aspectRatio: input.aspectRatio, imageSize: input.size },
         thinkingConfig: { thinkingLevel: input.quality === "best" ? "HIGH" : "MINIMAL" },
+        ...(input.seed !== undefined ? { seed: input.seed } : {}),
       },
     };
   },

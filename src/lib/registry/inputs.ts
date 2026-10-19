@@ -19,6 +19,7 @@ export interface GenerateImageInput {
   aspectRatio: ImageAspectRatio;
   size: "1K" | "2K" | "4K";
   quality: "fast" | "best";
+  seed?: number;
 }
 
 export type VideoRatio = "16:9" | "4:3" | "1:1" | "3:4" | "9:16" | "21:9" | "9:21";
@@ -44,3 +45,18 @@ export interface RenderFinalInput {
 }
 
 export type VideoInput = GenerateVideoInput | RenderFinalInput;
+
+// MiniMax H3: no draft mode, 4 to 15 s, 768P or 2K. Keyframes and reference
+// media can't be mixed in one request.
+export interface H3Input {
+  stage: "generate";
+  prompt: string;
+  firstFrame?: string;
+  lastFrame?: string;
+  referenceImages?: string[];
+  referenceVideos?: string[];
+  durationSec: number;
+  ratio?: VideoRatio;          // required for text to video; ignored with a first frame
+  resolution: "768P" | "2K";
+  seed?: number;
+}
