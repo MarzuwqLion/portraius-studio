@@ -28,7 +28,7 @@ key was saved at User scope. The terminal that launched Claude Code had carried 
 - **Seedance 2.5** 4 s 480p draft: about 86 s in `IN_PROGRESS` with no queue position. Result keys: `content`, `created_at`, `draft`, `duration`, `execution_expires_after`, `framespersecond`, `generate_audio`, `id`, `model`, `output_format`, `priority`, `ratio`, `resolution`, `seed`, `service_tier`, `status`, `updated_at`, `usage`. `return_last_frame: true` on a draft gives `last_frame_url`.
 - **Freepik skin enhancer:** about 87 s. Its output is far larger than its input (1.6 MB PNG in, 38.6 MB out), served from Magnific's `magnific-image-upscale-fast` path. For M6, check the output size before saving it and consider re-encoding.
 - **Status polls** never returned `Retry-After`; the 2 s default cadence was fine.
-- **Router runs this account's queued requests one at a time.** Two Nano Banana images submitted
+- **Router ran these two queued requests one at a time** (M3 later saw five run at once, so the limit varies). Two Nano Banana images submitted
   together came back `queue_position` 0 and 1, and the second only started once the first finished
   (15 s, then 15 s more). In smoke, an image submitted beside a Seedance draft sat `IN_QUEUE` for 90 s
   until the draft was done. No `X-Concurrency-*` headers came back on submits or status reads. For
