@@ -28,9 +28,11 @@ export interface WizardDraft {
   personDescription: string;     // design from text: what the candidates are drawn from
   candidateJobIds: string[];
   pickedCandidateJobId?: string;
+  candidateDescriptor?: number[];  // the picked face: a designed character's identity reference
   compositeJobIds: string[];     // every take of the composite; the last is current
   viewJobIds: Record<SheetView, string[]>;
   pickedViewJobIds: Partial<Record<SheetView, string>>;
+  scores: Record<string, number | null>;  // identity score per finished take (job ID); null when no face was found
   name: string;
   description: string;
   tags: string[];
@@ -52,6 +54,7 @@ export function newDraft(path: CreatePath): WizardDraft {
     compositeJobIds: [],
     viewJobIds: { front: [], threeQuarter: [], profile: [], fullBody: [] },
     pickedViewJobIds: {},
+    scores: {},
     name: "",
     description: "",
     tags: [],
@@ -86,4 +89,8 @@ export async function putDraftBlob(path: CreatePath, name: string, blob: Blob): 
 export async function clearDraft(path: CreatePath): Promise<void> {
   const prefix = `${draftId(path)}`;
   await db.blobs.where("id").startsWith(prefix).delete();
+}
+
+export async function deleteDraftBlob(id: string): Promise<void> {
+  if (id.startsWith("wizard:")) await db.blobs.delete(id);
 }

@@ -22,8 +22,9 @@ export const VIEW_LABEL: Record<SheetView, string> = {
   fullBody: "Full body",
 };
 
-// Profiles score low by design (spec: Where scoring is skipped).
-export const SCORED_VIEWS: readonly SheetView[] = ["front", "threeQuarter", "fullBody"];
+// Every image is scored, but profiles score low by design (spec: Where scoring
+// is skipped), so a low profile score is never flagged for a redraw.
+export const FLAGGED_VIEWS: readonly SheetView[] = ["front", "threeQuarter", "fullBody"];
 
 const IDENTITY_RULES =
   "Keep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\n" +
