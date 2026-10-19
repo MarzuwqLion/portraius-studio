@@ -88,13 +88,15 @@ const seedanceDraftBody = {
 };
 
 interface GeminiPart {
+  thought?: boolean;
   inlineData?: { mimeType?: string; data?: string };
   fileData?: { mimeType?: string; fileUri?: string };
 }
 
 function geminiImage(data: unknown): GeminiPart | undefined {
   const parts = (data as { candidates?: { content?: { parts?: GeminiPart[] } }[] })?.candidates?.[0]?.content?.parts ?? [];
-  return parts.find((p) => p.inlineData?.data || p.fileData?.fileUri);
+  // Thinking adds draft images marked thought: true ahead of the real one.
+  return parts.find((p) => !p.thought && (p.inlineData?.data || p.fileData?.fileUri));
 }
 
 export async function runDayOneChecks(report: Report): Promise<void> {

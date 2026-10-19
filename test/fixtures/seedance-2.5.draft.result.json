@@ -1,0 +1,26 @@
+{
+  "content": {
+    "last_frame_url": "https://storage.googleapis.com/partner-nodes-assets/byteplus-frames/2026/10/19/530de207-41d2-47c2-8757-655e7c07f80d.jpg?signed-query-stripped",
+    "video_url": "https://storage.googleapis.com/partner-nodes-assets/byteplus-videos/2026/10/19/b6c3c97a-6ac6-4faa-8ef7-bfb2771d1b8f.mp4?signed-query-stripped"
+  },
+  "created_at": 1792431158,
+  "draft": true,
+  "duration": 4,
+  "execution_expires_after": 172800,
+  "framespersecond": 24,
+  "generate_audio": false,
+  "id": "cgt-20261020013238-kgd82",
+  "model": "dreamina-seedance-2-5-260628",
+  "output_format": "mp4",
+  "priority": 0,
+  "ratio": "16:9",
+  "resolution": "480p",
+  "seed": 7,
+  "service_tier": "default",
+  "status": "succeeded",
+  "updated_at": 1792431228,
+  "usage": {
+    "completion_tokens": 38830,
+    "total_tokens": 38830
+  }
+}

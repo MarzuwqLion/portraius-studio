@@ -21,6 +21,7 @@ export interface ModelAdapter<I, Raw> {
   limits: { maxRefImages?: number; durationSec?: [number, number]; resolutions?: string[] };
   buildBody(input: I): unknown;         // app input -> model-native JSON
   extractAssets(raw: Raw): AssetRef[];  // native result -> assets to download
+  draftTaskId?(raw: Raw): string | undefined;  // models with draft then final (Seedance 2.5)
 }
 
 // What an adapter module exports. The registry attaches the model ID, so IDs

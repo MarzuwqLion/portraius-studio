@@ -1,0 +1,47 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "inlineData": {
+              "data": "<base64 stripped: 2099612 chars>",
+              "mimeType": "image/png"
+            },
+            "thought": true
+          },
+          {
+            "inlineData": {
+              "data": "<base64 stripped: 2099612 chars>",
+              "mimeType": "image/png"
+            },
+            "thoughtSignature": "<base64 stripped: 2224108 chars>"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "createTime": "2026-10-19T17:32:20.239474Z",
+  "modelVersion": "gemini-nano-banana-2.1",
+  "responseId": "JFTWavLODq2zlb4P7sfF8A4",
+  "usageMetadata": {
+    "candidatesTokenCount": 1120,
+    "candidatesTokensDetails": [
+      {
+        "modality": "IMAGE",
+        "tokenCount": 1120
+      }
+    ],
+    "promptTokenCount": 117,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 117
+      }
+    ],
+    "totalTokenCount": 1237,
+    "trafficType": "PROVISIONED_THROUGHPUT"
+  }
+}

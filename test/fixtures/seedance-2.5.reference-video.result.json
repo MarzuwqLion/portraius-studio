@@ -1,0 +1,25 @@
+{
+  "content": {
+    "video_url": "https://storage.googleapis.com/partner-nodes-assets/byteplus-videos/2026/10/19/a3fe6541-a69b-48f0-8493-c717fbcf7036.mp4?signed-query-stripped"
+  },
+  "created_at": 1792431446,
+  "draft": true,
+  "duration": 4,
+  "execution_expires_after": 172800,
+  "framespersecond": 24,
+  "generate_audio": false,
+  "id": "cgt-20261020013720-epudo",
+  "model": "dreamina-seedance-2-5-260628",
+  "output_format": "mp4",
+  "priority": 0,
+  "ratio": "16:9",
+  "resolution": "480p",
+  "seed": 7,
+  "service_tier": "default",
+  "status": "succeeded",
+  "updated_at": 1792431545,
+  "usage": {
+    "completion_tokens": 77260,
+    "total_tokens": 77260
+  }
+}
