@@ -2,20 +2,14 @@
 // the final submits only the draft's task ID and inherits everything else.
 import type { AdapterImpl, AssetRef } from "@/lib/registry/capabilities";
 import type { GenerateVideoInput, VideoInput } from "@/lib/registry/inputs";
+import type { ByteplusDreaminaSeedance25260628 as Schema } from "@/lib/registry/schemas";
 
-export interface SeedanceResult {
-  id?: string;
-  draft?: boolean;
-  content?: { video_url?: string; last_frame_url?: string } | null;
-}
+type SeedanceBody = Schema.operations["runRouterModel"]["requestBody"]["content"]["application/json"];
+type ContentItem = Schema.components["schemas"]["BytePlusVideoGenerationContent"];
+// The schema leaves out the draft flag the result carries (seen in M1).
+export type SeedanceResult = Schema.components["schemas"]["BytePlusVideoGenerationQueryResponse"] & { draft?: boolean };
 
 const DURATION: [number, number] = [4, 30];
-
-type ContentItem =
-  | { type: "text"; text: string }
-  | { type: "image_url"; role: "first_frame" | "last_frame" | "reference_image"; image_url: { url: string } }
-  | { type: "video_url"; role: "reference_video"; video_url: { url: string } }
-  | { type: "audio_url"; role: "reference_audio"; audio_url: { url: string } };
 
 function duration(input: GenerateVideoInput): number {
   // Seedance treats a reference video as a video task, which only takes -1
@@ -33,7 +27,7 @@ export const seedance: AdapterImpl<VideoInput, SeedanceResult> = {
   delivery: "queue",
   limits: { durationSec: DURATION, resolutions: ["480p", "1080p"] },
 
-  buildBody(input) {
+  buildBody(input): SeedanceBody {
     if (input.stage === "final") {
       return { content: [{ type: "draft_task", draft_task: { id: input.draftTaskId } }], resolution: "1080p" };
     }

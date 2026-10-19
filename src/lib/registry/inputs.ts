@@ -4,7 +4,7 @@
 // An image after browser prep (2048 px long edge, JPEG 90, EXIF stripped),
 // as raw base64 with no data: prefix.
 export interface InlineImage {
-  mime: string;
+  mime: "image/png" | "image/jpeg" | "image/webp";
   base64: string;
 }
 
@@ -21,7 +21,7 @@ export interface GenerateImageInput {
   quality: "fast" | "best";
 }
 
-export type VideoRatio = "16:9" | "4:3" | "1:1" | "3:4" | "9:16" | "21:9";
+export type VideoRatio = "16:9" | "4:3" | "1:1" | "3:4" | "9:16" | "21:9" | "9:21";
 
 // Every clip starts as a 480p draft; the final is rendered from the draft's ID.
 export interface GenerateVideoInput {

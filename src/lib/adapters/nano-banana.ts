@@ -2,24 +2,17 @@
 // source image in edit mode, then the references in legend order.
 import type { AdapterImpl, AssetRef } from "@/lib/registry/capabilities";
 import type { GenerateImageInput } from "@/lib/registry/inputs";
+import type { VertexaiGeminiNanoBanana21 as Schema } from "@/lib/registry/schemas";
 
-interface GeminiPart {
-  text?: string;
-  thought?: boolean;
-  inlineData?: { mimeType?: string; data?: string };
-  fileData?: { mimeType?: string; fileUri?: string };
-}
-
-export interface NanoBananaResult {
-  candidates?: { content?: { parts?: GeminiPart[] }; finishReason?: string }[];
-}
+type NanoBananaBody = Schema.operations["runRouterModel"]["requestBody"]["content"]["application/json"];
+export type NanoBananaResult = Schema.components["schemas"]["GeminiGenerateContentResponse"];
 
 export const nanoBanana: AdapterImpl<GenerateImageInput, NanoBananaResult> = {
   capabilities: ["character.sheet", "image.generate", "image.edit"],
   delivery: "queue",
   limits: { maxRefImages: 14, resolutions: ["1K", "2K", "4K"] },
 
-  buildBody(input) {
+  buildBody(input): NanoBananaBody {
     const images = input.source ? [input.source, ...input.references] : input.references;
     return {
       contents: [
