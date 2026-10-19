@@ -35,9 +35,10 @@ key was saved at User scope. The terminal that launched Claude Code had carried 
   M3: Count 1 to 4 runs one image after another, so job cards must show the queue position, and the
   limit may differ for a judge's key.
 - **Row 9 fails:** a 1080p final rendered from a draft (request `163de3a8-8b48-47be-9412-acc87a6f1f45`)
-  returned no `last_frame_url`, although its draft had one. M3 applies the fallback (extract the last
-  frame with ffmpeg.wasm); first try sending `return_last_frame: true` with the `draft_task`, which the
-  schema doesn't list among the fields a final inherits. The final waited 114 s in the queue at
+  returned no `last_frame_url`, although its draft had one. Resolved in M3: sending
+  `return_last_frame: true` alongside the `draft_task` gives a final its `last_frame_url` (request
+  `afb5be2d-c621-4a47-85cc-70c421fdd921`, 37 s). The app keeps a fallback for any final without one:
+  it grabs the last frame in the browser with a video element and a canvas, which needs no ffmpeg.wasm. The final waited 114 s in the queue at
   position 1, then took 35 s.
 - **Seedance `reference_video` needs `duration: -1` and `ratio: "adaptive"`** (row 10, ahead of M4).
   Seedance seems to read some prompts as an edit of the reference ("video editing tasks support only

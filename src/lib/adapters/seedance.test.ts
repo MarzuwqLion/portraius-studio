@@ -32,10 +32,11 @@ describe("seedance.buildBody", () => {
     });
   });
 
-  it("renders a final from the draft ID alone", () => {
+  it("renders a final from the draft ID alone, asking again for the last frame", () => {
     expect(seedance.buildBody({ stage: "final", draftTaskId: "cgt-20261020013238-kgd82" })).toEqual({
       content: [{ type: "draft_task", draft_task: { id: "cgt-20261020013238-kgd82" } }],
       resolution: "1080p",
+      return_last_frame: true,
     });
   });
 

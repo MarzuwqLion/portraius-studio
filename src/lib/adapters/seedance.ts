@@ -29,7 +29,9 @@ export const seedance: AdapterImpl<VideoInput, SeedanceResult> = {
 
   buildBody(input): SeedanceBody {
     if (input.stage === "final") {
-      return { content: [{ type: "draft_task", draft_task: { id: input.draftTaskId } }], resolution: "1080p" };
+      // A final doesn't inherit return_last_frame from its draft (M3: without
+      // it there's no last_frame_url; with it there is).
+      return { content: [{ type: "draft_task", draft_task: { id: input.draftTaskId } }], resolution: "1080p", return_last_frame: true };
     }
     const frames = Boolean(input.firstFrame || input.lastFrame);
     const referenceVideo = Boolean(input.referenceVideos?.length);
