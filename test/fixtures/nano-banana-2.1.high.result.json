@@ -1,0 +1,64 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "**Refining Visual Character**\n\nI'm focusing on translating the described features into a cohesive visual. My current thoughts are centered on balancing the specific elements like the tortoiseshell glasses and mustard sweater with a natural, characterful human presence, ensuring the lighting and lens perspective create a compelling studio portrait.\n\n",
+            "thought": true
+          },
+          {
+            "inlineData": {
+              "data": "<base64 stripped: 2292136 chars>",
+              "mimeType": "image/png"
+            },
+            "thought": true
+          },
+          {
+            "text": "**Finalizing Prompt Elements**\n\nThe current focus is on precisely aligning all specified visual attributes, from the desired lens perspective and subject's attire to the background and lighting conditions. I am ensuring every detail is accurately represented.\n\n",
+            "thought": true
+          },
+          {
+            "text": "Here is a studio portrait of the designed character, captured with natural detail and 85mm perspective:",
+            "thoughtSignature": "<base64 stripped: 1484428 chars>"
+          },
+          {
+            "inlineData": {
+              "data": "<base64 stripped: 2292052 chars>",
+              "mimeType": "image/png"
+            },
+            "thoughtSignature": "<base64 stripped: 1052704 chars>"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "createTime": "2026-10-19T18:25:11.265369Z",
+  "modelVersion": "gemini-nano-banana-2.1",
+  "responseId": "h2DWapmZEL36lb4P9unuwAw",
+  "usageMetadata": {
+    "candidatesTokenCount": 1162,
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 42
+      },
+      {
+        "modality": "IMAGE",
+        "tokenCount": 1120
+      }
+    ],
+    "promptTokenCount": 123,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 123
+      }
+    ],
+    "thoughtsTokenCount": 926,
+    "totalTokenCount": 2211,
+    "trafficType": "PROVISIONED_THROUGHPUT"
+  }
+}

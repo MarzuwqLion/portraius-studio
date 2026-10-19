@@ -211,8 +211,9 @@ export async function runDayOneChecks(report: Report): Promise<void> {
         ],
         draft: true,
         resolution: "480p",
-        duration: -1, // Seedance refuses a fixed duration on video tasks (M1: invalid_input with 4)
-        ratio: "16:9",
+        // A reference video can make it an edit: only -1 and adaptive (M1).
+        duration: -1,
+        ratio: "adaptive",
         generate_audio: false,
         seed: 7,
       };

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import draft from "../../../test/fixtures/seedance-2.5.draft.result.json";
+import final from "../../../test/fixtures/seedance-2.5.final.result.json";
 import referenceVideo from "../../../test/fixtures/seedance-2.5.reference-video.result.json";
 import type { GenerateVideoInput } from "@/lib/registry/inputs";
 import { seedance, type SeedanceResult } from "./seedance";
@@ -49,12 +50,14 @@ describe("seedance.buildBody", () => {
     expect(refs.content.map((c) => c.role)).toEqual([undefined, "reference_image", "reference_image"]);
   });
 
-  it("sends duration -1 with a reference video, which Seedance needs for video tasks", () => {
-    const body = seedance.buildBody({ ...base, referenceVideos: ["https://portraius-proxy.example.workers.dev/m/abc.mp4"] }) as {
+  it("sends duration -1 and an adaptive ratio with a reference video, which video edits need", () => {
+    const body = seedance.buildBody({ ...base, ratio: "16:9", referenceVideos: ["https://portraius-proxy.example.workers.dev/m/abc.mp4"] }) as {
       duration: number;
+      ratio: string;
       content: unknown[];
     };
     expect(body.duration).toBe(-1);
+    expect(body.ratio).toBe("adaptive");
     expect(body.content[1]).toEqual({ type: "video_url", role: "reference_video", video_url: { url: "https://portraius-proxy.example.workers.dev/m/abc.mp4" } });
   });
 
@@ -95,7 +98,8 @@ describe("seedance.draftTaskId", () => {
     expect(seedance.draftTaskId!(draft as SeedanceResult)).toBe(draft.id);
   });
 
-  it("has none for a final", () => {
-    expect(seedance.draftTaskId!({ id: "cgt-2", draft: false })).toBeUndefined();
+  it("has none for a recorded final, which also carries no last frame (Unknowns row 9)", () => {
+    expect(seedance.draftTaskId!(final as SeedanceResult)).toBeUndefined();
+    expect(seedance.extractAssets(final as SeedanceResult)).toEqual([{ kind: "video", url: final.content.video_url }]);
   });
 });

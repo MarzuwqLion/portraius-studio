@@ -126,8 +126,9 @@ await step("row2_seedance_reference_video_from_worker", async () => {
     ],
     draft: true,
     resolution: "480p",
-    duration: -1, // Seedance refuses a fixed duration on video tasks (M1: invalid_input with 4)
-    ratio: "16:9",
+    // A reference video can make it an edit: only -1 and adaptive (M1).
+    duration: -1,
+    ratio: "adaptive",
     generate_audio: false,
     seed: 11,
   };

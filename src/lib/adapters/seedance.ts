@@ -12,8 +12,8 @@ export type SeedanceResult = Schema.components["schemas"]["BytePlusVideoGenerati
 const DURATION: [number, number] = [4, 30];
 
 function duration(input: GenerateVideoInput): number {
-  // Seedance treats a reference video as a video task, which only takes -1
-  // (M1: a fixed duration came back invalid_input).
+  // With a reference video, Seedance may read the prompt as a video edit, which
+  // only takes -1 (M1: a fixed duration came back invalid_input).
   if (input.durationSec === "auto" || input.referenceVideos?.length) return -1;
   const [min, max] = DURATION;
   if (!Number.isInteger(input.durationSec) || input.durationSec < min || input.durationSec > max) {
@@ -32,6 +32,7 @@ export const seedance: AdapterImpl<VideoInput, SeedanceResult> = {
       return { content: [{ type: "draft_task", draft_task: { id: input.draftTaskId } }], resolution: "1080p" };
     }
     const frames = Boolean(input.firstFrame || input.lastFrame);
+    const referenceVideo = Boolean(input.referenceVideos?.length);
     if (input.lastFrame && !input.firstFrame) throw new RangeError("A last frame needs a first frame.");
     // Unknowns row 8: kept apart until M3 confirms Seedance takes both.
     if (frames && input.referenceImages?.length) throw new RangeError("Use a first frame or reference images, not both.");
@@ -51,8 +52,10 @@ export const seedance: AdapterImpl<VideoInput, SeedanceResult> = {
       draft: true,
       resolution: "480p",
       duration: duration(input),
-      // With a first frame Seedance 2.5 only accepts adaptive.
-      ratio: frames ? "adaptive" : (input.ratio ?? "16:9"),
+      // A first frame decides the shape, and a reference video can make the
+      // task an edit, which takes only adaptive (M1: "make it a sunny day" with
+      // 16:9 came back invalid_input; adaptive rendered).
+      ratio: frames || referenceVideo ? "adaptive" : (input.ratio ?? "16:9"),
       generate_audio: input.generateAudio,
       return_last_frame: true,
       ...(input.seed !== undefined ? { seed: input.seed } : {}),

@@ -4,8 +4,8 @@ Run on October 19 from `localhost:5173` in Chrome 155 with Marzuwq's key: the Se
 at 15:53 UTC (raw results in `.checks/m1-browser.json`, gitignored), then a follow-up Seedance probe
 in the same browser at 16:00 UTC to pin down the failed download.
 
-The Node checks (`scripts/m1-checks.ts`) haven't run yet: the shell's `COMFY_API_KEY` is a 14-character
-placeholder, and Router answers it with `401 unauthorized`, the same as no key at all.
+The Node checks (`scripts/m1-checks.ts`, raw results in `.checks/m1-node.json`) ran at 18:25 UTC, once the
+key was saved at User scope. The terminal that launched Claude Code had carried a 14-character placeholder.
 
 ## Unknowns rows 1 to 6
 
@@ -20,17 +20,34 @@ placeholder, and Router answers it with `401 unauthorized`, the same as no key a
 
 ## Other things learned
 
-- **Nano Banana 2.1** accepts `thinkingConfig.thinkingLevel: "MINIMAL"` (half of row 7; `HIGH` is in the Node checks). At 1K 1:1 it took 14 to 17 s.
+- **Nano Banana 2.1** accepts `thinkingConfig.thinkingLevel` `MINIMAL` (13 s) and `HIGH` (16 s) at 1K, so
+  row 7 holds: Fast is `MINIMAL`, Best is `HIGH` (fixture `nano-banana-2.1.high.result.json`).
   Even at `MINIMAL`, the result has two image parts: a draft marked `thought: true`, then the real
   image with a `thoughtSignature`. The first day-one run saved the draft by mistake. The adapter skips
   thought parts (fixture `test/fixtures/nano-banana-2.1.result.json`).
 - **Seedance 2.5** 4 s 480p draft: about 86 s in `IN_PROGRESS` with no queue position. Result keys: `content`, `created_at`, `draft`, `duration`, `execution_expires_after`, `framespersecond`, `generate_audio`, `id`, `model`, `output_format`, `priority`, `ratio`, `resolution`, `seed`, `service_tier`, `status`, `updated_at`, `usage`. `return_last_frame: true` on a draft gives `last_frame_url`.
 - **Freepik skin enhancer:** about 87 s. Its output is far larger than its input (1.6 MB PNG in, 38.6 MB out), served from Magnific's `magnific-image-upscale-fast` path. For M6, check the output size before saving it and consider re-encoding.
 - **Status polls** never returned `Retry-After`; the 2 s default cadence was fine.
-- **Seedance `reference_video` needs `duration: -1`** (row 10, ahead of M4). The same clip and prompt with
-  `duration: 4` completed as `invalid_input` with an empty `detail` (request
-  `b9871b1d-257a-4862-a9d2-ecaeeb516eff`). With `-1` it rendered a 4 s draft matching the clip. The
-  schema says "video editing tasks support only -1".
+- **Row 9 fails:** a 1080p final rendered from a draft (request `163de3a8-8b48-47be-9412-acc87a6f1f45`)
+  returned no `last_frame_url`, although its draft had one. M3 applies the fallback (extract the last
+  frame with ffmpeg.wasm); first try sending `return_last_frame: true` with the `draft_task`, which the
+  schema doesn't list among the fields a final inherits. The final waited 114 s in the queue at
+  position 1, then took 35 s.
+- **Seedance `reference_video` needs `duration: -1` and `ratio: "adaptive"`** (row 10, ahead of M4).
+  Seedance seems to read some prompts as an edit of the reference ("video editing tasks support only
+  -1", per the schema), and an edit refuses a fixed ratio too. Five tries, all with Worker-hosted clips
+  that BytePlus fetched fine (`wrangler tail`):
+
+  | Clip | Prompt ends | Duration | Ratio | Result |
+  | --- | --- | --- | --- | --- |
+  | teapot | "make it a bright sunny morning." | 4 | 16:9 | `invalid_input`, empty detail |
+  | teapot | "make it a bright sunny morning." | -1 | 16:9 | rendered |
+  | paper boat | "make it a sunny day." | -1 | 16:9 | `invalid_input`, twice |
+  | paper boat | "make it a bright sunny morning." | -1 | 16:9 | rendered |
+  | paper boat | "make it a sunny day." | -1 | adaptive | rendered |
+
+  The adapter now sends both whenever a reference video is attached. Router passes no detail for these
+  refusals, so the app can only say "This model didn't accept: one of the inputs."
 - **Who fetches an upload link:** a Hive moderation scanner (`HiveAI/1.0`) first, then BytePlus's
   ffmpeg (`Lavf`) with range requests, then a BytePlus "mirror-back-to-source" copy. That's about 7
   Worker requests per job, all served 200 or 206 within 4 seconds of the submit.
@@ -46,13 +63,25 @@ table's "deleted after 1 hour" is a target for the app's own cleanup, not someth
 ## Open
 
 1. **Worker deployed** on October 19 at `https://portraius-proxy.marzuwq-muhammad.workers.dev`, with the
-   `portraius-media` bucket and its 1-day lifecycle rule. Local dev points at it through `.env.local`.
-   The Pages workflow (still to build in M1) needs the same two variables.
+   `portraius-media` bucket and its 1-day lifecycle rule. Its URL is in the committed `.env`, which dev,
+   the Pages build and scripts all read.
 2. **Rate limit on `/m/`:** the per-IP limit of 30 a minute applies to providers too, and every visitor's
    jobs are fetched from the same BytePlus and Hive IPs. At about 4 provider requests per job, roughly
    7 jobs a minute across all visitors would start getting 429s. That's fine for the contest, but watch
    for it.
 3. **`VITE_MEDIA_HOST` default:** Contracts had `comfy-assets`, which can't work from a browser.
    Marzuwq approved making `worker` the default (October 19); the spec's Configuration table is updated.
-4. **Shell key:** replace the placeholder, then run `scripts/m1-checks.ts` for row 7 (`HIGH`), row 9
-   (`last_frame_url` on a final) and the recorded fixtures, and so `npm run smoke` can run.
+4. **Credits:** no route has reported `X-Comfy-Credits-Used` yet, so smoke prints "not reported".
+
+## M1 done
+
+- Findings: this file. Rows 3 to 6 applied; row 2 decided by Marzuwq (Worker on R2); rows 7 and 9
+  answered early.
+- `npm run smoke` passed at 18:28 UTC: catalog (9 models), estimate (price unknown), a Nano Banana
+  image (request `d140d4ce-05a8-44f0-976a-d8d4d06ed2c0`) and a Seedance draft (request
+  `7f5802f5-b743-4f2a-a1a5-9f7e8d77d187`) through the app's runner, Seedance downloaded through the
+  Worker, and a handle rebuilt from a stored request ID.
+- Unit tests cover every state-machine transition, the three reload-recovery cases, both adapters
+  against recorded results, the runner, the error mapper, downloads and the Worker.
+- The shell is live at https://marzuwqlion.github.io/portraius-studio/ (Pages workflow run
+  39303019858: tests, build and deploy all passed).
