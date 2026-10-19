@@ -1,0 +1,33 @@
+{
+  "format": "portraius.camera",
+  "version": 1,
+  "group": "angle",
+  "appliesTo": "shot",
+  "options": [
+    {
+      "id": "eye",
+      "label": "Eye level",
+      "phrase": "eye-level camera"
+    },
+    {
+      "id": "low",
+      "label": "Low",
+      "phrase": "low-angle shot looking up at the subject"
+    },
+    {
+      "id": "high",
+      "label": "High",
+      "phrase": "high-angle shot looking down at the subject"
+    },
+    {
+      "id": "overhead",
+      "label": "Overhead",
+      "phrase": "overhead top-down shot"
+    },
+    {
+      "id": "dutch",
+      "label": "Dutch",
+      "phrase": "Dutch angle with a tilted horizon"
+    }
+  ]
+}

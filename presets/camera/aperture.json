@@ -1,0 +1,43 @@
+{
+  "format": "portraius.camera",
+  "version": 1,
+  "group": "aperture",
+  "appliesTo": "shot",
+  "options": [
+    {
+      "id": "f1.4",
+      "label": "f/1.4",
+      "phrase": "shot at f/1.4 with a very shallow depth of field"
+    },
+    {
+      "id": "f2",
+      "label": "f/2",
+      "phrase": "shot at f/2 with a shallow depth of field"
+    },
+    {
+      "id": "f2.8",
+      "label": "f/2.8",
+      "phrase": "shot at f/2.8"
+    },
+    {
+      "id": "f4",
+      "label": "f/4",
+      "phrase": "shot at f/4"
+    },
+    {
+      "id": "f5.6",
+      "label": "f/5.6",
+      "phrase": "shot at f/5.6"
+    },
+    {
+      "id": "f8",
+      "label": "f/8",
+      "phrase": "shot at f/8 with most of the scene in focus"
+    },
+    {
+      "id": "f11",
+      "label": "f/11",
+      "phrase": "shot at f/11 with deep focus"
+    }
+  ]
+}

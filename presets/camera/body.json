@@ -1,0 +1,33 @@
+{
+  "format": "portraius.camera",
+  "version": 1,
+  "group": "body",
+  "appliesTo": "scene",
+  "options": [
+    {
+      "id": "digital-cinema",
+      "label": "Digital cinema",
+      "phrase": "shot on a digital cinema camera, clean and detailed"
+    },
+    {
+      "id": "film-35mm",
+      "label": "35mm film",
+      "phrase": "shot on 35mm film with fine natural grain"
+    },
+    {
+      "id": "film-16mm",
+      "label": "16mm film",
+      "phrase": "shot on 16mm film with visible grain and soft halation"
+    },
+    {
+      "id": "vhs",
+      "label": "VHS camcorder",
+      "phrase": "VHS camcorder footage with tape noise and soft colour bleed"
+    },
+    {
+      "id": "phone",
+      "label": "Phone",
+      "phrase": "shot on a phone camera, slightly wide and crisp"
+    }
+  ]
+}

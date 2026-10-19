@@ -1,0 +1,23 @@
+{
+  "format": "portraius.camera",
+  "version": 1,
+  "group": "era",
+  "appliesTo": "scene",
+  "options": [
+    {
+      "id": "1970s",
+      "label": "1970s",
+      "phrase": "set in the 1970s, with period clothing, cars and signage"
+    },
+    {
+      "id": "1990s",
+      "label": "1990s",
+      "phrase": "set in the 1990s, with period clothing, cars and signage"
+    },
+    {
+      "id": "present",
+      "label": "Present day",
+      "phrase": "set in the present day"
+    }
+  ]
+}

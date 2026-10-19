@@ -1,0 +1,23 @@
+{
+  "format": "portraius.camera",
+  "version": 1,
+  "group": "pacing",
+  "appliesTo": "scene",
+  "options": [
+    {
+      "id": "calm",
+      "label": "Calm",
+      "phrase": "unhurried, calm pacing"
+    },
+    {
+      "id": "standard",
+      "label": "Standard",
+      "phrase": ""
+    },
+    {
+      "id": "fast",
+      "label": "Fast",
+      "phrase": "fast pacing with quick, energetic action"
+    }
+  ]
+}

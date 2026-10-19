@@ -1,0 +1,38 @@
+{
+  "format": "portraius.camera",
+  "version": 1,
+  "group": "genre",
+  "appliesTo": "scene",
+  "options": [
+    {
+      "id": "drama",
+      "label": "Drama",
+      "phrase": "a grounded, dramatic tone"
+    },
+    {
+      "id": "action",
+      "label": "Action",
+      "phrase": "kinetic action-film energy"
+    },
+    {
+      "id": "thriller",
+      "label": "Thriller",
+      "phrase": "a tense thriller atmosphere"
+    },
+    {
+      "id": "comedy",
+      "label": "Comedy",
+      "phrase": "a light, comedic tone"
+    },
+    {
+      "id": "horror",
+      "label": "Horror",
+      "phrase": "an unsettling horror atmosphere"
+    },
+    {
+      "id": "documentary",
+      "label": "Documentary",
+      "phrase": "an observational documentary feel"
+    }
+  ]
+}

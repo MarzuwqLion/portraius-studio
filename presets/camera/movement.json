@@ -1,0 +1,56 @@
+{
+  "format": "portraius.camera",
+  "version": 1,
+  "group": "movement",
+  "appliesTo": "shot",
+  "options": [
+    {
+      "id": "static",
+      "label": "Static",
+      "phrase": "locked-off static camera"
+    },
+    {
+      "id": "slow-push-in",
+      "label": "Slow push-in",
+      "phrase": "the camera slowly pushes in toward the subject",
+      "overrides": {
+        "kling/kling-v3-omni": "slow dolly-in, steady"
+      }
+    },
+    {
+      "id": "pull-back",
+      "label": "Pull-back",
+      "phrase": "the camera slowly pulls back from the subject"
+    },
+    {
+      "id": "dolly-left",
+      "label": "Dolly left",
+      "phrase": "the camera dollies smoothly to the left"
+    },
+    {
+      "id": "dolly-right",
+      "label": "Dolly right",
+      "phrase": "the camera dollies smoothly to the right"
+    },
+    {
+      "id": "orbit",
+      "label": "Orbit",
+      "phrase": "the camera orbits slowly around the subject"
+    },
+    {
+      "id": "crane-up",
+      "label": "Crane up",
+      "phrase": "the camera cranes up and away"
+    },
+    {
+      "id": "handheld-follow",
+      "label": "Handheld follow",
+      "phrase": "handheld camera following the subject"
+    },
+    {
+      "id": "whip-pan",
+      "label": "Whip pan",
+      "phrase": "a fast whip pan"
+    }
+  ]
+}

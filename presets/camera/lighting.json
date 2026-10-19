@@ -1,0 +1,38 @@
+{
+  "format": "portraius.camera",
+  "version": 1,
+  "group": "lighting",
+  "appliesTo": "shot",
+  "options": [
+    {
+      "id": "soft-key",
+      "label": "Soft key",
+      "phrase": "soft key light from one side"
+    },
+    {
+      "id": "noon-sun",
+      "label": "Hard noon sun",
+      "phrase": "hard noon sunlight with crisp shadows"
+    },
+    {
+      "id": "golden-hour",
+      "label": "Golden hour",
+      "phrase": "warm golden-hour light"
+    },
+    {
+      "id": "neon",
+      "label": "Neon",
+      "phrase": "neon light in magenta and cyan"
+    },
+    {
+      "id": "practicals",
+      "label": "Practicals only",
+      "phrase": "lit only by practical lamps in the scene"
+    },
+    {
+      "id": "moonlight",
+      "label": "Moonlight",
+      "phrase": "cool, low moonlight"
+    }
+  ]
+}

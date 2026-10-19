@@ -1,0 +1,38 @@
+{
+  "format": "portraius.camera",
+  "version": 1,
+  "group": "lens",
+  "appliesTo": "shot",
+  "options": [
+    {
+      "id": "24mm",
+      "label": "24 mm",
+      "phrase": "24mm wide-angle lens"
+    },
+    {
+      "id": "35mm",
+      "label": "35 mm",
+      "phrase": "35mm lens"
+    },
+    {
+      "id": "50mm",
+      "label": "50 mm",
+      "phrase": "50mm lens with a natural perspective"
+    },
+    {
+      "id": "85mm",
+      "label": "85 mm",
+      "phrase": "85mm portrait lens with a compressed background"
+    },
+    {
+      "id": "135mm",
+      "label": "135 mm",
+      "phrase": "135mm telephoto lens with a softly blurred background"
+    },
+    {
+      "id": "anamorphic",
+      "label": "Anamorphic",
+      "phrase": "anamorphic lens with oval bokeh and horizontal flares"
+    }
+  ]
+}

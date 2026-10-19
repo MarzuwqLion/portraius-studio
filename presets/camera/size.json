@@ -1,0 +1,38 @@
+{
+  "format": "portraius.camera",
+  "version": 1,
+  "group": "size",
+  "appliesTo": "shot",
+  "options": [
+    {
+      "id": "ECU",
+      "label": "Extreme close-up",
+      "phrase": "extreme close-up on the eyes and face"
+    },
+    {
+      "id": "CU",
+      "label": "Close-up",
+      "phrase": "close-up of the face"
+    },
+    {
+      "id": "MCU",
+      "label": "Medium close-up",
+      "phrase": "medium close-up from the chest up"
+    },
+    {
+      "id": "MS",
+      "label": "Medium",
+      "phrase": "medium shot from the waist up"
+    },
+    {
+      "id": "WS",
+      "label": "Wide",
+      "phrase": "wide shot showing the full figure in the setting"
+    },
+    {
+      "id": "EWS",
+      "label": "Extreme wide",
+      "phrase": "extreme wide shot, the figure small in a vast setting"
+    }
+  ]
+}
