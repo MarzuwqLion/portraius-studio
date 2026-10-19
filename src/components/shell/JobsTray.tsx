@@ -1,37 +1,71 @@
+import { useState } from "react";
+import { Link } from "react-router";
+import { jobStatusText } from "@/components/studio/JobTake";
 import { useRecentJobs } from "@/lib/jobs/hooks";
-import type { JobStatus } from "@/lib/types/jobs";
+import { cancelJob, retryJob } from "@/lib/jobs/runner";
+import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
+import type { Job } from "@/lib/types/jobs";
+import { cn } from "@/lib/utils";
 
-const STATUS_LABEL: Record<JobStatus, string> = {
-  submitting: "Sending",
-  queued: "Queued",
-  running: "Generating",
-  downloading: "Downloading",
-  scoring: "Scoring",
-  done: "Done",
-  failed: "Failed",
-  cancelling: "Cancelling",
-  cancelled: "Cancelled",
-  expired: "Expired",
+const STUDIO: Partial<Record<Job["kind"], string>> = {
+  image: "/image",
+  video: "/video",
+  recast: "/recast",
+  shot: "/director",
+  sheet: "/characters",
 };
 
-// The film strip: one frame per queued or finished job. M3 adds thumbnails,
-// links to results and reload recovery controls.
-export function JobsTray() {
-  const jobs = useRecentJobs();
+const WORKING: Job["status"][] = ["submitting", "queued", "running", "downloading", "scoring", "cancelling"];
+
+function Frame({ job }: { job: Job }) {
+  const generation = useGeneration(job.status === "done" ? job.generationIds[0] : undefined);
+  const still = generation?.assets.find((a) => a.kind === "image") ?? generation?.assets.find((a) => a.kind === "frame");
+  const url = useBlobUrl(still?.blobId);
+  const [busy, setBusy] = useState(false);
+  const working = WORKING.includes(job.status);
+  const canCancel = job.status === "queued" || job.status === "running";
+  const canRetry = (job.status === "failed" || job.status === "expired") && job.error?.retry !== "never";
+
   return (
-    <section aria-label="Jobs" className="flex h-16 shrink-0 items-center gap-2 overflow-x-auto border-t border-rule px-4">
+    <li className="flex h-14 shrink-0 items-center gap-2 rounded-media border border-rule pr-2">
+      <Link to={STUDIO[job.kind] ?? "/library"} className="flex h-full items-center gap-2" title={job.status === "failed" ? jobStatusText(job) : undefined}>
+        <span className="relative h-full w-12 overflow-hidden rounded-l-media bg-seamless">
+          {url && <img src={url} alt="" className="develop absolute inset-0 size-full object-cover" />}
+        </span>
+        <span className="flex flex-col text-control">
+          <span className={cn("font-semibold", job.status === "failed" && "text-drift")}>{job.status === "failed" ? "Failed" : jobStatusText(job)}</span>
+          <span className="text-ink-muted">{job.kind === "sheet" ? "character" : job.kind}</span>
+        </span>
+      </Link>
+      {canCancel && (
+        <button type="button" disabled={busy} className="text-control font-semibold underline underline-offset-4" onClick={() => (setBusy(true), void cancelJob(job.id).finally(() => setBusy(false)))}>
+          Cancel
+        </button>
+      )}
+      {canRetry && (
+        <button type="button" disabled={busy} className="text-control font-semibold underline underline-offset-4" onClick={() => (setBusy(true), void retryJob(job.id).finally(() => setBusy(false)))}>
+          Retry
+        </button>
+      )}
+      {working && <span className="sr-only">Working</span>}
+    </li>
+  );
+}
+
+// The film strip: one frame per queued or finished job, newest first. It
+// survives navigation and reloads (jobs live in IndexedDB and resume on load).
+export function JobsTray() {
+  const jobs = useRecentJobs(30);
+  return (
+    <section aria-label="Jobs" className="flex h-[4.5rem] shrink-0 items-center overflow-x-auto border-t border-rule px-4">
       {jobs.length === 0 ? (
         <p className="text-control text-ink-muted">No jobs yet. Everything you generate lines up here.</p>
       ) : (
-        jobs.map((job) => (
-          <div key={job.id} className="flex h-11 shrink-0 flex-col justify-center rounded-media border border-rule px-3 text-control">
-            <span className="font-semibold">{STATUS_LABEL[job.status]}</span>
-            <span className="text-ink-muted">
-              {job.kind}
-              {job.status === "queued" && job.queuePosition !== undefined ? ` · ${job.queuePosition} ahead` : ""}
-            </span>
-          </div>
-        ))
+        <ol className="flex gap-2">
+          {jobs.map((job) => (
+            <Frame key={job.id} job={job} />
+          ))}
+        </ol>
       )}
     </section>
   );

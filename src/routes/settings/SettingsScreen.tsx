@@ -131,6 +131,22 @@ function ThemeSection() {
   );
 }
 
+function GenerationSection() {
+  const settings = useSettings();
+  return (
+    <Section title="Generation">
+      <label className="flex max-w-[70ch] items-start gap-3 text-body">
+        <Checkbox checked={settings.autoRetry} onCheckedChange={(v) => void updateSettings({ autoRetry: v === true })} className="mt-0.5" />
+        <span>Retry an image once, automatically, when its identity score drifts under 60</span>
+      </label>
+      <label className="flex max-w-[70ch] items-start gap-3 text-body">
+        <Checkbox checked={settings.keepDrafts} onCheckedChange={(v) => void updateSettings({ keepDrafts: v === true })} className="mt-0.5" />
+        <span>Keep a video's 480p draft after its final renders</span>
+      </label>
+    </Section>
+  );
+}
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
@@ -163,6 +179,7 @@ export function SettingsScreen() {
       <div className="grid max-w-2xl gap-10">
         <KeySection />
         <ThemeSection />
+        <GenerationSection />
         <StorageSection />
         {DayOneChecks && (
           <Suspense fallback={null}>

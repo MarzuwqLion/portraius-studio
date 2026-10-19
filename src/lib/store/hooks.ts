@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { DEFAULT_SETTINGS, type CharacterRecord, type Settings } from "@/lib/types/records";
+import { DEFAULT_SETTINGS, type CharacterRecord, type Generation, type Settings } from "@/lib/types/records";
 import { db } from "./db";
 
 export type VisibleSettings = Omit<Settings, "rememberedKey">;
@@ -48,4 +48,8 @@ export function useObjectUrl(blob: Blob | undefined): string | undefined {
     return () => URL.revokeObjectURL(next);
   }, [blob]);
   return url;
+}
+
+export function useGeneration(id: string | undefined): Generation | undefined {
+  return useLiveQuery(async () => (id ? db.generations.get(id) : undefined), [id]);
 }

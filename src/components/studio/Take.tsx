@@ -65,13 +65,16 @@ const BAND_TEXT: Record<Band, { label: string; className: string }> = {
   drift: { label: "Drift", className: "text-drift" },
 };
 
-// An identity score on proof, coloured by band.
+// An identity score, coloured by band. It sits in its own proof chip, since
+// the band colours only reach their contrast targets on proof, not on Studio grey.
+const chip = "inline-flex items-baseline gap-2 rounded-control bg-proof px-2 py-0.5";
+
 export function ScoreBadge({ score, note }: { score: number | null | undefined; note?: string }) {
-  if (score === undefined) return <span className="text-control text-ink-muted">Scoring</span>;
-  if (score === null) return <span className="text-control text-ink-muted">{note ?? "No face found to score"}</span>;
+  if (score === undefined) return <span className={cn(chip, "text-control text-ink-muted")}>Scoring</span>;
+  if (score === null) return <span className={cn(chip, "text-control text-ink-muted")}>{note ?? "No face found to score"}</span>;
   const b = BAND_TEXT[band(score)];
   return (
-    <span className="inline-flex items-baseline gap-2">
+    <span className={chip}>
       <span className={cn("font-display text-panel font-extrabold", b.className)}>{score}</span>
       <span className={cn("text-control font-semibold", b.className)}>{b.label}</span>
     </span>
