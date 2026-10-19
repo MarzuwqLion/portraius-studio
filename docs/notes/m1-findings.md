@@ -49,7 +49,7 @@ table's "deleted after 1 hour" is a target for the app's own cleanup, not someth
    jobs are fetched from the same BytePlus and Hive IPs. At about 4 provider requests per job, roughly
    7 jobs a minute across all visitors would start getting 429s. That's fine for the contest, but watch
    for it.
-3. **`VITE_MEDIA_HOST` default:** Contracts set it to `comfy-assets`, which can't work from a browser.
-   Builds set `VITE_MEDIA_HOST=worker`. Changing the default is a Contracts change, so ask first.
+3. **`VITE_MEDIA_HOST` default:** Contracts had `comfy-assets`, which can't work from a browser.
+   Marzuwq approved making `worker` the default (October 19); the spec's Configuration table is updated.
 4. **Shell key:** replace the placeholder, then run `scripts/m1-checks.ts` for row 7 (`HIGH`), row 9
    (`last_frame_url` on a final) and the recorded fixtures, and so `npm run smoke` can run.

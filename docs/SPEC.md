@@ -508,7 +508,7 @@ Messages say what happened and what to do next, never apologise, and always show
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `VITE_ROUTER_BASE_URL` | `https://api.comfy.org` | The Worker's `/router` URL if risk 1 fails |
-| `VITE_MEDIA_HOST` | `comfy-assets` | `comfy-assets` or `worker` |
+| `VITE_MEDIA_HOST` | `worker` | `worker` (the Worker's R2 upload) or `comfy-assets` (Comfy Cloud's asset store, which browsers can't reach; M1 findings) |
 | `VITE_WORKER_URL` | empty | The Worker's origin, if deployed |
 | `VITE_BASE` | `/portraius-studio/` | Vite `base` for GitHub Pages |
 

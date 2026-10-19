@@ -3,7 +3,8 @@
 
 export const ROUTER_DEFAULT_BASE_URL = "https://api.comfy.org";
 
-// Comfy Cloud's asset store, the default media host (VITE_MEDIA_HOST=comfy-assets).
+// Comfy Cloud's asset store (VITE_MEDIA_HOST=comfy-assets). Browsers can't reach it (M1), so
+// the default media host is the Worker.
 export const COMFY_CLOUD_API_URL = "https://cloud.comfy.org/api/v2";
 
 // Result asset hosts the browser downloads from directly: they send CORS

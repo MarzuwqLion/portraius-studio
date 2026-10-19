@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const config = vi.hoisted(() => ({ routerBaseUrl: "https://api.comfy.org", mediaHost: "comfy-assets", workerUrl: "" }));
+const config = vi.hoisted(() => ({ routerBaseUrl: "https://api.comfy.org", mediaHost: "worker", workerUrl: "" }));
 vi.mock("@/lib/config", () => ({ config }));
 
 import { downloadAsset, fetchUrlFor, sniffMime } from "./download";
