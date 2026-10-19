@@ -1,9 +1,12 @@
 // Fetches every result asset and returns it as a Blob, so the library stores
 // bytes rather than links that expire in 12 to 24 hours.
 import { config } from "@/lib/config";
+import { sniffMime } from "@/lib/media/mime";
 import type { AssetRef } from "@/lib/registry/capabilities";
 import { appError } from "./errors";
 import { WORKER_FETCH_PREFIXES } from "./hosts";
+
+export { sniffMime };
 
 const DEFAULT_MIME: Record<AssetRef["kind"], string> = {
   image: "image/png",
@@ -22,21 +25,6 @@ export function base64ToBlob(base64: string, mime: string): Blob {
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return new Blob([bytes], { type: mime });
-}
-
-function ascii(bytes: Uint8Array, start: number, end: number): string {
-  return String.fromCharCode(...bytes.subarray(start, end));
-}
-
-// Recognises the formats the registry's models return from their first bytes.
-export function sniffMime(head: Uint8Array): string | undefined {
-  if (head[0] === 0x89 && ascii(head, 1, 4) === "PNG") return "image/png";
-  if (head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff) return "image/jpeg";
-  if (ascii(head, 0, 4) === "RIFF" && ascii(head, 8, 12) === "WEBP") return "image/webp";
-  if (ascii(head, 0, 4) === "RIFF" && ascii(head, 8, 12) === "WAVE") return "audio/wav";
-  if (ascii(head, 4, 8) === "ftyp") return ascii(head, 8, 10) === "qt" ? "video/quicktime" : "video/mp4";
-  if (ascii(head, 0, 3) === "ID3" || (head[0] === 0xff && ((head[1] ?? 0) & 0xe0) === 0xe0)) return "audio/mpeg";
-  return undefined;
 }
 
 // Where the browser fetches an asset link from: directly, or through the

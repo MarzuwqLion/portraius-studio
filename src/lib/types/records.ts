@@ -33,6 +33,13 @@ export type CharacterFile = {
   tags: string[];
 };
 
+// A character with its files: what a .portraius zip holds.
+export interface CharacterBundle {
+  file: CharacterFile;
+  // Zip path to bytes: photos, sheet images, thumb and (optionally) the consent clip.
+  files: Map<string, Blob>;
+}
+
 export interface CharacterRecord {
   id: string;
   kind: CharacterFile["kind"];

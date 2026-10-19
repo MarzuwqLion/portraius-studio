@@ -26,6 +26,7 @@ describe("sniffMime", () => {
     expect(sniffMime(bytes([0, 0, 0, 0x18], "ftypisom"))).toBe("video/mp4");
     expect(sniffMime(bytes([0, 0, 0, 0x14], "ftypqt  "))).toBe("video/quicktime");
     expect(sniffMime(bytes("ID3", [4, 0]))).toBe("audio/mpeg");
+    expect(sniffMime(bytes([0x1a, 0x45, 0xdf, 0xa3, 0x9f]))).toBe("video/webm");
   });
 
   it("returns undefined for anything else", () => {
