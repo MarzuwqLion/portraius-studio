@@ -131,7 +131,7 @@ function formatBytes(bytes: number): string {
 
 function StorageSection() {
   const [usage, setUsage] = useState<{ used: number; quota: number } | null>(null);
-  const [credits, setCredits] = useState(0);
+  const [credits, setCredits] = useState<number | null>(null);
   useEffect(() => {
     navigator.storage
       ?.estimate()
@@ -144,7 +144,7 @@ function StorageSection() {
       <p className="text-body">
         {usage ? `Using ${formatBytes(usage.used)} of about ${formatBytes(usage.quota)} this browser allows.` : "Storage use isn't available in this browser."}
       </p>
-      <p className="text-body">Spent this session: {credits.toFixed(2)} credits.</p>
+      {credits !== null && <p className="text-body">Spent this session: {credits.toFixed(2)} credits.</p>}
     </Section>
   );
 }

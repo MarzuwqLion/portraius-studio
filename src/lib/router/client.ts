@@ -50,14 +50,16 @@ function modelPath(modelId: string): string {
 
 // ---- Session spend, from X-Comfy-Credits-Used ----
 
-type CreditsListener = (totalCredits: number) => void;
-let sessionCredits = 0;
+// null until Router reports a figure. M1 found the header absent on queued
+// submits and result reads, so the UI hides the total rather than show 0.
+type CreditsListener = (totalCredits: number | null) => void;
+let sessionCredits: number | null = null;
 const creditListeners = new Set<CreditsListener>();
 
 function recordCredits(raw: string | null | undefined): void {
   const credits = raw ? Number(raw) : NaN;
   if (!Number.isFinite(credits)) return;
-  sessionCredits += credits;
+  sessionCredits = (sessionCredits ?? 0) + credits;
   for (const listener of creditListeners) listener(sessionCredits);
 }
 
