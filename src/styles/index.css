@@ -1,0 +1,77 @@
+@import "tailwindcss";
+@import "./fonts.css";
+@import "./tokens.css";
+
+/* Tailwind's default palette, radii, shadows and type scale are removed so the
+   only utilities that exist are the ones built on our tokens. */
+@theme {
+  --color-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-*: initial;
+  --font-*: initial;
+}
+
+@theme inline {
+  --color-seamless: var(--seamless);
+  --color-proof: var(--proof);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-rule: var(--rule);
+  --color-grease: var(--grease);
+  --color-match: var(--match);
+  --color-check: var(--check);
+  --color-drift: var(--drift);
+  --color-on-seamless: var(--on-seamless);
+  --color-on-ink: var(--on-ink);
+  --color-tint-hover: var(--tint-hover);
+  --color-tint-active: var(--tint-active);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --font-display: var(--type-display);
+  --font-body: var(--type-body);
+
+  --text-control: var(--size-control);
+  --text-control--line-height: 1.35;
+  --text-body: var(--size-body);
+  --text-body--line-height: 1.5;
+  --text-panel: var(--size-panel);
+  --text-panel--line-height: 1.3;
+  --text-screen: var(--size-screen);
+  --text-screen--line-height: 1.1;
+  --text-slate: var(--size-slate);
+  --text-slate--line-height: 1;
+
+  --radius-media: var(--corner-media);
+  --radius-control: var(--corner-control);
+  --radius-full: 9999px;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--proof);
+    color: var(--ink);
+    font-family: var(--type-body);
+    font-size: var(--size-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--tint-active);
+  }
+}

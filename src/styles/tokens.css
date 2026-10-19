@@ -1,0 +1,71 @@
+/*
+ * Portraius Studio design tokens. The only file in src/ that holds colour values.
+ * The theme follows the system unless Settings sets data-theme on <html>.
+ */
+
+:root {
+  --seamless: #64676b;
+  --proof: #eef0f1;
+  --ink: #26292c;
+  --rule: #c9cdd1;
+  --grease: #d2352b;
+  --match: #4f6b34;
+  --check: #8a5e0c;
+  --drift: #a3313a;
+
+  /* Text that sits directly on --seamless. Proof in light, ink in dark, because
+     dark proof on dark seamless is only about 1.8:1. */
+  --on-seamless: var(--proof);
+  /* Text and icons on an --ink fill (the primary button). */
+  --on-ink: var(--proof);
+
+  /* Quiet interaction tints, mixed from ink so no new colours appear. */
+  --tint-hover: color-mix(in srgb, var(--ink) 7%, transparent);
+  --tint-active: color-mix(in srgb, var(--ink) 12%, transparent);
+  --ink-muted: color-mix(in srgb, var(--ink) 72%, var(--proof));
+
+  --type-display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  --type-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+
+  --size-control: 13px;
+  --size-body: 15px;
+  --size-panel: 18px;
+  --size-screen: 28px;
+  --size-slate: 44px;
+
+  --corner-media: 2px;
+  --corner-control: 6px;
+
+  --develop-duration: 600ms;
+  --mark-duration: 250ms;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --seamless: #4e5155;
+    --proof: #26292c;
+    --ink: #e6e8ea;
+    --rule: #3a3e42;
+    --grease: #f0574b;
+    --match: #9bbf7a;
+    --check: #e0b455;
+    --drift: #f08a90;
+    --on-seamless: var(--ink);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --seamless: #4e5155;
+  --proof: #26292c;
+  --ink: #e6e8ea;
+  --rule: #3a3e42;
+  --grease: #f0574b;
+  --match: #9bbf7a;
+  --check: #e0b455;
+  --drift: #f08a90;
+  --on-seamless: var(--ink);
+  color-scheme: dark;
+}
