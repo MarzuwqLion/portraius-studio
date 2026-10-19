@@ -1,0 +1,13 @@
+// Portraius Studio's Worker. Deploy steps are in proxy/README.md.
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "portraius-proxy",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "portraius-media" }],
+  // 30 requests a minute per IP, on every route.
+  "ratelimits": [{ "name": "LIMITER", "namespace_id": "1001", "simple": { "limit": 30, "period": 60 } }],
+  "vars": { "ALLOWED_ORIGINS": "https://marzuwqlion.github.io" },
+  "observability": { "enabled": true }
+}

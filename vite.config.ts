@@ -81,7 +81,7 @@ export default defineConfig(({ mode }) => {
       ],
     },
     test: {
-      include: ["src/**/*.test.{ts,tsx}", "test/**/*.test.{ts,tsx}"],
+      include: ["src/**/*.test.{ts,tsx}", "test/**/*.test.{ts,tsx}", "proxy/src/**/*.test.ts"],
       environment: "node",
       setupFiles: ["test/setup.ts"],
     },

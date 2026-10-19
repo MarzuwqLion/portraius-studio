@@ -11,12 +11,14 @@
     "dev": "vite",
     "build": "npm run typecheck && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json",
+    "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json && tsc -p proxy/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
     "smoke": "tsx scripts/smoke.ts",
-    "gen:schemas": "tsx scripts/gen-schema-types.ts"
+    "gen:schemas": "tsx scripts/gen-schema-types.ts",
+    "proxy:dev": "wrangler dev -c proxy/wrangler.jsonc",
+    "proxy:deploy": "wrangler deploy -c proxy/wrangler.jsonc"
   },
   "dependencies": {
     "@comfyorg/sdk": "^0.5.0",
@@ -35,6 +37,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261019.1",
     "@fontsource/atkinson-hyperlegible-next": "^5.3.0",
     "@fontsource/big-shoulders-display": "^5.3.0",
     "@playwright/test": "^1.64.1",
@@ -51,6 +54,7 @@
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vite": "^8.3.4",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "wrangler": "^4.151.2"
   }
 }
