@@ -193,14 +193,38 @@ export async function runDayOneChecks(report: Report): Promise<void> {
     };
   });
 
-  await timed("media-upload", "2", `Upload a clip to the media host (${config.mediaHost}) from the browser`, report, async () => {
-    const file = video ?? new Blob(["portraius m1 check"], { type: "text/plain" });
-    const hosted = await router.uploadAsset(file, {
-      filePath: video ? "portraius-m1-check.mp4" : "portraius-m1-check.txt",
-      contentType: video ? "video/mp4" : "text/plain",
-    });
-    const anonymous = await fetch(hosted.url, { credentials: "omit" }).then((r) => r.status).catch((err) => `fetch failed: ${(err as Error).message}`);
-    await router.deleteAsset(hosted.id).catch(() => undefined);
-    return { outcome: "pass", details: { host: safeUrl(hosted.url), expiresAt: hosted.expiresAt, anonymousFetchStatus: anonymous } };
+  await timed("media-upload", "2", `Upload the draft to the media host (${config.mediaHost}), then use it as a Seedance reference video`, report, async () => {
+    if (!video) return { outcome: "info", details: { note: "skipped: no video from the Seedance check" } };
+    const hosted = await router.uploadAsset(video, { filePath: "portraius-m1-check.mp4", contentType: "video/mp4" });
+    const details: Record<string, unknown> = { host: safeUrl(hosted.url), expiresAt: hosted.expiresAt };
+    try {
+      details.anonymousFetchStatus = await fetch(hosted.url, { credentials: "omit" })
+        .then((r) => r.status)
+        .catch((err) => `fetch failed: ${(err as Error).message}`);
+      // The provider has to fetch the link itself: a reference_video draft proves it can.
+      const body = {
+        content: [
+          { type: "text", text: "Keep the motion and camera of the reference video; make it a bright sunny morning." },
+          { type: "video_url", role: "reference_video", video_url: { url: hosted.url } },
+        ],
+        draft: true,
+        resolution: "480p",
+        duration: -1, // Seedance refuses a fixed duration on video tasks (M1: invalid_input with 4)
+        ratio: "16:9",
+        generate_audio: false,
+        seed: 7,
+      };
+      const submitted = await router.submit(MODEL_IDS.seedance, body, { idempotencyKey: crypto.randomUUID() });
+      details.referenceRequestId = submitted.requestId;
+      const polled = await pollToCompletion(MODEL_IDS.seedance, submitted.requestId);
+      details.statusTrail = polled.trail;
+      const res = await router.result(MODEL_IDS.seedance, submitted.requestId);
+      details.providerFetched = Boolean((res.data as { content?: { video_url?: string } }).content?.video_url);
+    } catch (err) {
+      return { outcome: "fail", details: { ...details, error: describeError(err) } };
+    } finally {
+      details.deleted = await router.deleteAsset(hosted.id).then(() => true, () => false);
+    }
+    return { outcome: details.providerFetched ? "pass" : "fail", details };
   });
 }

@@ -126,7 +126,7 @@ await step("row2_seedance_reference_video", async () => {
     ],
     draft: true,
     resolution: "480p",
-    duration: 4,
+    duration: -1, // Seedance refuses a fixed duration on video tasks (M1: invalid_input with 4)
     ratio: "16:9",
     generate_audio: false,
     seed: 11,
