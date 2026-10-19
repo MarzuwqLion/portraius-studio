@@ -1,14 +1,289 @@
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
-import { Note, WorkScreen } from "@/components/shell/Screen";
+import { Shuffle } from "lucide-react";
+import { WorkScreen } from "@/components/shell/Screen";
+import { CameraPicker } from "@/components/studio/CameraPicker";
+import { CastPicker } from "@/components/studio/CastPicker";
+import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
+import { OutputTake } from "@/components/studio/OutputTake";
+import { Take } from "@/components/studio/Take";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useEstimateLabel, useRecentJobs } from "@/lib/jobs/hooks";
+import { retryJob, type JobInput } from "@/lib/jobs/runner";
+import type { CameraSelection } from "@/lib/prompts/camera";
+import type { H3Input, VideoRatio } from "@/lib/registry/inputs";
+import { MODEL_IDS } from "@/lib/registry/models";
+import { useBlobUrl } from "@/lib/store/hooks";
+import type { CastPick } from "@/lib/studio/cast";
+import { randomSeed } from "@/lib/studio/image";
+import { generationImageBlobId, storeUpload } from "@/lib/studio/uploads";
+import {
+  DEFAULT_MODEL,
+  VIDEO_MODELS,
+  isDraft,
+  isFinal,
+  lastFrameBlobId,
+  renderFinal,
+  retrySilent,
+  startVideo,
+  type VideoMode,
+  type VideoModel,
+  type VideoRequest,
+} from "@/lib/studio/video";
+import type { Job } from "@/lib/types/jobs";
+
+const MODES: { value: VideoMode; label: string }[] = [
+  { value: "text", label: "Text" },
+  { value: "still", label: "Still first" },
+  { value: "references", label: "References" },
+  { value: "image", label: "From image" },
+];
+const RATIOS: VideoRatio[] = ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "9:21"];
+
+type ClipInput = JobInput & { request?: VideoRequest };
+
+function clipLabel(job: Job): string {
+  if (job.kind === "image") return "Opening still";
+  if (job.modelId === MODEL_IDS.minimaxH3) return `H3 ${((job.input as JobInput<H3Input>).model).resolution}`;
+  return isFinal(job) ? "Final 1080p" : "Draft 480p";
+}
+
+function ClipActions({ job, followUps, onContinue }: { job: Job; followUps: Job[]; onContinue: (blobId: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const run = (work: () => Promise<unknown>) => {
+    setBusy(true);
+    setError(undefined);
+    void work()
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setBusy(false));
+  };
+  const hasFinal = followUps.some((c) => isFinal(c) && c.status !== "failed" && c.status !== "cancelled");
+  const generationId = job.generationIds[0];
+  return (
+    <div className="grid gap-1">
+      <div className="flex flex-wrap gap-2">
+        {job.status === "done" && isDraft(job) && !hasFinal && (
+          <Button size="sm" onClick={() => run(() => renderFinal(job.id))} disabled={busy}>
+            Render final
+          </Button>
+        )}
+        {job.status === "done" && job.kind === "video" && generationId && (
+          <Button size="sm" variant="secondary" onClick={() => run(async () => onContinue(await lastFrameBlobId(generationId)))} disabled={busy}>
+            Continue
+          </Button>
+        )}
+        {job.status === "failed" && job.error?.refusalSubject === "output_audio" && (
+          <Button size="sm" variant="secondary" onClick={() => run(() => retrySilent(job.id))} disabled={busy}>
+            Retry silent
+          </Button>
+        )}
+        {(job.status === "failed" || job.status === "expired") && job.error?.retry !== "never" && (
+          <Button size="sm" variant="secondary" onClick={() => run(() => retryJob(job.id))} disabled={busy}>
+            Retry
+          </Button>
+        )}
+      </div>
+      {error && <p className="text-control text-drift">{error}</p>}
+    </div>
+  );
+}
 
 export function VideoScreen() {
   const [params] = useSearchParams();
-  const from = params.get("from");
-  return (
-    <WorkScreen
-      title="Video"
-      callSheet={<Note>{from ? `Generation ${from} becomes the first frame.` : "Mode, prompt, cast and draft controls go here."}</Note>}
-      set={<p className="text-panel">Drafts and finals play here.</p>}
-    />
+  const [mode, setMode] = useState<VideoMode>("text");
+  const [model, setModel] = useState<VideoModel>(DEFAULT_MODEL);
+  const [scene, setScene] = useState("");
+  const [cast, setCast] = useState<CastPick[]>([]);
+  const [sourceBlobId, setSourceBlobId] = useState<string>();
+  const [durationSec, setDurationSec] = useState(8);
+  const [ratio, setRatio] = useState<VideoRatio>("16:9");
+  const [audio, setAudio] = useState(true);
+  const [seed, setSeed] = useState(randomSeed);
+  const [h3Resolution, setH3Resolution] = useState<H3Input["resolution"]>("768P");
+  const [camera, setCamera] = useState<CameraSelection>({ movement: "slow-push-in" });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const upload = useRef<HTMLInputElement>(null);
+  const top = useRef<HTMLDivElement>(null);
+  const sourceUrl = useBlobUrl(sourceBlobId);
+  const jobs = useRecentJobs(60);
+  const spec = VIDEO_MODELS.find((m) => m.id === model)!;
+
+  // ?from=<generationId>: that image becomes the first frame.
+  useEffect(() => {
+    const from = params.get("from");
+    if (!from) return;
+    void generationImageBlobId(from).then((id) => {
+      if (id) {
+        setSourceBlobId(id);
+        setMode("image");
+      }
+    });
+  }, [params]);
+
+  // Still first is the default once a cast is picked.
+  useEffect(() => {
+    if (cast.length && mode === "text") setMode("still");
+    // Only a change in cast size should flip the mode, not every mode change.
+  }, [cast.length]);
+
+  // Durations past a model's range clamp to it.
+  useEffect(() => {
+    const [min, max] = spec.duration;
+    setDurationSec((d) => Math.min(max, Math.max(min, d)));
+  }, [model]);
+
+  const request: VideoRequest = { mode, model, scene, cast, ...(sourceBlobId ? { sourceBlobId } : {}), durationSec, ratio, audio, seed, h3Resolution, camera };
+  const needsCast = mode === "still" || mode === "references";
+  const ready = Boolean(scene.trim()) && (!needsCast || cast.length > 0) && (mode !== "image" || Boolean(sourceBlobId));
+  const estimateInput = async () =>
+    model === MODEL_IDS.minimaxH3
+      ? { stage: "generate", prompt: scene, durationSec, ratio, resolution: h3Resolution }
+      : { stage: "draft", prompt: scene, durationSec, ratio, generateAudio: audio };
+  const price = useEstimateLabel(model, ready ? estimateInput : undefined, `${model}:${durationSec}:${h3Resolution}:${audio}:${ready}`);
+
+  async function generate() {
+    if (!ready || busy) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      await startVideo(request);
+      setSeed(randomSeed());
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function continueFrom(blobId: string) {
+    setSourceBlobId(blobId);
+    setMode("image");
+    top.current?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  // Clips: every video job, plus Still first stills still waiting on their draft.
+  const childrenOf = (id: string) => jobs.filter((j) => j.parentJobId === id);
+  const clips = jobs.filter((j) => j.kind === "video" || (j.kind === "image" && Boolean((j.input as JobInput).next) && childrenOf(j.id).length === 0));
+
+  const callSheet = (
+    <form
+      className="grid gap-5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void generate();
+      }}
+    >
+      <div ref={top} />
+      <Segmented label="Mode" value={mode} onChange={setMode} options={MODES} />
+      <Field label="Prompt" hint={cast.length ? `Name cast members with ${cast.map((c) => `{${c.slot}}`).join(", ")}.` : undefined}>
+        {(id) => <TextArea id={id} value={scene} onChange={setScene} rows={4} maxLength={2000} placeholder="{lead} steps out of the rain into a lit doorway and looks back" />}
+      </Field>
+
+      {needsCast && <Field label="Cast">{() => <CastPicker value={cast} onChange={setCast} />}</Field>}
+      {mode === "still" && <p className="text-control text-ink-muted">Nano Banana 2.1 draws the opening still with your cast, then the clip starts from it.</p>}
+
+      {mode === "image" && (
+        <Field label="First frame">
+          {() => (
+            <div className="grid gap-2">
+              {sourceUrl && <Take src={sourceUrl} alt="First frame" aspect="16 / 9" className="max-w-56" />}
+              <Button type="button" variant="secondary" size="sm" className="justify-self-start" onClick={() => upload.current?.click()}>
+                {sourceBlobId ? "Replace" : "Upload an image"}
+              </Button>
+              <input
+                ref={upload}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) void storeUpload(file).then(setSourceBlobId, () => setError("That image couldn't be read."));
+                }}
+              />
+            </div>
+          )}
+        </Field>
+      )}
+
+      <Field label="Model">
+        {(id) => <Select id={id} value={model} onChange={(v) => v && setModel(v)} options={VIDEO_MODELS.map((m) => ({ value: m.id, label: m.label }))} />}
+      </Field>
+
+      <Field label={`Duration: ${durationSec} s`}>
+        {(id) => <input id={id} type="range" min={spec.duration[0]} max={spec.duration[1]} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} className="w-full accent-ink" />}
+      </Field>
+
+      <div className="grid grid-cols-2 gap-3">
+        {(mode === "text" || mode === "references" || mode === "still") && (
+          <Field label="Aspect ratio">{(id) => <Select id={id} value={ratio} onChange={(v) => v && setRatio(v)} options={RATIOS.map((r) => ({ value: r, label: r }))} />}</Field>
+        )}
+        {model === MODEL_IDS.minimaxH3 && (
+          <Field label="Resolution">
+            {(id) => <Select id={id} value={h3Resolution} onChange={(v) => v && setH3Resolution(v)} options={[{ value: "768P", label: "768P" }, { value: "2K", label: "2K" }]} />}
+          </Field>
+        )}
+        <Field label="Seed">
+          {(id) => (
+            <div className="flex gap-1">
+              <input id={id} type="number" value={seed} onChange={(e) => setSeed(Number(e.target.value) || 0)} className="h-10 w-full min-w-0 rounded-control border border-rule bg-proof px-3 text-body" />
+              <Button type="button" variant="ghost" size="icon" aria-label="New seed" onClick={() => setSeed(randomSeed())}>
+                <Shuffle />
+              </Button>
+            </div>
+          )}
+        </Field>
+      </div>
+
+      {spec.draft && (
+        <label className="flex items-center gap-3 text-body">
+          <Checkbox checked={audio} onCheckedChange={(v) => setAudio(v === true)} />
+          Generate audio
+        </label>
+      )}
+
+      <Field label="Camera and look">{() => <CameraPicker groups={["movement", "size", "angle", "lens", "lighting"]} value={camera} onChange={setCamera} />}</Field>
+
+      {error && (
+        <p className="text-control text-drift" role="alert">
+          {error}
+        </p>
+      )}
+      <Button type="submit" disabled={!ready || busy}>
+        {spec.draft ? "Make draft" : "Generate"} · {price}
+      </Button>
+      {spec.draft && <p className="text-control text-ink-muted">Every clip starts as a 480p draft. Render the final at 1080p once you like it.</p>}
+    </form>
   );
+
+  const set = (
+    <div className="h-full w-full self-stretch overflow-auto">
+      {clips.length === 0 ? (
+        <p className="flex h-full items-center justify-center text-body">Clips appear here.</p>
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-6">
+          {clips.map((job) => {
+            const input = job.input as ClipInput;
+            const next = (input.next as { video?: VideoRequest } | undefined)?.video;
+            const aspect = (input.request?.ratio ?? next?.ratio ?? "16:9").replace(":", " / ");
+            return (
+              <OutputTake
+                key={job.id}
+                job={job}
+                alt={input.prompt || "Clip"}
+                aspect={aspect}
+                label={clipLabel(job)}
+                actions={<ClipActions job={job} followUps={childrenOf(job.id)} onContinue={continueFrom} />}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  return <WorkScreen title="Video" callSheet={callSheet} set={set} />;
 }
