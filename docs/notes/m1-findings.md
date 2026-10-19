@@ -20,7 +20,10 @@ placeholder, and Router answers it with `401 unauthorized`, the same as no key a
 
 ## Other things learned
 
-- **Nano Banana 2.1** accepts `thinkingConfig.thinkingLevel: "MINIMAL"` (half of row 7; `HIGH` is in the Node checks). At 1K 1:1 it took 17 s and returned one PNG as `inlineData` (1.6 MB).
+- **Nano Banana 2.1** accepts `thinkingConfig.thinkingLevel: "MINIMAL"` (half of row 7; `HIGH` is in the Node checks). At 1K 1:1 it took 14 to 17 s.
+  Even at `MINIMAL`, the result has two image parts: a draft marked `thought: true`, then the real
+  image with a `thoughtSignature`. The first day-one run saved the draft by mistake. The adapter skips
+  thought parts (fixture `test/fixtures/nano-banana-2.1.result.json`).
 - **Seedance 2.5** 4 s 480p draft: about 86 s in `IN_PROGRESS` with no queue position. Result keys: `content`, `created_at`, `draft`, `duration`, `execution_expires_after`, `framespersecond`, `generate_audio`, `id`, `model`, `output_format`, `priority`, `ratio`, `resolution`, `seed`, `service_tier`, `status`, `updated_at`, `usage`. `return_last_frame: true` on a draft gives `last_frame_url`.
 - **Freepik skin enhancer:** about 87 s. Its output is far larger than its input (1.6 MB PNG in, 38.6 MB out), served from Magnific's `magnific-image-upscale-fast` path. For M6, check the output size before saving it and consider re-encoding.
 - **Status polls** never returned `Retry-After`; the 2 s default cadence was fine.
