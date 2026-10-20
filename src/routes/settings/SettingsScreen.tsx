@@ -12,6 +12,7 @@ import { forgetKey, saveKey, useKeyStore, verifyKey } from "@/lib/session/key";
 import { applyTheme } from "@/lib/session/theme";
 import { useSettings } from "@/lib/store/hooks";
 import { updateSettings } from "@/lib/store/settings";
+import { deleteAllData } from "@/lib/store/wipe";
 import type { Settings } from "@/lib/types/records";
 
 // Development builds only: the M1 day-one checks. Never part of the shipped site.
@@ -173,6 +174,45 @@ function StorageSection() {
   );
 }
 
+function DataSection() {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function wipe() {
+    setBusy(true);
+    await forgetKey();
+    await deleteAllData();
+    window.location.replace(`${window.location.pathname}#/`);
+    window.location.reload();
+  }
+
+  return (
+    <Section title="Your data">
+      <p className="max-w-[70ch] text-body">
+        Everything Portraius Studio keeps is in this browser: characters with their face data and consent records, the library, and these
+        settings. Export characters and takes you want to keep first.
+      </p>
+      {confirming ? (
+        <div className="grid gap-3">
+          <p className="max-w-[70ch] text-body">Delete every character, take and setting from this browser? This can't be undone.</p>
+          <div className="flex gap-3">
+            <Button variant="danger" onClick={() => void wipe()} disabled={busy}>
+              Delete all data
+            </Button>
+            <Button variant="ghost" onClick={() => setConfirming(false)} disabled={busy}>
+              Keep it
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button variant="secondary" className="justify-self-start" onClick={() => setConfirming(true)}>
+          Delete all data
+        </Button>
+      )}
+    </Section>
+  );
+}
+
 export function SettingsScreen() {
   return (
     <Screen title="Settings">
@@ -181,6 +221,7 @@ export function SettingsScreen() {
         <ThemeSection />
         <GenerationSection />
         <StorageSection />
+        <DataSection />
         {DayOneChecks && (
           <Suspense fallback={null}>
             <DayOneChecks />
