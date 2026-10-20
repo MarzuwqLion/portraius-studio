@@ -7,7 +7,7 @@ import { ScoreBadge } from "@/components/studio/Take";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Band } from "@/lib/identity/score";
-import { exportZip, libraryGenerations, matches, storageUse, type LibraryFilter } from "@/lib/library/library";
+import { exportZip, libraryGenerations, matches, saveFile, storageUse, type LibraryFilter } from "@/lib/library/library";
 import { REGISTRY } from "@/lib/registry/models";
 import { useBlobUrl, useCharacters } from "@/lib/store/hooks";
 import type { Generation } from "@/lib/types/records";
@@ -24,15 +24,6 @@ const BANDS: { value: Band | "unscored"; label: string }[] = [
   { value: "drift", label: "Drift" },
   { value: "unscored", label: "Not scored" },
 ];
-
-function download(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
-}
 
 function Print({ generation, selecting, selected, onToggle }: { generation: Generation; selecting: boolean; selected: boolean; onToggle: () => void }) {
   const still = generation.assets.find((a) => a.kind === "image") ?? generation.assets.find((a) => a.kind === "frame");
@@ -103,7 +94,7 @@ export function LibraryScreen() {
   async function exportSelected() {
     setExporting(true);
     try {
-      download(await exportZip([...selected]), `portraius-library-${new Date().toISOString().slice(0, 10)}.zip`);
+      saveFile(await exportZip([...selected]),`portraius-library-${new Date().toISOString().slice(0, 10)}.zip`);
       setSelecting(false);
       setSelected(new Set());
     } finally {

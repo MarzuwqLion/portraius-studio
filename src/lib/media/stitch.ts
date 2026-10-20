@@ -7,13 +7,14 @@
 // (same codec, size, frame rate and audio) are joined by stream copy, and
 // everything else is re-encoded at 720p (docs/notes/m6-notes.md).
 import type { FFmpeg } from "@ffmpeg/ffmpeg";
+import { AI_COMMENT } from "./ai-tag";
 import { loadFfmpeg } from "./video-prep";
 
 export const STITCH_FPS = 24;
 export const CROSSFADE_FRAMES = 6;
 
 // Spec: Security (metadata row). Every exported MP4 says it's AI-generated.
-export const AI_COMMENT = "AI-generated with Portraius Studio";
+export { AI_COMMENT };
 
 export interface StitchClip {
   durationSec: number;

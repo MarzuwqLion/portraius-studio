@@ -3,6 +3,7 @@
 // so they keep playing after Router's links expire.
 import JSZip from "jszip";
 import { band, type Band } from "@/lib/identity/score";
+import { tagAiGenerated } from "@/lib/media/ai-tag";
 import { modelLabel } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
 import type { Generation } from "@/lib/types/records";
@@ -77,7 +78,7 @@ export async function exportZip(ids: string[]): Promise<Blob> {
       const row = await db.blobs.get(asset.blobId);
       if (!row) continue;
       const name = fileName(generation, i, asset.kind, asset.mime);
-      zip.file(name, row.blob, { binary: true, date: new Date(generation.createdAt) });
+      zip.file(name, await tagAiGenerated(row.blob), { binary: true, date: new Date(generation.createdAt) });
       files.push(name);
     }
     manifest.push({
@@ -92,6 +93,27 @@ export async function exportZip(ids: string[]): Promise<Blob> {
   }
   zip.file("manifest.json", `${JSON.stringify({ format: "portraius.library-export", version: 1, items: manifest }, null, 2)}\n`);
   return zip.generateAsync({ type: "blob", mimeType: "application/zip", compression: "STORE" });
+}
+
+// A generation's files as the user downloads them: each says it's
+// AI-generated (lib/media/ai-tag.ts).
+export async function generationFiles(generation: Generation): Promise<{ blob: Blob; name: string }[]> {
+  const files: { blob: Blob; name: string }[] = [];
+  for (const [i, asset] of generation.assets.entries()) {
+    const row = await db.blobs.get(asset.blobId);
+    if (row) files.push({ blob: await tagAiGenerated(row.blob), name: fileName(generation, i, asset.kind, asset.mime) });
+  }
+  return files;
+}
+
+// Hands a file to the browser's downloads.
+export function saveFile(blob: Blob, name: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
 // Ask the browser not to evict the library (spec: Data model). Harmless to repeat.

@@ -5,7 +5,7 @@ import { Screen } from "@/components/shell/Screen";
 import { RemixActions } from "@/components/studio/RemixActions";
 import { ScoreBadge } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
-import { deleteGeneration, fileName } from "@/lib/library/library";
+import { deleteGeneration, generationFiles, saveFile } from "@/lib/library/library";
 import { modelLabel } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
 import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
@@ -39,16 +39,7 @@ export function GenerationScreen() {
   if (!generation) return <Screen title="Take" />;
 
   async function download() {
-    for (const [i, asset] of generation!.assets.entries()) {
-      const row = await db.blobs.get(asset.blobId);
-      if (!row) continue;
-      const url = URL.createObjectURL(row.blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName(generation!, i, asset.kind, asset.mime);
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 10_000);
-    }
+    for (const file of await generationFiles(generation!)) saveFile(file.blob, file.name);
   }
 
   return (
