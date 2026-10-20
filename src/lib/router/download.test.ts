@@ -48,6 +48,13 @@ describe("fetchUrlFor", () => {
     expect(() => fetchUrlFor(SEEDANCE_URL)).toThrow(expect.objectContaining({ code: "download_failed" }));
   });
 
+  it("sends BytePlus's own storage links through the Worker too", () => {
+    config.workerUrl = "https://proxy.example.workers.dev";
+    const tos = "https://ark-acg-ap-southeast-1.tos-ap-southeast-1.volces.com/dreamina-seedance-2-5/1/Video/clip.mp4?sig=x";
+    expect(fetchUrlFor(tos)).toBe(`https://proxy.example.workers.dev/fetch?url=${encodeURIComponent(tos)}`);
+    expect(fetchUrlFor("https://evil.example/ark-acg-x.tos-y.volces.com/clip.mp4")).toBe("https://evil.example/ark-acg-x.tos-y.volces.com/clip.mp4");
+  });
+
   it("matches the bucket, not the whole storage host", () => {
     const other = "https://storage.googleapis.com/some-other-bucket/file.mp4";
     expect(fetchUrlFor(other)).toBe(other);

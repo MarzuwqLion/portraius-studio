@@ -16,6 +16,23 @@ export const ASSET_HOSTS: readonly string[] = ["ai-statics.magnific.com"];
 // results in this bucket.
 export const WORKER_FETCH_PREFIXES: readonly string[] = ["https://storage.googleapis.com/partner-nodes-assets/"];
 
+// When Comfy can't rehost a Seedance link it passes on BytePlus's own (M3: a
+// draft's video_url on ark-acg-ap-southeast-1.tos-ap-southeast-1.volces.com).
+export const WORKER_FETCH_HOSTS: readonly RegExp[] = [/^ark-acg-[a-z0-9-]+.tos-[a-z0-9-]+.volces.com$/];
+
+// Whether a result link has to go through the Worker. Checked on the parsed,
+// normalised URL, so ../ segments and lookalike hosts don't match.
+export function needsWorkerFetch(link: string | URL): boolean {
+  let url: URL;
+  try {
+    url = new URL(link);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:") return false;
+  return WORKER_FETCH_PREFIXES.some((prefix) => url.href.startsWith(prefix)) || WORKER_FETCH_HOSTS.some((host) => host.test(url.hostname));
+}
+
 export function connectSources(options: { routerBaseUrl?: string; workerUrl?: string }): string[] {
   const origins = new Set<string>([ROUTER_DEFAULT_BASE_URL]);
   for (const url of [options.routerBaseUrl, options.workerUrl]) {

@@ -4,7 +4,7 @@
 // results, which send no CORS headers (row 3). This Worker does both and
 // nothing else. It never stores a key: uploads are checked against Router once
 // and only a hash of the key is remembered, for 10 minutes.
-import { WORKER_FETCH_PREFIXES } from "../../src/lib/router/hosts";
+import { needsWorkerFetch } from "../../src/lib/router/hosts";
 
 export interface Env {
   MEDIA: R2Bucket;
@@ -161,7 +161,7 @@ async function proxyFetch(request: Request): Promise<Response> {
     return fail(400, "bad_url", "Pass the asset link as ?url=.");
   }
   // href is normalised, so ../ and %2e%2e segments can't step out of the prefix.
-  if (target.protocol !== "https:" || !WORKER_FETCH_PREFIXES.some((prefix) => target.href.startsWith(prefix))) {
+  if (!needsWorkerFetch(target)) {
     return fail(403, "host_not_allowed", "This Worker only fetches Portraius Studio's result hosts.");
   }
   // Redirects aren't followed, so an allowed link can't lead anywhere else.

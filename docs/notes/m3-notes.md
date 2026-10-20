@@ -51,3 +51,25 @@ proper test before switching.
 - **Row 9 resolved:** a final sent with `return_last_frame: true` returns `last_frame_url`. A final without
   one still gets its last frame grabbed in the browser.
 - **H3** at 768P with a first frame downloads in the browser with no proxy needed.
+
+## After the decision: people on H3 (checked October 19)
+
+| Check | Result |
+| --- | --- |
+| Still first with Walt | The Nano still scored 94; the chain started an H3 768P clip by itself. |
+| Reload while the H3 clip ran | The job resumed from its stored request ID and finished; the clip scored a median 72, worst frame 0 (a turned head). |
+| Seedance draft, then Render final | The final sent only `{ stage: "final", draftTaskId }` and came back as a 7 MB 1080p video with its last frame. |
+| Continue from a person-free clip | From image with the last frame, still on Seedance. |
+| Video screen with people | The model locks to H3 (2K) and says why. |
+
+A Seedance draft's `video_url` arrived once as BytePlus's own link
+(`ark-acg-ap-southeast-1.tos-ap-southeast-1.volces.com`), not rehosted, and failed to download (no
+CORS). `needsWorkerFetch` in `hosts.ts` now sends BytePlus storage hosts through the Worker too; the
+redeployed Worker streamed that same link (1.3 MB).
+
+## Acceptance status
+
+- **Video studio:** passes on both models (Seedance draft and final from the draft ID; H3 resumes after a
+  reload).
+- **Image studio:** works with no cast, with a cast and in edit mode, but "8 of 10 score 80 or more" waits
+  on the identity calibration (Unknowns row 13, M5).

@@ -8,8 +8,9 @@ One Cloudflare Worker that does the two things M1 found a browser can't do alone
   `portraius-media` R2 bucket under a random 128-bit key. Uploads and deletes need a Comfy key that
   Router accepts. The Worker checks it once with `GET api.comfy.org/v2/models?limit=1` and keeps only a
   hash of it, for 10 minutes. 100 MB cap; MP4, MOV, WAV, MP3, PNG and JPEG only.
-- **`GET /fetch?url=`:** streams a result back with CORS headers, for the links in
-  `WORKER_FETCH_PREFIXES` (`src/lib/router/hosts.ts`) only. HTTPS only, and redirects aren't followed.
+- **`GET /fetch?url=`:** streams a result back with CORS headers, only for links that `needsWorkerFetch`
+  (`src/lib/router/hosts.ts`) accepts: Comfy's rehost bucket and BytePlus's own storage. HTTPS only,
+  and redirects aren't followed.
 
 Every route answers only the GitHub Pages site and `localhost`, and limits each IP to 30 requests a
 minute. The Worker forwards requests and stores nothing but the uploads. The app deletes each upload

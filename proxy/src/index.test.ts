@@ -199,8 +199,16 @@ describe("/fetch", () => {
     expect(upstream).toHaveBeenCalledWith(SEEDANCE_URL, { redirect: "manual" });
   });
 
+  it("streams BytePlus's own storage links, which Comfy sometimes passes on", async () => {
+    const tos = "https://ark-acg-ap-southeast-1.tos-ap-southeast-1.volces.com/dreamina-seedance-2-5/1/Video/clip.mp4?X-Tos-Signature=x";
+    const res = await call(`/fetch?url=${encodeURIComponent(tos)}`);
+    expect(res.status).toBe(599); // the fake upstream answers 599 for any host it doesn't know
+    expect(upstream).toHaveBeenCalledWith(tos, { redirect: "manual" });
+  });
+
   it("refuses hosts and buckets outside the allowlist", async () => {
     for (const url of [
+      "https://ark-acg-ap-southeast-1.tos-ap-southeast-1.volces.com.evil.example/clip.mp4",
       "https://example.com/video.mp4",
       "https://storage.googleapis.com/another-bucket/video.mp4",
       "https://storage.googleapis.com/partner-nodes-assets/../another-bucket/video.mp4",

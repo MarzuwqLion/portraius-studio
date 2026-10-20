@@ -47,9 +47,26 @@ export function Select<T extends string>({
   );
 }
 
-export function Segmented<T extends string>({ value, onChange, options, label }: { value: T; onChange: (value: T) => void; options: readonly { value: T; label: string }[]; label: string }) {
+export function Segmented<T extends string>({
+  value,
+  onChange,
+  options,
+  label,
+  columns,
+}: {
+  value: T;
+  onChange: (value: T) => void;
+  options: readonly { value: T; label: string }[];
+  label: string;
+  columns?: number; // a grid instead of one row, for longer option lists
+}) {
   return (
-    <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-1 rounded-control border border-rule p-1">
+    <div
+      role="radiogroup"
+      aria-label={label}
+      className={cn("gap-1 rounded-control border border-rule p-1", columns ? "grid" : "flex flex-wrap")}
+      style={columns ? { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` } : undefined}
+    >
       {options.map((o) => (
         <button
           key={o.value}

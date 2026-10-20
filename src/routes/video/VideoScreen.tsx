@@ -192,7 +192,7 @@ export function VideoScreen() {
       }}
     >
       <div ref={top} />
-      <Segmented label="Mode" value={mode} onChange={setMode} options={MODES} />
+      <Segmented label="Mode" value={mode} onChange={setMode} options={MODES} columns={2} />
       <Field label="Prompt" hint={cast.length ? `Name cast members with ${cast.map((c) => `{${c.slot}}`).join(", ")}.` : undefined}>
         {(id) => <TextArea id={id} value={scene} onChange={setScene} rows={4} maxLength={2000} placeholder="{lead} steps out of the rain into a lit doorway and looks back" />}
       </Field>

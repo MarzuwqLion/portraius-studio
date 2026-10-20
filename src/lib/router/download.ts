@@ -4,7 +4,7 @@ import { config } from "@/lib/config";
 import { sniffMime } from "@/lib/media/mime";
 import type { AssetRef } from "@/lib/registry/capabilities";
 import { appError } from "./errors";
-import { WORKER_FETCH_PREFIXES } from "./hosts";
+import { needsWorkerFetch } from "./hosts";
 
 export { sniffMime };
 
@@ -30,7 +30,7 @@ export function base64ToBlob(base64: string, mime: string): Blob {
 // Where the browser fetches an asset link from: directly, or through the
 // Worker's /fetch route for hosts that send no CORS headers.
 export function fetchUrlFor(url: string): string {
-  if (!WORKER_FETCH_PREFIXES.some((prefix) => url.startsWith(prefix))) return url;
+  if (!needsWorkerFetch(url)) return url;
   if (!config.workerUrl) {
     throw appError("download_failed", "This result's host needs Portraius Studio's download proxy, which isn't set up here.", { retry: "manual" });
   }
