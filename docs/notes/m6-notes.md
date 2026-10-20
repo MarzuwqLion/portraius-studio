@@ -72,3 +72,67 @@ same recipe card and, with no person in that vault, "Design a character" instead
 
 - Director's anchor stills also appear in the Image studio's results (they're image jobs), and a
   manual retry there is labelled "Automatic retry". Cosmetic.
+
+## AI-generated tag on downloads (Security, metadata row)
+
+`lib/media/ai-tag.ts` writes the tag on the bytes, with no re-encode, whenever a file leaves the app
+(Download on a take, the library zip): PNG gets an `iTXt` XMP packet after `IHDR`, JPEG an APP1 XMP
+segment after the JFIF and Exif headers, MP4 a QuickTime `©cmt` atom in `moov/udta`. The XMP carries the
+IPTC digital source type `trainedAlgorithmicMedia`, `xmp:CreatorTool` Portraius Studio and the
+description "AI-generated with Portraius Studio". When `moov` comes before `mdat` (Kling, our own trims)
+every `stco`/`co64` chunk offset moves by the bytes added.
+
+**Several providers already sign their files.** Checked on the library's own outputs:
+
+| Output | What it carries | What the app does |
+| --- | --- | --- |
+| Nano Banana 2.1 PNG | C2PA manifest (`caBX`), XMP with `trainedAlgorithmicMedia` and "Made with Google AI" | Leaves it as is |
+| Seedance 2.5 MP4 and last-frame JPEG | C2PA (`uuid` box `d8fec3d6…`, APP11 JUMBF) | Leaves it as is |
+| BFL video edit MP4 | C2PA `uuid` box | Leaves it as is |
+| MiniMax H3 MP4 | TC260 AIGC label in `udta/meta` (`mdta` keys), not C2PA | Adds `©cmt` beside it |
+| HappyHorse, Kling, Freepik, canvas frames | Nothing | Adds the tag |
+
+A C2PA hard binding hashes the whole file, so one added byte breaks the provider's signature. A
+signed credential that already says AI-generated is worth more than our comment, so those files are
+handed out unchanged. ffmpeg.wasm read the comment back from tagged H3, HappyHorse and Kling clips and
+a trimmed clip, and decoded each with no errors. Director's scene and the 9:16 export get the comment
+from ffmpeg itself.
+
+## Make it real (Finishing, Realism pass)
+
+The Freepik skin enhancer runs on any still: the picked take in the Image studio, or a still in the
+library. A Strength slider scales the three settings together (80 gives the spec's 80, 10, 4). The
+pass keeps the still's cast, so the runner scores it again, and the result shows Before and After in
+one frame with a wipe, plus both scores.
+
+A probe on a 928×1152 still (request `2db0bfb0-5f50-430f-8b0d-54415d0b35bd`): 103 s, and the result
+came back at 3840×4800 as a 31.6 MB PNG with no metadata. It's an upscale as much as a skin pass. The
+runner keeps `enhance` results as a JPEG (quality 92) of at most 4096 px: 2.8 MB, made in about 3 s.
+The automatic pass on Director anchors isn't built.
+
+## Elements (Character vault, Elements)
+
+A third path in the create wizard: Photos (1 to 6, no face checks, an outfit/prop/location choice
+and a trademark warning), Sheet, Describe, Save. Saved with `kind: "element"`, `elementType`,
+`origin: "photos"`, no identity and no consent. The sheet is product-style: outfits on an invisible
+mannequin, props on grey, locations empty. The file's four view slots keep their names, with labels
+per type (an outfit's `profile` is its Back, a location's `front` is its Wide). "Save as element" on any
+still adds it to the element wizard as a photo. Elements go into a cast as `{outfit}`, `{prop}` or
+`{location}` and send their composite.
+
+**A refusal in the prompt.** The first view prompts said "leave out any logo, brand name, mascot or
+trademarked design". Every single view came back `content_policy_violation` with no detail (four of
+four, twice), while the composite with the same sentence went through. Each reference alone with the
+sentence was refused too; without the sentence the view drew. "No logos or brand names" in the closing
+line passes on views and the composite, so every element prompt now uses that. Test element: a designed
+leather satchel drawn at 1K fast; the export and import round trip gives the same files and a
+byte-identical second export.
+
+## Export 9:16 (Remix links, Social export; Recast, Result view)
+
+`lib/media/social.ts`: one clip fitted into 720×1280 on Studio grey, or a Recast's original and result
+in one frame, stacked or side by side (whichever shows them larger). Labels ("Original", "Recast") and
+the end card ("Made with Portraius Studio", "Open source") are drawn on a canvas in Big Shoulders and
+Atkinson with the token colours, then laid over by ffmpeg. The end card is on by default, with a
+checkbox to drop it. 720p rather than 1080p, as with Director (row 15). An 8 s H3 recast exported in
+34 s (0.85 MB). The button is on every clip in the library and under each Recast result.
