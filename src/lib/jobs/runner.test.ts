@@ -18,7 +18,7 @@ vi.mock("@/lib/router/client", () => router);
 const download = vi.hoisted(() => ({ downloadAsset: vi.fn() }));
 vi.mock("@/lib/router/download", () => download);
 
-import { cancelJob, resumeJobs, setScorer, settled, startJob, timing } from "./runner";
+import { cancelJob, onRestart, resumeJobs, retryJob, setScorer, settled, startJob, timing } from "./runner";
 
 const imageInput = {
   model: { prompt: "A teapot", references: [], aspectRatio: "1:1" as const, size: "1K" as const, quality: "fast" as const },
@@ -219,6 +219,25 @@ describe("failures", () => {
     const job = await seed({ status: "running" });
     await resumeJobs();
     expect(await settled(job.id, 5000)).toMatchObject({ status: "expired", error: { code: "expired" } });
+  });
+});
+
+describe("retry", () => {
+  it("runs a job again with the same input, linked to the one it retries", async () => {
+    const failed = await seed({ status: "failed" });
+    const next = await retryJob(failed.id);
+    expect(next).toMatchObject({ parentJobId: failed.id, input: imageInput, kind: "image" });
+    expect(next.idempotencyKey).not.toBe(failed.idempotencyKey);
+  });
+
+  it("hands a job whose uploads are gone to its studio to host them again", async () => {
+    const failed = await seed({ status: "failed", kind: "lipsync", modelId: MODEL_IDS.sync3, uploads: ["a.mp4", "b.mp3"] });
+    await expect(retryJob(failed.id)).rejects.toThrow(/deleted when it ended/);
+    const restarted = await seed({ status: "submitting", parentJobId: failed.id });
+    const off = onRestart(async (job) => (job.id === failed.id ? restarted : undefined));
+    expect(await retryJob(failed.id)).toBe(restarted);
+    off();
+    expect(router.submit).not.toHaveBeenCalled();
   });
 });
 

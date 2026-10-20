@@ -12,7 +12,7 @@
 // The line rides on the result as an audio asset, so the library keeps it.
 import { MAX_LINE_CHARS } from "@/lib/adapters/elevenlabs";
 import { runAndSave } from "@/lib/jobs/direct";
-import { startJob, type JobInput } from "@/lib/jobs/runner";
+import { onRestart, startJob, type JobInput } from "@/lib/jobs/runner";
 import { LINE_TYPES, audioDuration } from "@/lib/media/audio";
 import { isStylised, type CameraSelection } from "@/lib/prompts/camera";
 import { compileVideoPrompt, role } from "@/lib/prompts/compile";
@@ -105,7 +105,7 @@ async function withUploads(uploads: HostedAsset[], start: (ids: string[]) => Pro
 }
 
 // Sync-3 takes both files as public links only: they go up to the media host.
-export async function startLipSync(generationId: string, line: SpokenLine): Promise<Job> {
+export async function startLipSync(generationId: string, line: SpokenLine, parentJobId?: string): Promise<Job> {
   const { generation, blob } = await generationVideo(generationId);
   const video = await uploadAsset(blob, { filePath: "speaking.mp4", contentType: "video/mp4" });
   const sound = await hostLine(line).catch(async (err) => {
@@ -125,6 +125,7 @@ export async function startLipSync(generationId: string, line: SpokenLine): Prom
       request: { lipSyncOf: generationId, line } satisfies LipSyncRequest,
     } satisfies JobInput<LipSyncInput>,
     uploads,
+    ...(parentJobId ? { parentJobId } : {}),
   }));
 }
 
@@ -207,7 +208,7 @@ export async function speakingInput(request: SpeakingRequest, audioUrl: string):
   };
 }
 
-export async function startSpeakingClip(request: SpeakingRequest): Promise<Job> {
+export async function startSpeakingClip(request: SpeakingRequest, parentJobId?: string): Promise<Job> {
   const sound = await hostLine(request.line);
   const { input, characterIds } = await speakingInput(request, sound.url).catch(async (err) => {
     await deleteAsset(sound.id).catch(() => undefined);
@@ -225,5 +226,19 @@ export async function startSpeakingClip(request: SpeakingRequest): Promise<Job> 
       request,
     } satisfies JobInput<H3Input>,
     uploads,
+    ...(parentJobId ? { parentJobId } : {}),
   }));
+}
+
+// Retry: the line and the clip are hosted again (the old links went when the
+// job ended).
+async function restartVoiceJob(job: Job): Promise<Job | undefined> {
+  if (job.kind !== "lipsync") return undefined;
+  const request = (job.input as JobInput).request as LipSyncRequest | SpeakingRequest | undefined;
+  if (!request) return undefined;
+  return "lipSyncOf" in request ? startLipSync(request.lipSyncOf, request.line, job.id) : startSpeakingClip(request, job.id);
+}
+
+export function registerVoice(): () => void {
+  return onRestart(restartVoiceJob);
 }

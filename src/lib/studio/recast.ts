@@ -7,7 +7,7 @@
 // style run on MiniMax H3, which kept motion, timing and camera in M4's test.
 // Object Swap runs on HappyHorse 1.0 video edit, the A/B winner over Kling
 // (which retimes the clip), Wan 2.7 and BFL (docs/notes/recast-ab.md).
-import { onJobDone, startJob, type JobInput } from "@/lib/jobs/runner";
+import { onJobDone, onRestart, startJob, type JobInput } from "@/lib/jobs/runner";
 import { prepareImage } from "@/lib/media/image-prep";
 import { loadFfmpeg } from "@/lib/media/video-prep";
 import { preset as findPreset } from "@/lib/presets/load";
@@ -78,7 +78,7 @@ async function requireBlob(id: string | undefined, what: string): Promise<Blob> 
   return row.blob;
 }
 
-export async function startRecast(request: RecastRequest): Promise<string> {
+export async function startRecast(request: RecastRequest, parentJobId?: string): Promise<string> {
   const p = findPreset(request.presetId);
   if (!p) throw new Error("That preset isn't available.");
   const mode = modeOf(p);
@@ -133,6 +133,7 @@ export async function startRecast(request: RecastRequest): Promise<string> {
     modelId,
     uploads,
     input: { model, characterIds, prompt: p.title, stylised, request } satisfies RecastJobInput,
+    ...(parentJobId ? { parentJobId } : {}),
   });
   return job.id;
 }
@@ -161,13 +162,13 @@ export function settingPrompt(setting: string): string {
   return `Move the person to a new location: ${setting}. Replace everything around them, including walls, windows, furniture and props, with that location. Keep the person, their face, their hair, their clothes and their motion exactly as they are.`;
 }
 
-async function startSettingStep(job: Job, input: RecastJobInput, setting: string): Promise<void> {
+async function startSettingStep(job: Job, input: RecastJobInput, setting: string): Promise<Job | undefined> {
   const generation = await db.generations.get(job.generationIds[0] ?? "");
   const asset = generation?.assets.find((a) => a.kind === "video");
   const video = asset ? await db.blobs.get(asset.blobId) : undefined;
-  if (!video) return;
+  if (!video) return undefined;
   const hosted = await uploadAsset(video.blob, { filePath: "performer.mp4", contentType: "video/mp4" });
-  await startJob({
+  return startJob({
     kind: "recast",
     modelId: MODEL_IDS.happyHorseEdit,
     uploads: [hosted.id],
@@ -200,8 +201,26 @@ async function afterRecast(job: Job): Promise<void> {
   await db.generations.update(generation!.id, { assets: generation!.assets.map((a) => (a === asset ? { ...a, bytes: muxed.size } : a)) });
 }
 
+// Retry: the clip (or, for a setting step, the first step's result) is
+// hosted again, since the old links went when the job ended.
+async function restartRecast(job: Job): Promise<Job | undefined> {
+  if (job.kind !== "recast") return undefined;
+  const input = job.input as RecastJobInput;
+  if (input.request.settingStep) {
+    const first = await db.jobs.get(job.parentJobId ?? "");
+    const setting = findPreset(input.request.presetId)?.recipe.params?.setting;
+    return first && typeof setting === "string" ? startSettingStep(first, first.input as RecastJobInput, setting) : undefined;
+  }
+  return db.jobs.get(await startRecast(input.request, job.id));
+}
+
 export function registerRecastStudio(): () => void {
-  return onJobDone(afterRecast);
+  const done = onJobDone(afterRecast);
+  const restart = onRestart(restartRecast);
+  return () => {
+    done();
+    restart();
+  };
 }
 
 // "Other people in the clip will still appear" (spec: Input): the most faces

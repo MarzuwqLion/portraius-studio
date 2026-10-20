@@ -304,10 +304,27 @@ async function scoringStep(id: string): Promise<void> {
 
 // ---- Retry, cancel and reload ----
 
+// A job whose inputs were hosted (its uploads) can't run again as it was:
+// those links were deleted when it ended. Its studio starts it again with the
+// files hosted anew, linked to the job it retries.
+type Restart = (job: Job) => Promise<Job | undefined>;
+const restarts = new Set<Restart>();
+export function onRestart(restart: Restart): () => void {
+  restarts.add(restart);
+  return () => restarts.delete(restart);
+}
+
 // A new job with the same request, linked to the one it retries.
 export async function retryJob(id: string, changes: { input?: JobInput } = {}): Promise<Job> {
   const job = await db.jobs.get(id);
   if (!job) throw new Error("That job is gone.");
+  if (job.uploads?.length && !changes.input) {
+    for (const restart of restarts) {
+      const next = await restart(job);
+      if (next) return next;
+    }
+    throw new Error("This job's uploaded files were deleted when it ended. Start it again from its screen.");
+  }
   return startJob({ kind: job.kind, modelId: job.modelId, input: changes.input ?? (job.input as JobInput), parentJobId: job.id });
 }
 
