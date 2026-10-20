@@ -1,11 +1,12 @@
 // Director (spec: Director): a scene card with film settings, a shot list,
 // an anchor still per shot, one motion take per shot, finals, and one
-// stitched export. Chaining ("continue") is P2 and not built.
+// stitched export. Chaining (P2): a "continue" shot starts from the previous
+// shot's last frame instead of an anchor.
 //
 // The Contracts schema has no scenes table, so a scene is a JSON blob in the
 // blobs table (like the wizard draft), keyed "scene:<id>".
-import { retryJob, type JobInput } from "@/lib/jobs/runner";
-import { stitchClips } from "@/lib/media/stitch";
+import { onJobDone, retryJob, type JobInput } from "@/lib/jobs/runner";
+import { stitchClips, type StitchSource } from "@/lib/media/stitch";
 import { clipInfo } from "@/lib/media/video-prep";
 import { slotsIn } from "@/lib/prompts/compile";
 import type { CameraSelection } from "@/lib/prompts/camera";
@@ -15,7 +16,7 @@ import { db } from "@/lib/store/db";
 import type { Job } from "@/lib/types/jobs";
 import type { CastPick } from "./cast";
 import { startImages } from "./image";
-import { DEFAULT_MODEL, isDraft, renderFinal, startVideo } from "./video";
+import { DEFAULT_MODEL, isDraft, lastFrameBlobId, renderFinal, startVideo } from "./video";
 
 export type SceneRatio = Extract<VideoRatio, "16:9" | "9:16" | "21:9">;
 
@@ -38,12 +39,14 @@ export interface Shot {
   lighting?: string;
   action: string;                 // "{lead} slides the envelope across the table"
   durationSec: number;
-  continuity: "cut";              // "continue" (chaining) is P2
+  continuity: "cut" | "continue"; // continue = first frame is the previous shot's last frame
   rolls: number;                  // motion re-rolls, so a re-roll gets a new seed
   anchorJobIds: string[];         // every still drawn for this shot
   anchorJobId?: string;           // the picked one
   takeJobId?: string;             // the motion take: a Seedance draft, or an H3 render
   finalJobId?: string;            // Seedance only: the 1080p final from the draft's ID
+  fromTakeJobId?: string;         // continue: the previous shot's take this one started from
+  waiting?: boolean;              // continue: animate once the previous shot's take is done
 }
 
 export interface Scene {
@@ -164,7 +167,7 @@ export function mergeEdits(stored: Scene, edited: Scene): Scene {
     shots: edited.shots.map((shot) => {
       const s = byId.get(shot.id);
       if (!s) return shot;
-      const { anchorJobId: _a, takeJobId: _t, finalJobId: _f, ...typed } = shot;
+      const { anchorJobId: _a, takeJobId: _t, finalJobId: _f, fromTakeJobId: _p, waiting: _w, ...typed } = shot;
       return {
         ...typed,
         rolls: s.rolls,
@@ -172,6 +175,8 @@ export function mergeEdits(stored: Scene, edited: Scene): Scene {
         ...(s.anchorJobId ? { anchorJobId: s.anchorJobId } : {}),
         ...(s.takeJobId ? { takeJobId: s.takeJobId } : {}),
         ...(s.finalJobId ? { finalJobId: s.finalJobId } : {}),
+        ...(s.fromTakeJobId ? { fromTakeJobId: s.fromTakeJobId } : {}),
+        ...(s.waiting ? { waiting: true } : {}),
       };
     }),
   };
@@ -227,6 +232,38 @@ export function anchorAspect(ratio: SceneRatio): ImageAspectRatio {
   return ratio;
 }
 
+// ---- Chaining ----
+
+export function previousShot(scene: Scene, shot: Shot): Shot | undefined {
+  const i = scene.shots.findIndex((s) => s.id === shot.id);
+  return i > 0 ? scene.shots[i - 1] : undefined;
+}
+
+// The first shot has nothing to continue from, so it's always a cut.
+export function continues(scene: Scene, shot: Shot): boolean {
+  return shot.continuity === "continue" && previousShot(scene, shot) !== undefined;
+}
+
+// A continued shot whose previous shot has been re-rolled or moved since: its
+// first frame no longer matches what comes before it.
+export function chainStale(scene: Scene, shot: Shot): boolean {
+  return continues(scene, shot) && Boolean(shot.takeJobId) && shot.fromTakeJobId !== previousShot(scene, shot)?.takeJobId;
+}
+
+// The job whose last frame a continued shot starts from: the previous shot's
+// final once it's done (same motion, more pixels), otherwise its take.
+async function chainSourceJob(previous: Shot): Promise<Job | undefined> {
+  const [take, final] = await db.jobs.bulkGet([previous.takeJobId ?? "", previous.finalJobId ?? ""]);
+  if (final?.status === "done") return final;
+  return take?.status === "done" ? take : undefined;
+}
+
+async function chainFrameBlobId(previous: Shot): Promise<string | undefined> {
+  const job = await chainSourceJob(previous);
+  const generationId = job?.generationIds[0];
+  return generationId ? lastFrameBlobId(generationId) : undefined;
+}
+
 // ---- Steps ----
 
 // Anchors: 2 to 4 stills with the cast references and the shot's camera
@@ -271,21 +308,37 @@ async function anchorBlobId(jobId: string): Promise<string> {
   return asset.blobId;
 }
 
-// Animate: the anchor is the first frame. Seedance makes a 480p draft; a
-// face in the anchor sends the shot to H3 instead (Seedance refuses people),
-// which renders once at 768P.
-export async function animateShot(sceneId: string, shotId: string, reroll = false): Promise<string> {
+// Animate: the anchor is the first frame, or for a continued shot the
+// previous shot's last frame. Seedance makes a 480p draft; a face in that
+// frame sends the shot to H3 instead (Seedance refuses people), which renders
+// once at 768P. A continued shot whose previous take isn't done yet waits for
+// it, so a whole chain can be started at once and runs in order.
+export async function animateShot(sceneId: string, shotId: string, reroll = false): Promise<string | undefined> {
   const scene = await loadScene(sceneId);
   const shot = scene?.shots.find((s) => s.id === shotId);
   if (!scene || !shot) throw new Error("This shot is gone.");
-  if (!shot.anchorJobId) throw new Error("Pick an anchor still first.");
+  const previous = continues(scene, shot) ? previousShot(scene, shot) : undefined;
+  let sourceBlobId: string;
+  if (previous) {
+    const frame = await chainFrameBlobId(previous);
+    if (!frame) {
+      await updateShot(sceneId, shotId, (s) => ({ ...s, waiting: true }));
+      // The previous take may have finished while this one was being marked.
+      void resumeWaitingShots();
+      return undefined;
+    }
+    sourceBlobId = frame;
+  } else {
+    if (!shot.anchorJobId) throw new Error("Pick an anchor still first.");
+    sourceBlobId = await anchorBlobId(shot.anchorJobId);
+  }
   const rolled = reroll ? { ...shot, rolls: shot.rolls + 1 } : shot;
   const jobId = await startVideo({
     mode: "image",
     model: DEFAULT_MODEL,
     scene: shotScene(scene, rolled),
     cast: shotCast(scene, rolled),
-    sourceBlobId: await anchorBlobId(rolled.anchorJobId!),
+    sourceBlobId,
     durationSec: rolled.durationSec,
     ratio: scene.ratio,
     audio: scene.sound,
@@ -294,10 +347,49 @@ export async function animateShot(sceneId: string, shotId: string, reroll = fals
     camera: shotCamera(scene, rolled, true),
   });
   await updateShot(sceneId, shotId, (s) => {
-    const { finalJobId: _old, ...rest } = s;
-    return { ...rest, rolls: rolled.rolls, takeJobId: jobId };
+    const { finalJobId: _old, fromTakeJobId: _from, waiting: _w, ...rest } = s;
+    return { ...rest, rolls: rolled.rolls, takeJobId: jobId, ...(previous?.takeJobId ? { fromTakeJobId: previous.takeJobId } : {}) };
   });
   return jobId;
+}
+
+export async function stopWaiting(sceneId: string, shotId: string): Promise<void> {
+  await updateShot(sceneId, shotId, (s) => {
+    const { waiting: _w, ...rest } = s;
+    return rest;
+  });
+}
+
+// Takes the shot's wait, so two finished jobs can't both start it.
+async function claimWait(sceneId: string, shotId: string): Promise<boolean> {
+  let claimed = false;
+  await updateShot(sceneId, shotId, (s) => {
+    if (!s.waiting) return s;
+    claimed = true;
+    const { waiting: _w, ...rest } = s;
+    return rest;
+  });
+  return claimed;
+}
+
+// Starts every waiting shot whose previous shot now has a finished take.
+// Runs when a video job finishes and once on start-up.
+export async function resumeWaitingShots(): Promise<void> {
+  for (const scene of await listScenes()) {
+    for (const shot of scene.shots) {
+      const previous = shot.waiting ? previousShot(scene, shot) : undefined;
+      if (!previous || !(await chainSourceJob(previous))) continue;
+      if (!(await claimWait(scene.id, shot.id))) continue;
+      // A re-roll when the shot already has a take, so it gets a new seed.
+      await animateShot(scene.id, shot.id, Boolean(shot.takeJobId)).catch((err) => {
+        console.warn("a continued shot didn't start", { shot: shot.id, error: (err as Error).message });
+      });
+    }
+  }
+}
+
+export function registerDirector(): () => void {
+  return onJobDone((job) => (job.kind === "video" ? resumeWaitingShots() : undefined));
 }
 
 // A failed take (or final) tried again with the same input.
@@ -356,13 +448,15 @@ async function shotVideo(shot: Shot): Promise<{ blob: Blob; characterIds: string
 export async function exportScene(sceneId: string, crossfade: boolean, onProgress?: (share: number) => void): Promise<string> {
   const scene = await loadScene(sceneId);
   if (!scene?.shots.length) throw new Error("Add shots before exporting.");
-  const sources: { blob: Blob; durationSec: number }[] = [];
+  const sources: StitchSource[] = [];
   const characterIds = new Set<string>();
   for (const [i, shot] of scene.shots.entries()) {
     const video = await shotVideo(shot);
     if (!video) throw new Error(`Shot ${i + 1} has no finished take yet.`);
     video.characterIds.forEach((id) => characterIds.add(id));
-    sources.push({ blob: video.blob, durationSec: (await clipInfo(video.blob)).durationSec });
+    // A continued shot picks up where the last one stopped: a straight cut, never a crossfade.
+    const chained = continues(scene, shot) && !chainStale(scene, shot);
+    sources.push({ blob: video.blob, durationSec: (await clipInfo(video.blob)).durationSec, ...(chained ? { continues: true } : {}) });
   }
   const blob = await stitchClips(sources, { ...EXPORT_SIZE[scene.ratio], crossfade }, onProgress);
   const id = crypto.randomUUID();

@@ -72,6 +72,31 @@ describe("stitchArgs", () => {
     expect(graph).not.toContain("concat=");
   });
 
+  it("cuts straight into a continued shot and drops its repeated first frame", () => {
+    const chained = [clips[0]!, { ...clips[1]!, continues: true }, clips[2]!];
+    const graph = graphOf(stitchArgs(["a", "b", "c"], chained, { width: 1280, height: 720, crossfade: true }, "o.mp4"));
+    // Shot 2 loses one frame (4 s - 1/24) and joins shot 1 with no overlap;
+    // shot 3 still fades in, 0.25 s before the 5 + 3.958 s already joined.
+    expect(graph).toContain("trim=start_frame=1:duration=3.958");
+    expect(graph).toContain("anullsrc=r=48000:cl=stereo,atrim=duration=3.958");
+    expect(graph).toContain("[v0][a0][v1][a1]concat=n=2:v=1:a=1[x1][y1]");
+    expect(graph).toContain("[x1][v2]xfade=transition=fade:duration=0.250:offset=8.708[v]");
+    expect(graph).toContain("[y1][a2]acrossfade=d=0.250[a]");
+    expect(graph).not.toContain("trim=start_frame=1:duration=5.000");
+  });
+
+  it("trims a continued shot's audio by the same frame", () => {
+    const chained = [clips[1]!, { ...clips[2]!, continues: true }];
+    const graph = graphOf(stitchArgs(["a", "b"], chained, { width: 1280, height: 720, crossfade: false }, "o.mp4"));
+    expect(graph).toContain("[1:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,apad,atrim=start=0.042:duration=5.958");
+    expect(graph).toContain("[v0][a0][v1][a1]concat=n=2:v=1:a=1[v][a]");
+  });
+
+  it("never treats the first shot as continued", () => {
+    const graph = graphOf(stitchArgs(["a"], [{ ...clips[0]!, continues: true }], { width: 1280, height: 720, crossfade: true }, "o.mp4"));
+    expect(graph).toContain("trim=duration=5.000");
+  });
+
   it("tags the file as AI-generated", () => {
     const args = stitchArgs(["a"], [clips[0]!], { width: 1920, height: 1080, crossfade: true }, "o.mp4");
     expect(args[args.indexOf("-metadata") + 1]).toBe(`comment=${AI_COMMENT}`);

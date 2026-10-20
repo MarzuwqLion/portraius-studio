@@ -14,9 +14,11 @@ import { Input } from "@/components/ui/input";
 import { useEstimateLabel, useJob, useJobImageUrl, useJobs } from "@/lib/jobs/hooks";
 import { MODEL_IDS, registryEntry } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
-import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
+import { useBlobUrl, useGeneration, useObjectUrl } from "@/lib/store/hooks";
 import {
   animateShot,
+  chainStale,
+  continues,
   deleteScene,
   drawAnchors,
   exportJobId,
@@ -27,6 +29,7 @@ import {
   newScene,
   newShot,
   pickAnchor,
+  previousShot,
   retryAnchor,
   retryShotJob,
   saveEdits,
@@ -34,6 +37,7 @@ import {
   shotCamera,
   shotCast,
   shotScene,
+  stopWaiting,
   takeIsDraft,
   type Scene,
   type SceneRatio,
@@ -269,6 +273,11 @@ function ShotCard({
   const named = scene.cast.length ? scene.cast.map((c) => `{${c.slot}}`).join(", ") : "Add cast in the scene card";
   const aspect = aspectOf(scene.ratio);
   const ready = Boolean(shot.action.trim());
+  const chained = continues(scene, shot);
+  const stale = chainStale(scene, shot);
+  const previous = previousShot(scene, shot);
+  const chainFrame = useChainFrameUrl(chained ? previous : undefined);
+  const canAnimate = chained || Boolean(shot.anchorJobId);
 
   const stillsPrice = useEstimateLabel(
     MODEL_IDS.nanoBanana,
@@ -291,13 +300,13 @@ function ShotCard({
   const motionModel = castSlots.length ? MODEL_IDS.minimaxH3 : MODEL_IDS.seedance;
   const motionPrice = useEstimateLabel(
     motionModel,
-    shot.anchorJobId
+    canAnimate
       ? async () =>
           motionModel === MODEL_IDS.minimaxH3
             ? { stage: "generate", prompt: shot.action, firstFrame: "https://example.invalid/anchor.jpg", durationSec: shot.durationSec, resolution: "768P" }
             : { stage: "draft", prompt: shot.action, firstFrame: "https://example.invalid/anchor.jpg", durationSec: shot.durationSec, generateAudio: scene.sound }
       : undefined,
-    `${shot.id}:${motionModel}:${shot.durationSec}:${scene.sound}:${Boolean(shot.anchorJobId)}`,
+    `${shot.id}:${motionModel}:${shot.durationSec}:${scene.sound}:${canAnimate}`,
   );
 
   const takeDone = take?.status === "done";
@@ -331,9 +340,35 @@ function ShotCard({
           onChange={(c) => onChange({ size: c.size ?? shot.size, angle: c.angle ?? shot.angle, lens: c.lens ?? shot.lens, aperture: c.aperture, movement: c.movement ?? "static", lighting: c.lighting })}
         />
         <Field label="Length">{(id) => <Select id={id} value={String(shot.durationSec)} options={DURATIONS} onChange={(v) => onChange({ durationSec: Number(v ?? 5) })} />}</Field>
+        {index > 0 && (
+          <Field label="Starts with" hint={shot.continuity === "continue" ? `Picks up from the last frame of shot ${index}, with no anchor still.` : undefined}>
+            {() => (
+              <Segmented
+                label="Starts with"
+                value={shot.continuity}
+                options={[
+                  { value: "cut", label: "A cut" },
+                  { value: "continue", label: `Shot ${index}'s last frame` },
+                ]}
+                onChange={(continuity) => onChange({ continuity })}
+              />
+            )}
+          </Field>
+        )}
       </div>
 
       <div className="grid content-start gap-4 bg-seamless p-4 text-on-seamless lg:border-l lg:border-rule">
+        {chained ? (
+          <section aria-label="First frame" className="grid gap-3">
+            <h3 className="text-control font-semibold">First frame</h3>
+            <div className="w-44">
+              <Take src={chainFrame} alt={`Last frame of shot ${index}`} aspect={aspect}>
+                Shot {index}'s last frame
+              </Take>
+            </div>
+            <p className="text-control">{chainFrame ? `The last frame of shot ${index}'s take.` : `Taken from shot ${index}'s take once it's done.`}</p>
+          </section>
+        ) : (
         <section aria-label="Anchor stills" className="grid gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="mr-auto text-control font-semibold">Anchor</h3>
@@ -369,17 +404,22 @@ function ShotCard({
             <p className="text-control">{ready ? "Draw stills, then pick the one to animate." : "Describe the action first."}</p>
           )}
         </section>
+        )}
 
         <section aria-label="Motion" className="grid gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="mr-auto text-control font-semibold">Motion</h3>
-            {!shot.takeJobId ? (
-              <Button size="sm" disabled={!shot.anchorJobId || busy !== undefined} onClick={() => void run(`animate:${shot.id}`, () => animateShot(scene.id, shot.id))}>
+            {shot.waiting && chained ? (
+              <Button size="sm" variant="secondary" disabled={busy !== undefined} onClick={() => void run(`wait:${shot.id}`, () => stopWaiting(scene.id, shot.id))}>
+                Stop waiting
+              </Button>
+            ) : !shot.takeJobId ? (
+              <Button size="sm" disabled={!canAnimate || !ready || busy !== undefined} onClick={() => void run(`animate:${shot.id}`, () => animateShot(scene.id, shot.id))}>
                 Animate · {motionPrice}
               </Button>
             ) : (
               <>
-                <Button size="sm" variant="secondary" disabled={busy !== undefined || !shot.anchorJobId} onClick={() => void run(`animate:${shot.id}`, () => animateShot(scene.id, shot.id, true))}>
+                <Button size="sm" variant={stale ? "primary" : "secondary"} disabled={busy !== undefined || !canAnimate} onClick={() => void run(`animate:${shot.id}`, () => animateShot(scene.id, shot.id, true))}>
                   Re-roll · {motionPrice}
                 </Button>
                 {canFinal && (
@@ -390,7 +430,9 @@ function ShotCard({
               </>
             )}
           </div>
-          {!shot.anchorJobId && shot.anchorJobIds.length > 0 && <p className="text-control">Pick an anchor still to animate.</p>}
+          {!chained && !shot.anchorJobId && shot.anchorJobIds.length > 0 && <p className="text-control">Pick an anchor still to animate.</p>}
+          {chained && shot.waiting && <p className="text-control">Starts as soon as shot {index}'s take is done.</p>}
+          {stale && <p className="text-control">Shot {index} has a different take now, so this one no longer starts where it ends. Re-roll to match.</p>}
           <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-3">
             {take && (
               <OutputTake
@@ -439,6 +481,20 @@ function useAnchorJobs(ids: string[]) {
   return [...shown, ...retries];
 }
 
+// The frame a continued shot starts from: the previous shot's saved last
+// frame. Seedance returns one; for an H3 take it's taken when the shot is animated.
+function useChainFrameUrl(previous: Shot | undefined): string | undefined {
+  const blob = useLiveQuery(async () => {
+    if (!previous) return undefined;
+    const [take, final] = await db.jobs.bulkGet([previous.takeJobId ?? "", previous.finalJobId ?? ""]);
+    const job = final?.status === "done" ? final : take?.status === "done" ? take : undefined;
+    const generation = job ? await db.generations.get(job.generationIds[0] ?? "") : undefined;
+    const frame = generation?.assets.find((a) => a.kind === "frame");
+    return frame ? (await db.blobs.get(frame.blobId))?.blob : undefined;
+  }, [previous?.takeJobId, previous?.finalJobId]);
+  return useObjectUrl(blob);
+}
+
 // ---- Timeline and export ----
 
 function Timeline({ scene, editor, onMove }: { scene: Scene; editor: Editor; onMove: (from: number, to: number) => void }) {
@@ -472,7 +528,7 @@ function Timeline({ scene, editor, onMove }: { scene: Scene; editor: Editor; onM
             }}
             className="w-40 shrink-0 cursor-grab"
           >
-            <StripFrame shot={shot} index={i} aspect={aspectOf(scene.ratio)} />
+            <StripFrame shot={shot} index={i} chained={continues(scene, shot)} aspect={aspectOf(scene.ratio)} />
           </li>
         ))}
       </ol>
@@ -509,10 +565,28 @@ function Timeline({ scene, editor, onMove }: { scene: Scene; editor: Editor; onM
   );
 }
 
-function StripFrame({ shot, index, aspect }: { shot: Shot; index: number; aspect: string }) {
-  const still = useJobImageUrl(shot.anchorJobId);
+function StripFrame({ shot, index, chained, aspect }: { shot: Shot; index: number; chained: boolean; aspect: string }) {
+  const anchor = useJobImageUrl(shot.anchorJobId);
   const job = useJob(exportJobId(shot));
-  const status = !shot.anchorJobId ? "No anchor" : !job ? "Not animated" : job.status === "done" ? (shot.finalJobId ? "Final" : takeIsDraft(job) ? "Draft" : "Ready") : "Working";
+  const take = useJob(shot.takeJobId);
+  // A continued shot's still is the frame its take started from.
+  const startFrame = useBlobUrl((take?.input as { request?: { sourceBlobId?: string } } | undefined)?.request?.sourceBlobId);
+  const still = chained ? startFrame : anchor;
+  const status = !job
+    ? chained
+      ? shot.waiting
+        ? "Waiting"
+        : "Not animated"
+      : !shot.anchorJobId
+        ? "No anchor"
+        : "Not animated"
+    : job.status === "done"
+      ? shot.finalJobId
+        ? "Final"
+        : takeIsDraft(job)
+          ? "Draft"
+          : "Ready"
+      : "Working";
   return (
     <figure className="grid gap-1">
       <Take src={still} alt={`Shot ${index + 1}`} aspect={aspect}>

@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { exportJobId, mergeEdits, newScene, newShot, shotCamera, shotCast, shotScene, shotSeed, type Scene, type Shot } from "./director";
+import {
+  chainStale,
+  continues,
+  exportJobId,
+  mergeEdits,
+  newScene,
+  newShot,
+  previousShot,
+  shotCamera,
+  shotCast,
+  shotScene,
+  shotSeed,
+  type Scene,
+  type Shot,
+} from "./director";
 
 function scene(): Scene {
   const s = newScene(1000);
@@ -65,7 +79,43 @@ describe("shots", () => {
   });
 });
 
+describe("chaining", () => {
+  it("never continues the first shot", () => {
+    const s = scene();
+    const first = { ...s.shots[0]!, continuity: "continue" as const };
+    const chained = { ...s, shots: [first, { ...s.shots[1]!, continuity: "continue" as const }] };
+    expect(continues(chained, chained.shots[0]!)).toBe(false);
+    expect(continues(chained, chained.shots[1]!)).toBe(true);
+    expect(previousShot(chained, chained.shots[1]!)?.id).toBe(first.id);
+  });
+
+  it("marks a continued take stale once the shot before it is re-rolled or moved", () => {
+    const s = scene();
+    s.shots[0] = { ...s.shots[0]!, takeJobId: "t1" };
+    s.shots[1] = { ...s.shots[1]!, continuity: "continue", takeJobId: "t2", fromTakeJobId: "t1" };
+    expect(chainStale(s, s.shots[1]!)).toBe(false);
+    const rerolled = { ...s, shots: [{ ...s.shots[0]!, takeJobId: "t1b" }, s.shots[1]!] };
+    expect(chainStale(rerolled, rerolled.shots[1]!)).toBe(true);
+    const third = { ...newShot(s), takeJobId: "t3" };
+    const moved = { ...s, shots: [s.shots[0]!, third, s.shots[1]!] };
+    expect(chainStale(moved, s.shots[1]!)).toBe(true);
+    // A cut is never stale, and a continued shot with no take yet has nothing to match.
+    expect(chainStale(rerolled, { ...rerolled.shots[1]!, continuity: "cut" })).toBe(false);
+    const { takeJobId: _t, ...untaken } = rerolled.shots[1]!;
+    expect(chainStale(rerolled, untaken)).toBe(false);
+  });
+});
+
 describe("mergeEdits", () => {
+  it("keeps where a continued shot started from and whether it's waiting", () => {
+    const stored = scene();
+    stored.shots[1] = { ...stored.shots[1]!, continuity: "continue", fromTakeJobId: "t1", waiting: true };
+    const edited = { ...stored, shots: stored.shots.map((s) => ({ ...s, fromTakeJobId: undefined, waiting: undefined })) };
+    edited.shots[1] = { ...edited.shots[1]!, continuity: "cut" };
+    const merged = mergeEdits(stored, edited).shots[1]!;
+    expect(merged).toMatchObject({ continuity: "cut", fromTakeJobId: "t1", waiting: true });
+  });
+
   it("keeps what steps wrote while taking what was typed", () => {
     const stored = scene();
     stored.shots[0] = { ...stored.shots[0]!, anchorJobIds: ["a1", "a2"], anchorJobId: "a2", takeJobId: "t1", rolls: 2 };

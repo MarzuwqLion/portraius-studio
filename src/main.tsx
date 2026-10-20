@@ -6,6 +6,7 @@ import { AppRoutes } from "@/routes/AppRoutes";
 import { scoreJobOutputs } from "@/lib/identity/score-output";
 import { resumeJobs, setScorer } from "@/lib/jobs/runner";
 import { persistStorage } from "@/lib/library/library";
+import { registerDirector, resumeWaitingShots } from "@/lib/studio/director";
 import { registerImageStudio } from "@/lib/studio/image";
 import { registerRecastStudio } from "@/lib/studio/recast";
 import { registerRemix } from "@/lib/studio/remix";
@@ -28,16 +29,19 @@ async function bootstrap() {
     // IndexedDB unavailable (private mode in some browsers): start without a saved key.
   }
   // Outputs with a cast are scored in the browser; the studios add their
-  // follow-up work (drift retries, Still first, finals' last frames).
+  // follow-up work (drift retries, Still first, finals' last frames, Director
+  // shots waiting to continue from the shot before).
   setScorer(scoreJobOutputs);
   registerImageStudio();
   registerVideoStudio();
   registerRecastStudio();
+  registerDirector();
   registerRemix();
   // Unfinished jobs pick up where they stopped. Polling needs a key, so jobs
   // are resumed again whenever one is added.
   void resumeJobs().catch(() => undefined);
   void resumeChains().catch(() => undefined);
+  void resumeWaitingShots().catch(() => undefined);
   // Ask the browser not to evict the library (spec: Data model).
   void persistStorage();
   useKeyStore.subscribe((state, previous) => {

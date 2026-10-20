@@ -19,6 +19,15 @@ export { AI_COMMENT };
 export interface StitchClip {
   durationSec: number;
   hasAudio: boolean;
+  // Director chaining: this clip starts on the previous clip's last frame, so
+  // it joins with a straight cut and drops that repeated first frame.
+  continues?: boolean;
+}
+
+export interface StitchSource {
+  blob: Blob;
+  durationSec: number;
+  continues?: boolean;
 }
 
 // What ffmpeg reports about an input's streams.
@@ -67,33 +76,44 @@ const fixed = (n: number) => n.toFixed(3);
 // The filter graph and arguments, separate from ffmpeg so they can be tested.
 export function stitchArgs(inputs: string[], clips: StitchClip[], o: StitchOptions, output: string): string[] {
   const { width: w, height: h } = o;
+  const frame = 1 / STITCH_FPS;
+  const chained = (i: number) => i > 0 && Boolean(clips[i]!.continues);
+  const lengths = clips.map((clip, i) => clip.durationSec - (chained(i) ? frame : 0));
   const graph: string[] = [];
   clips.forEach((clip, i) => {
-    const d = fixed(clip.durationSec);
+    const d = fixed(lengths[i]!);
+    const skip = chained(i);
     graph.push(
-      `[${i}:v]scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,fps=${STITCH_FPS},format=yuv420p,trim=duration=${d},setpts=PTS-STARTPTS[v${i}]`,
+      `[${i}:v]scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,fps=${STITCH_FPS},format=yuv420p,trim=${skip ? "start_frame=1:" : ""}duration=${d},setpts=PTS-STARTPTS[v${i}]`,
     );
     graph.push(
       clip.hasAudio
-        ? `[${i}:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,apad,atrim=duration=${d},asetpts=PTS-STARTPTS[a${i}]`
+        ? `[${i}:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,apad,atrim=${skip ? `start=${fixed(frame)}:` : ""}duration=${d},asetpts=PTS-STARTPTS[a${i}]`
         : `anullsrc=r=48000:cl=stereo,atrim=duration=${d},aformat=sample_fmts=fltp:channel_layouts=stereo[a${i}]`,
     );
   });
 
-  if (!o.crossfade || clips.length < 2) {
+  // Which joins fade: with crossfades on, every one except into a continued clip.
+  const fades = clips.map((_, i) => o.crossfade && i > 0 && !chained(i));
+  if (!fades.some(Boolean)) {
     graph.push(`${clips.map((_, i) => `[v${i}][a${i}]`).join("")}concat=n=${clips.length}:v=1:a=1[v][a]`);
   } else {
     const fade = CROSSFADE_FRAMES / STITCH_FPS;
-    let offset = 0;
+    let length = lengths[0]!;
     let v = "v0";
     let a = "a0";
     for (let i = 1; i < clips.length; i++) {
-      offset += clips[i - 1]!.durationSec - fade;
       const last = i === clips.length - 1;
       const nv = last ? "v" : `x${i}`;
       const na = last ? "a" : `y${i}`;
-      graph.push(`[${v}][v${i}]xfade=transition=fade:duration=${fixed(fade)}:offset=${fixed(offset)}[${nv}]`);
-      graph.push(`[${a}][a${i}]acrossfade=d=${fixed(fade)}[${na}]`);
+      if (fades[i]) {
+        graph.push(`[${v}][v${i}]xfade=transition=fade:duration=${fixed(fade)}:offset=${fixed(length - fade)}[${nv}]`);
+        graph.push(`[${a}][a${i}]acrossfade=d=${fixed(fade)}[${na}]`);
+        length += lengths[i]! - fade;
+      } else {
+        graph.push(`[${v}][${a}][v${i}][a${i}]concat=n=2:v=1:a=1[${nv}][${na}]`);
+        length += lengths[i]!;
+      }
       v = nv;
       a = na;
     }
@@ -130,8 +150,10 @@ export async function probeInput(ffmpeg: FFmpeg, name: string): Promise<Probe> {
   return parseProbe(lines.filter((l) => l.includes("Stream #")).join("\n"));
 }
 
+// Stream copy keeps a continued clip's repeated first frame (one frame, 42 ms):
+// dropping it would need a re-encode, which is what row 15 avoids.
 export async function stitchClips(
-  sources: { blob: Blob; durationSec: number }[],
+  sources: StitchSource[],
   options: StitchOptions,
   onProgress?: (share: number) => void,
 ): Promise<Blob> {
@@ -160,7 +182,7 @@ export async function stitchClips(
       await ffmpeg.writeFile(list, inputs.map((name) => `file '${name}'`).join("\n"));
       code = await ffmpeg.exec(copyArgs(list, output));
     } else {
-      const clips = sources.map((s, i) => ({ durationSec: s.durationSec, hasAudio: Boolean(probes[i]!.audio) }));
+      const clips = sources.map((s, i) => ({ durationSec: s.durationSec, hasAudio: Boolean(probes[i]!.audio), ...(s.continues ? { continues: true } : {}) }));
       code = await ffmpeg.exec(stitchArgs(inputs, clips, options, output));
     }
     if (code !== 0) throw new Error("The scene couldn't be joined.");
