@@ -1,0 +1,70 @@
+// npm run workflows:check: checks workflows/*.api.json against the node
+// definitions ComfyUI publishes (Comfy Cloud's /api/object_info): every node
+// type exists, every input name is one the node takes, and every choice is
+// one of its options. Free to run; nothing executes. Reads COMFY_API_KEY from
+// the shell, like smoke.
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
+type Spec = [unknown, Record<string, unknown>?];
+type Inputs = { required?: Record<string, Spec>; optional?: Record<string, Spec> };
+type Allowed = { options?: unknown[]; min?: number; max?: number; link?: boolean };
+
+const key = process.env.COMFY_API_KEY?.trim();
+if (!key) {
+  console.error("Set COMFY_API_KEY in your shell first.");
+  process.exit(2);
+}
+const res = await fetch("https://cloud.comfy.org/api/object_info", { headers: { "X-API-Key": key } });
+if (!res.ok) throw new Error(`object_info: HTTP ${res.status}`);
+const catalog = (await res.json()) as Record<string, { input: Inputs }>;
+
+// Dynamic inputs (a model choice with its own inputs, a growing list of image
+// slots) are flattened to the dotted names a prompt uses.
+function flatten(inputs: Inputs, prefix: string, chosen: Record<string, unknown>, out: Record<string, Allowed>): void {
+  for (const group of [inputs.required, inputs.optional]) {
+    for (const [name, [type, opts = {}]] of Object.entries(group ?? {})) {
+      const id = prefix ? `${prefix}.${name}` : name;
+      if (type === "COMFY_DYNAMICCOMBO_V3") {
+        const options = opts.options as { key: string; inputs: Inputs }[];
+        out[id] = { options: options.map((o) => o.key) };
+        const pick = options.find((o) => o.key === chosen[id]);
+        if (pick) flatten(pick.inputs, id, chosen, out);
+      } else if (type === "COMFY_AUTOGROW_V3") {
+        for (const n of ((opts.template as { names?: string[] }).names ?? [])) out[`${id}.${n}`] = { link: true };
+      } else if (Array.isArray(type)) out[id] = { options: type };
+      else if (type === "COMBO") out[id] = { options: opts.options as unknown[] };
+      else out[id] = { min: opts.min as number | undefined, max: opts.max as number | undefined };
+    }
+  }
+}
+
+const problems: string[] = [];
+for (const file of readdirSync("workflows").filter((f) => f.endsWith(".api.json"))) {
+  const prompt = JSON.parse(readFileSync(join("workflows", file), "utf8")) as Record<string, { class_type: string; inputs: Record<string, unknown> }>;
+  for (const [id, node] of Object.entries(prompt)) {
+    const where = `${file} node ${id} (${node.class_type})`;
+    const def = catalog[node.class_type];
+    if (!def) {
+      problems.push(`${where}: no such node`);
+      continue;
+    }
+    const allowed: Record<string, Allowed> = {};
+    flatten(def.input, "", node.inputs, allowed);
+    for (const [name, value] of Object.entries(node.inputs)) {
+      const a = allowed[name];
+      if (!a) problems.push(`${where}: takes no input ${name}`);
+      else if (Array.isArray(value)) continue; // a link to another node
+      // Image files are whatever the user puts in ComfyUI/input/.
+      else if (a.options && !(node.class_type === "LoadImage" && name === "image") && !a.options.includes(value)) problems.push(`${where}: ${name} ${JSON.stringify(value)} isn't an option`);
+      else if (typeof value === "number" && ((a.min !== undefined && value < a.min) || (a.max !== undefined && value > a.max))) problems.push(`${where}: ${name} ${value} is out of range`);
+    }
+    for (const name of Object.keys(def.input.required ?? {})) if (!(name in node.inputs)) problems.push(`${where}: missing ${name}`);
+  }
+  console.log(`checked ${file}: ${Object.keys(prompt).length} nodes`);
+}
+if (problems.length) {
+  for (const p of problems) console.error(`✗ ${p}`);
+  process.exit(1);
+}
+console.log("Every node, input and option matches ComfyUI's published definitions.");

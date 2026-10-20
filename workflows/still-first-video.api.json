@@ -1,0 +1,159 @@
+{
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-sheet.jpg"
+    },
+    "_meta": {
+      "title": "Character sheet"
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-front.jpg"
+    },
+    "_meta": {
+      "title": "Character front view"
+    }
+  },
+  "4": {
+    "class_type": "GeminiNanoBanana2V2",
+    "inputs": {
+      "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD looks up from a sealed envelope toward the diner door, and almost smiles.\nClose-up of the face, 35mm lens, lit only by practical lamps in the scene.\nNatural skin texture with visible pores, real lens imperfections.",
+      "model": "Gemini Nano Banana 2.1",
+      "model.aspect_ratio": "16:9",
+      "model.resolution": "2K",
+      "model.thinking_level": "HIGH",
+      "seed": 7,
+      "response_modalities": "IMAGE",
+      "system_prompt": "",
+      "temperature": 1,
+      "top_p": 0.95,
+      "model.images.image_1": [
+        "2",
+        0
+      ],
+      "model.images.image_2": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Opening still (character)"
+    }
+  },
+  "5": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "portraius/still-first/still",
+      "images": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save image"
+    }
+  },
+  "6": {
+    "class_type": "MinimaxHailuo03FirstLastFrameNode",
+    "inputs": {
+      "model": "MiniMax H3",
+      "model.prompt": "Walt Harmon looks up from a sealed envelope toward the diner door, and almost smiles.\nClose-up of the face, 35mm lens, the camera slowly pushes in toward the subject, lit only by practical lamps in the scene.",
+      "model.resolution": "768P",
+      "model.duration": 5,
+      "seed": 7,
+      "watermark": false,
+      "first_frame": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "MiniMax H3 (clips with people)"
+    }
+  },
+  "7": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "video/portraius-still-first",
+      "format": "auto",
+      "format.codec": "auto",
+      "video": [
+        "6",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save video"
+    }
+  },
+  "8": {
+    "class_type": "GeminiNanoBanana2V2",
+    "inputs": {
+      "prompt": "Rain streaks the diner window at night. Inside, an empty booth and a cup of coffee going cold under a hanging lamp.\nWide shot showing the full figure in the setting, 35mm lens, lit only by practical lamps in the scene.",
+      "model": "Gemini Nano Banana 2.1",
+      "model.aspect_ratio": "16:9",
+      "model.resolution": "2K",
+      "model.thinking_level": "HIGH",
+      "seed": 11,
+      "response_modalities": "IMAGE",
+      "system_prompt": "",
+      "temperature": 1,
+      "top_p": 0.95
+    },
+    "_meta": {
+      "title": "Opening still (no people)"
+    }
+  },
+  "9": {
+    "class_type": "ByteDance2FirstLastFrameNode",
+    "inputs": {
+      "model": "Seedance 2.5 Draft",
+      "model.prompt": "Rain streaks the diner window at night. Inside, an empty booth and a cup of coffee going cold under a hanging lamp.\nWide shot showing the full figure in the setting, 35mm lens, the camera slowly pushes in toward the subject.",
+      "model.resolution": "480p",
+      "model.duration": 5,
+      "model.generate_audio": true,
+      "model.output_format": "mp4",
+      "seed": 1234,
+      "watermark": false,
+      "first_frame_asset_id": "",
+      "last_frame_asset_id": "",
+      "first_frame": [
+        "8",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Seedance 2.5 draft (480p)"
+    }
+  },
+  "10": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "video/portraius-draft",
+      "format": "auto",
+      "format.codec": "auto",
+      "video": [
+        "9",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save video"
+    }
+  },
+  "11": {
+    "class_type": "PreviewAny",
+    "inputs": {
+      "source": [
+        "9",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "Preview as Text"
+    }
+  }
+}
