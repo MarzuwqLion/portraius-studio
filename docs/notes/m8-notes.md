@@ -108,3 +108,13 @@ Below.
 `6de75250-f6a1-423a-a1ff-1a6c8b86e055`), a Seedance 4 s 480p draft through the Worker (request
 `c9668162-aacc-405b-9732-fc5b5499bdbf`), and a queued handle rebuilt from a stored request ID. Pushing
 `main` deploys GitHub Pages.
+
+### On GitHub Pages after the deploy (run 39379895190, build and deploy green)
+
+- `#/tour` with the production CSP: all 27 images and 7 videos load (every video to `readyState` 4 with
+  the right length), 12 "Pre-made sample" labels.
+- "Add Walt Harmon to your vault" imported him into the Pages origin's vault (which held only Marzuwq's own
+  character) as a usable designed character.
+- With the key already saved on that origin: Image studio, cast Walt, "{lead} buys a newspaper at a harbour
+  kiosk at dawn", 1K Fast. Done 34 s after the click (request `4072e2eb…`), identity 67 (a wide shot, so a
+  small face). Tour to first image is well under the 3-minute bar.
