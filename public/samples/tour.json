@@ -1,0 +1,125 @@
+{
+  "format": "portraius.tour",
+  "version": 1,
+  "character": {
+    "name": "Walt Harmon",
+    "origin": "designed",
+    "description": "Designed from a description: four candidate faces, one pick, then a turnaround sheet and four views. Retired harbour pilot, tall and lean, usually in a navy wool peacoat. Everything that makes him is one .portraius file, face data included. A character made from photos also carries the webcam consent record.",
+    "file": "walt-harmon.portraius",
+    "sheet": { "src": "walt-sheet.jpg", "width": 1920, "height": 1072 },
+    "views": [
+      { "label": "Front", "src": "walt-front.jpg", "width": 806, "height": 1000 },
+      { "label": "Three-quarter", "src": "walt-three-quarter.jpg", "width": 806, "height": 1000 },
+      { "label": "Profile", "src": "walt-profile.jpg", "width": 806, "height": 1000 },
+      { "label": "Full body", "src": "walt-full-body.jpg", "width": 558, "height": 1000 }
+    ]
+  },
+  "sections": [
+    {
+      "id": "images",
+      "title": "Images with an identity score",
+      "body": "Each still is scored against Walt's own face data, in the browser. 80 or more is a strong match. Under 60, the app retries once on its own and shows both.",
+      "items": [
+        {
+          "media": { "kind": "image", "src": "walt-diner.jpg", "width": 1289, "height": 1600, "alt": "Walt reading a paperback in a corner booth of a late-night diner, rain on the window behind him" },
+          "caption": "Corner booth: 85 mm, medium close-up, soft key",
+          "model": "Nano Banana 2.1",
+          "score": 96
+        },
+        {
+          "media": { "kind": "image", "src": "walt-letter.jpg", "width": 1600, "height": 893, "alt": "Walt looks up from an envelope toward the diner door and almost smiles" },
+          "caption": "An anchor still from a Director scene: close-up, 35 mm",
+          "model": "Nano Banana 2.1",
+          "score": 98
+        },
+        {
+          "media": { "kind": "image", "src": "walt-pier.jpg", "width": 1600, "height": 893, "alt": "Walt at the end of a wooden pier at dusk, turning toward the camera with a faint smile" },
+          "caption": "End of the pier at dusk",
+          "model": "Nano Banana 2.1",
+          "score": 94
+        }
+      ]
+    },
+    {
+      "id": "realism",
+      "title": "Make it real",
+      "body": "One click adds real skin texture to a still, then scores it again. Here the score went from 96 to 81: still a strong match, and the reason the app scores the result instead of assuming it.",
+      "items": [
+        {
+          "media": { "kind": "beforeAfter", "before": "walt-diner.jpg", "after": "walt-diner-real.jpg", "width": 1289, "height": 1600, "alt": "Walt in the diner booth" },
+          "caption": "Skin pass at strength 80",
+          "model": "Freepik skin enhancer",
+          "before": 96,
+          "after": 81
+        }
+      ]
+    },
+    {
+      "id": "video",
+      "title": "Video, draft first",
+      "body": "A clip without people starts as a cheap 480p draft. The 1080p final is rendered from the draft's ID, with nothing sent again. A clip with a person in it renders on MiniMax H3 and is scored one frame a second.",
+      "items": [
+        {
+          "media": { "kind": "video", "src": "diner-window-draft.mp4", "width": 856, "height": 478, "alt": "Rain on a diner window at night, an empty booth and a cup of coffee, 480p draft" },
+          "caption": "The 480p draft",
+          "model": "Seedance 2.5"
+        },
+        {
+          "media": { "kind": "video", "src": "diner-window.mp4", "width": 1920, "height": 1080, "alt": "Rain on a diner window at night, an empty booth and a cup of coffee, 1080p final" },
+          "caption": "The 1080p final, from the draft's ID",
+          "model": "Seedance 2.5"
+        },
+        {
+          "media": { "kind": "video", "src": "walt-looks-up.mp4", "width": 1344, "height": 768, "alt": "Walt looks up from an envelope toward the door and almost smiles" },
+          "caption": "From the anchor still above, 5 s at 768P",
+          "model": "MiniMax H3",
+          "score": 95,
+          "worst": 93
+        }
+      ]
+    },
+    {
+      "id": "recast",
+      "title": "Recast",
+      "body": "Walt takes over a performer's clip, keeping the motion, the timing and the camera. The original performer is a designed person made for testing; Recast only ever takes a face from your vault.",
+      "items": [
+        {
+          "media": { "kind": "split", "original": "concert-original.mp4", "recast": "concert-recast.mp4", "width": 1344, "height": 768 },
+          "caption": "Concert stage preset. Drag the line to compare.",
+          "model": "MiniMax H3",
+          "score": 89.5,
+          "worst": 82
+        },
+        {
+          "media": { "kind": "video", "src": "concert-9x16.mp4", "width": 720, "height": 1280, "alt": "The original and the recast in one 9:16 frame, then the Made with Portraius Studio end card" },
+          "caption": "Export 9:16, with the end card",
+          "model": "Made in the browser"
+        }
+      ]
+    },
+    {
+      "id": "director",
+      "title": "Director",
+      "body": "A scene planned as shots: film settings once, an anchor still per shot, a clip per shot, then one MP4 joined in the browser with crossfades.",
+      "items": [
+        {
+          "media": { "kind": "video", "src": "the-letter.mp4", "width": 1280, "height": 720, "alt": "The Letter: a retired harbour pilot finds a letter he never sent, in three shots" },
+          "caption": "The Letter: three shots, 15 s",
+          "model": "Seedance 2.5 and MiniMax H3"
+        }
+      ]
+    },
+    {
+      "id": "elements",
+      "title": "Elements",
+      "body": "Outfits, props and locations are saved like characters, from 1 to 6 photos, and ride along in any shot as {outfit}, {prop} or {location}.",
+      "items": [
+        {
+          "media": { "kind": "image", "src": "satchel-sheet.jpg", "width": 1376, "height": 768, "alt": "Reference sheet of a worn tan leather satchel: front, three-quarter, side and a close-up of a brass buckle" },
+          "caption": "A prop's reference sheet, from one photo",
+          "model": "Nano Banana 2.1"
+        }
+      ]
+    }
+  ]
+}

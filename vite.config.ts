@@ -69,11 +69,48 @@ function devCheckResults(): Plugin {
   };
 }
 
+// Dev server only: Tour samples are picked from the local library in the
+// browser and posted here, landing in public/samples/. Never part of a build.
+function devSamples(): Plugin {
+  return {
+    name: "portraius-dev-samples",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use("/__dev/samples/", (req, res) => {
+        const name = decodeURIComponent((req.url ?? "").replace(/^\//, ""));
+        if (req.method !== "POST" || !/^[a-z0-9][a-z0-9-]*\.(jpg|png|mp4|json|portraius)$/.test(name)) {
+          res.statusCode = 400;
+          res.end();
+          return;
+        }
+        const chunks: Buffer[] = [];
+        let size = 0;
+        req.on("data", (chunk: Buffer) => {
+          size += chunk.length;
+          if (size <= 60_000_000) chunks.push(chunk);
+        });
+        req.on("end", () => {
+          if (size > 60_000_000) {
+            res.statusCode = 413;
+            res.end();
+            return;
+          }
+          const dir = fileURLToPath(new URL("./public/samples/", import.meta.url));
+          mkdirSync(dir, { recursive: true });
+          writeFileSync(`${dir}${name}`, Buffer.concat(chunks));
+          res.statusCode = 204;
+          res.end();
+        });
+      });
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
   return {
     base: env.VITE_BASE || "/portraius-studio/",
-    plugins: [react(), tailwindcss(), contentSecurityPolicy(env), devCheckResults()],
+    plugins: [react(), tailwindcss(), contentSecurityPolicy(env), devCheckResults(), devSamples()],
     // ffmpeg.wasm starts its own worker, which Vite's dependency pre-bundling breaks.
     optimizeDeps: { exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/util"] },
     resolve: {
