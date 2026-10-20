@@ -25,7 +25,8 @@ competition (#OpenSourceHiggsfield).
 
 - **A character is a file you own.** A `.portraius` file is a zip of the photos, a turnaround sheet with four
   views, face data and the consent record. Export it, back it up, send it to someone you're making things with,
-  import it on another machine. Elements (outfits, props, locations) use the same format.
+  import it on another machine, or open it in ComfyUI with the node pack. Elements (outfits, props, locations)
+  use the same format.
 - **Consent is built in.** A character from photos needs a short webcam check (three random prompts, a head-turn
   check and a face match against the photos) and the subject's typed name and 18+ statement. An import without a
   consent record stays locked: viewable, never usable.
@@ -35,9 +36,13 @@ competition (#OpenSourceHiggsfield).
 - **Recast and Director, open.** Recast (the Genjutsu rebuild) keeps a clip's motion and camera and swaps in a
   character from your vault, swaps one object, or restyles it, with original and result side by side. Director
   (the Cinema Studio rebuild) plans a scene as shots with camera and lens controls, an anchor still per shot,
-  a clip per shot, and one stitched MP4.
+  a clip per shot, and one stitched MP4. A shot can pick up from the last frame of the one before; Kling can shoot
+  the whole scene as one quick take; Claude can draft the shot list from a logline.
 - **Presets anyone can add.** Camera moves, looks, image, video and Recast presets are JSON files in `presets/`,
   checked on every pull request. Any result can be shared as a remix link that carries the recipe, never a face.
+- **Voices and lip sync.** Give a character one of 12 stock voices, write a line, and either lip-sync an existing
+  clip to it (Sync-3) or have MiniMax H3 draw a new clip of the character saying it. Director shots can speak too.
+  Stock voices only: no voice cloning.
 - **Finishing.** "Make it real" adds skin texture to a still and scores it again, with a before/after wipe.
   "Export 9:16" puts a clip, or a Recast's original and result, in one vertical frame with an optional end card.
   Every file you download is tagged as AI-generated (see Responsible use).
@@ -62,13 +67,16 @@ tick "Remember on this device". There's no `.env` key and no server to hold one.
 | `npm run smoke` | One image, one video draft, an estimate and a resumed job against real Router calls, with `COMFY_API_KEY` from your shell (costs cents) |
 | `npm run presets:check` | Validates `presets/` |
 | `npm run workflows` / `workflows:check` | Rebuilds `workflows/` from the app's prompts / checks them against ComfyUI's node definitions |
+| `npm run nodepack` | Rebuilds the ComfyUI node pack's presets, prompt cases and example workflow from the app |
+| `npm run voices:check` | Speaks one line in every voice in `presets/voices.json` through Router (costs cents) |
 | `npm run build` | The static site in `dist/`, as GitHub Pages serves it |
 
 ## Models
 
 Every call goes through [Comfy Router](https://docs.comfy.org/development/comfy-router/queue.md), queued so it
-survives a reload. Model IDs live in one file, `src/lib/registry/models.ts`. No request sends `model_provider`, so
-each model is served by its own provider.
+survives a reload; only ElevenLabs runs on Router's synchronous route, because it answers with the audio itself.
+Model IDs live in one file, `src/lib/registry/models.ts`. No request sends `model_provider` (and the synchronous
+call sends `fallback_provider=false`), so each model is served by its own provider.
 
 | Model | Router ID | What it does here |
 | --- | --- | --- |
@@ -77,7 +85,11 @@ each model is served by its own provider.
 | MiniMax H3 | `minimax/minimax-h3` | Every video with a person in it, and Recast's Motion Transfer. Seedance refuses photoreal people as input images |
 | HappyHorse 1.0 video edit | `wan/happyhorse-1.0-video-edit` | Recast's Object Swap and setting changes, keeping the clip's timing |
 | Freepik skin enhancer | `freepik/ai-skin-enhancer-faithful` | Make it real |
-| Kling V3 Omni, Wan 2.7, BFL video edit | `kling/kling-v3-omni`, `wan/wan2.7-videoedit`, `bfl/video-edit-v1` | Object Swap alternatives, compared in [`docs/notes/recast-ab.md`](docs/notes/recast-ab.md) |
+| Kling V3 Omni | `kling/kling-v3-omni` | Director's one-take: every shot of a scene in one clip, each with its own prompt |
+| ElevenLabs v4 | `elevenlabs/eleven_v4` | A character's lines, in 12 checked stock voices |
+| Sync-3 | `synclabs/sync-3` | Lip sync: moves the mouth of a finished clip to a line |
+| Claude Sonnet 5.5 | `anthropic/claude-sonnet-5-5` | Director's "Draft shots with AI" |
+| Wan 2.7, BFL video edit | `wan/wan2.7-videoedit`, `bfl/video-edit-v1` | Object Swap alternatives, compared with Kling in [`docs/notes/recast-ab.md`](docs/notes/recast-ab.md) |
 
 ## Costs
 
@@ -99,9 +111,9 @@ Library   <- download (bytes in IndexedDB) <---- result <-------------+
 
 The request runs left to right; the result comes back right to left, its bytes saved before the link expires,
 then scored in the browser. A small Cloudflare Worker ([`proxy/`](proxy/README.md)) does the two things a browser
-can't: it hosts short-lived copies of clips that providers fetch by URL (deleted when the job ends, and by R2
-after a day), and streams back results from hosts that send no CORS headers. It forwards requests and stores no
-keys.
+can't: it hosts short-lived copies of clips and lines that providers fetch by URL (deleted when the job ends, and
+by R2 after a day), and streams back results from hosts a browser can't download from (Comfy's Seedance bucket,
+Sync Labs). It forwards requests and stores no keys.
 
 | Folder | Holds |
 | --- | --- |
@@ -116,6 +128,7 @@ keys.
 | `presets/` | Camera, look, image, video and Recast presets |
 | `public/samples/` | Tour mode's samples |
 | `workflows/` | The ComfyUI workflows |
+| `custom_nodes/comfyui-portraius-characters/` | The ComfyUI node pack |
 | `proxy/` | The Cloudflare Worker |
 | `docs/` | The build spec ([`docs/SPEC.md`](docs/SPEC.md)) and per-milestone notes |
 
@@ -129,7 +142,13 @@ format, built from Comfy's partner nodes:
   Seedance 2.5 draft, then its 1080p final.
 
 They're generated from the app's own prompt code, so a graph sends what the app sends, and checked against
-ComfyUI's published node definitions. The `.portraius` node pack for ComfyUI is planned (P2) and not built.
+ComfyUI's published node definitions.
+
+The node pack in [`custom_nodes/comfyui-portraius-characters/`](custom_nodes/comfyui-portraius-characters/README.md)
+brings the character file itself into ComfyUI: **Load Portraius Character** (a person from photos needs their
+consent record, as in the app), **Character Prompt** (a Python port of the app's prompt compiler, tested word for
+word against it, with the reference images it names) and **Identity Score** (0 to 100 on the app's scale, from
+FaceNet). Copy the folder into `ComfyUI/custom_nodes/`; an example workflow comes with it.
 
 ## Responsible use
 

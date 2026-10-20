@@ -50,6 +50,7 @@ Marzuwq settled every open decision on October 19. Claude Code builds to these; 
 | Keys | The visitor's own Comfy API key, plus a no-key Tour mode with pre-made samples. |
 | Demo video | Marzuwq records it after testing. Not part of Claude Code's milestones. |
 | Sample character | Marzuwq provides it after everything else is built. Until then, build and test with designed characters. |
+| M7 open questions (October 20) | Marzuwq: "go with your best recommendation". A spoken line is a direct call outside the job state machine; the line rides on its clip as an audio asset (no audio generation type); the second lip sync path is MiniMax H3 reference mode, which is also Unknowns row 17's fallback; the Worker may be updated and redeployed for Sync Labs downloads; the node pack is built and tested in a local ComfyUI, and publishing waits for Marzuwq's Comfy Registry publisher. |
 
 ### Defaults
 
@@ -138,7 +139,7 @@ In `@comfyorg/sdk` 0.5.0, the Router client (the `comfy` namespace) pulls in exa
 | `POST /upload` | Streams the file into R2 under a random key and returns `{ url, expiresAt }` | Caller's key checked once with `GET /v2/models?limit=1` and cached 10 minutes; 100 MB cap; MIME allowlist (mp4, mov, wav, mp3, png, jpeg) |
 | `GET /m/:key` | Serves the R2 object publicly so providers can fetch it | Unguessable 128-bit key |
 | `DELETE /m/:key` | The app deletes each upload as soon as its job finishes | Same key check as upload |
-| `GET /fetch?url=` | Streams a result asset back with CORS headers | `https` only; host allowlist from the M1 findings |
+| `GET /fetch?url=` | Streams a result asset back with CORS headers | `https` only; host allowlist from the M1 findings; follows a redirect only to another allowed link (M7: Sync Labs sends results on to S3) |
 
 Every route limits CORS to the GitHub Pages origin and `localhost`, rate-limits each IP to 30 requests a minute, and an R2 lifecycle rule deletes anything older than 1 day (R2 rules count in whole days).
 
@@ -206,8 +207,8 @@ Every model is reached through one registry entry plus one adapter, and nothing 
 | Multi-shot and video edit | `kling/kling-v3-omni` | Queue | `image_list` as base64 or URL (refs or first/end frame); `video_list` as URL only, with `refer_type: "base"` to edit one 3 to 10 s clip; `multi_shot` with up to 6 shots | `data.task_result.videos[].url` |
 | Realism pass | `freepik/ai-skin-enhancer-faithful` | Queue | `image` as base64 or HTTPS; `skin_detail`, `sharpen`, `smart_grain` | `data.generated[]`. Freepik's own links, not rehosted. |
 | Voice | `elevenlabs/eleven_v4` | Sync only (returns raw audio bytes) | `inputs[]` of `{text, voice_id}`. Stock voices only; this route has no voice cloning. | The response body is the audio |
-| Lip sync | `synclabs/sync-3` | Queue | Public URLs only: one video or image plus one audio | `outputUrl`. Sync Labs' own link, not rehosted. |
-| Director agent (P2) | `anthropic/claude-sonnet-5-5` | Sync | Text | Text |
+| Lip sync | `synclabs/sync-3` | Queue | Public URLs only: one video or image plus one audio | `outputUrl`. Sync Labs' own link, not rehosted; it refuses browsers, so it comes through the Worker (M7). |
+| Director agent (P2) | `anthropic/claude-sonnet-5-5` | Queue (M7: Router's queue takes it) | Text, with a JSON schema for the reply | Text |
 | Identity second opinion (optional) | `vertexai/gemini-3.8-flash` | Sync | Base64 images | Text (JSON verdict) |
 
 ### Adapter contract
@@ -279,7 +280,7 @@ Every assumption this spec couldn't verify, where it gets checked, and what to b
 | 14 | face-api's weights can be redistributed in the repo | M5 | Load the weights at runtime from the author's release URL (add that host to the CSP) and note it in the README |
 | 15 | Single-thread ffmpeg.wasm stitches a 3-shot 1080p scene in under 2 minutes | M6 | Stream-copy concat (`-c copy`) when every shot shares codec and size; otherwise stitch at 720p |
 | 16 | ElevenLabs stock voice IDs work through Router | M7 | Drop voice and lip sync |
-| 17 | Sync-3 lip sync looks right | M7 | Use the Seedance `reference_audio` path instead |
+| 17 | Sync-3 lip sync looks right | M7 | Use MiniMax H3 reference mode with the line as `reference_audio` instead (decided October 20: Seedance refuses photoreal people) |
 
 ## Data model and local-first storage
 
@@ -766,7 +767,7 @@ export type Shot = {
 1. **Scene card.** Logline, cast, a location element, and the film settings.
 2. **Shot list.** Rows the user adds and edits. P2 adds "Draft with AI": `anthropic/claude-sonnet-5-5` returns 3 to 6 shots as JSON matching the `Shot` schema, which the user then edits.
 3. **Anchors.** For each shot, Nano Banana 2.1 draws 2 to 4 stills with the cast references and camera phrases. The user picks one as the anchor; identity scores show on each.
-4. **Animate.** Each shot becomes a Seedance draft with its anchor as `first_frame`. Chaining (P2): when `continuity` is `continue`, the previous shot's last frame is used instead.
+4. **Animate.** Each shot becomes a Seedance draft with its anchor as `first_frame` (MiniMax H3 when a person is in that frame). Chaining (P2, built in M7): when `continuity` is `continue`, the previous shot's last frame is used instead; a continued shot waits for that take, goes stale when it's re-rolled or moved, and joins the export with a straight cut.
 5. **Review.** Drafts sit in a timeline strip. Drag to reorder, re-roll any shot, render finals for approved ones.
 6. **Export.** ffmpeg.wasm re-encodes every final to 1080p, 24 fps, AAC, then concatenates them with optional 6-frame crossfades. The MP4 goes into the library and downloads.
 
@@ -779,6 +780,8 @@ export type Shot = {
 ### One-take multi-shot (P2)
 
 For short sequences (up to 15 s total), offer Kling V3 Omni's built-in multi-shot: `multi_shot: true`, `shot_type: "customize"`, and up to 6 `multi_prompt` entries, each with its own prompt (512 characters max) and duration. Good for a fast first pass before refining shot by shot.
+
+Built in M7 at 720p (`std`): the cast's sheets go in `image_list` (Kling accepts references with `multi_shot`), each shot's prompt names them with Kling's `<<<image_n>>>` tokens, scenes over 15 s are shortened to fit, and 21:9 shoots at 16:9.
 
 ## Identity match score
 
@@ -830,15 +833,17 @@ Three add-ons that sit on top of results: a one-click realism pass for stills (P
 
 - **Model:** `elevenlabs/eleven_v4`, which on Router is ElevenLabs text-to-dialogue: `inputs[]` of `{ text, voice_id }`, up to 10 distinct voices in one call. A two-character exchange is a single request.
 - **Voices:** stock voices only. This route has no cloning, which also keeps voice likeness out of scope. Ship a curated list of about 12 stock voice IDs in `presets/voices.json` and confirm each works through Router in M7.
-- **Delivery:** the response body is raw audio bytes, so it can't be queued. Call the synchronous route with `fallback_provider=false`.
+- **Delivery:** the response body is raw audio bytes, so it can't be queued. Call the synchronous route with `fallback_provider=false`. A spoken line is a direct call outside the job state machine (`lib/jobs/direct.ts`), saved straight to the blobs table.
 - A character can store a default `voice` so it travels with the file.
 
 ### Lip sync (P2)
 
-Two paths, tested side by side in M7:
+Two paths, tested side by side in M7 (docs/notes/m7-notes.md):
 
-1. **Post-sync (default):** a finished video plus the dialogue audio go to `synclabs/sync-3` as `input: [{ type: "video", url }, { type: "audio", url }]` with `options.sync_mode: "cut_off"`. Both inputs must be public URLs, so both go through `lib/media/host.ts`. The result's `outputUrl` is Sync Labs' own link and isn't rehosted, so download it immediately.
-2. **Generate speaking:** Seedance 2.5 with the dialogue as `reference_audio` (a data URI is fine for audio), the anchor as `first_frame`, and a prompt like "LEAD speaks the line in the reference audio." One call instead of two, if the mouth sync holds up.
+1. **Post-sync:** a finished video plus the dialogue audio go to `synclabs/sync-3` as `input: [{ type: "video", url }, { type: "audio", url }]` with `options.sync_mode: "cut_off"`. Both inputs must be public URLs, so both go through `lib/media/host.ts`. The result's `outputUrl` is Sync Labs' own link and isn't rehosted, so download it immediately (through the Worker: it refuses requests from browsers).
+2. **Generate speaking:** MiniMax H3 with the cast's sheets as `reference_image` and the dialogue as `reference_audio`, and a prompt like "LEAD speaks the words in the reference audio." One call instead of two. The plan was Seedance 2.5 with the anchor as `first_frame`, but Seedance refuses photoreal people and H3 can't mix a first frame with reference media. H3 refuses the audio as a data URI, so it's hosted too.
+
+Both work. In the A/B the new speaking clip followed the words more closely and kept identity better, so it's the first offer on a clip with a cast; lip sync is the way to make an existing clip speak, and the one Director uses, since a shot keeps its anchor and its place in a chain. Either way the line is saved on the result as an audio asset.
 
 ## Presets and recipes
 
@@ -910,13 +915,13 @@ Built with the V3 node schema ([migration guide](https://docs.comfy.org/custom-n
 | --- | --- | --- | --- |
 | Load Portraius Character | `.portraius` file from `input/characters/` | `PORTRAIUS_CHARACTER`, sheet `IMAGE`, views `IMAGE` batch, photos `IMAGE` batch, name and description `STRING` | Raises an error for a photo-based person with no consent record, matching the app |
 | Character Prompt | One or more `PORTRAIUS_CHARACTER`, scene `STRING`, camera preset id | Compiled prompt `STRING`, reference `IMAGE` batch | A Python port of `compile.ts`, so graph outputs match app outputs. Plugs into existing partner nodes. |
-| Identity Score | `IMAGE` (or frame batch), `PORTRAIUS_CHARACTER` | Score `FLOAT`, report `STRING` | Uses `facenet-pytorch` (MIT). Scores won't match the browser's exactly; the README says so. |
+| Identity Score | `IMAGE` (or frame batch), `PORTRAIUS_CHARACTER` | Score `FLOAT`, report `STRING` | Uses `facenet-pytorch` (MIT), vendored: the package pins torch below 2.3, which would downgrade ComfyUI's. Scores won't match the browser's exactly; the README says so. |
 
 ### Publishing
 
 - `pyproject.toml` with `[project]` (name, version, license, repository URL) and `[tool.comfy]` (PublisherId, DisplayName, Icon), per the [Registry spec](https://docs.comfy.org/registry/specifications.md).
 - An `example_workflows/` folder so the graphs show up in ComfyUI's Template Browser.
-- Publish with `comfy node publish` or the Registry's GitHub Action ([publishing guide](https://docs.comfy.org/registry/publishing.md)).
+- Publish with `comfy node publish` or the Registry's GitHub Action ([publishing guide](https://docs.comfy.org/registry/publishing.md)). The pack lives in a subfolder, so `.github/workflows/publish-node-pack.yml` runs the action's steps from there, by hand only, once Marzuwq's publisher exists and its key is the `REGISTRY_ACCESS_TOKEN` secret.
 
 The pitch for Most Innovative: a character you make in the app is a file you can load in ComfyUI, score in ComfyUI, and share with anyone running either.
 
