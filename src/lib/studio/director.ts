@@ -364,16 +364,30 @@ export async function stopWaiting(sceneId: string, shotId: string): Promise<void
   });
 }
 
-// Takes the shot's wait, so two finished jobs can't both start it.
-async function claimWait(sceneId: string, shotId: string): Promise<boolean> {
-  let claimed = false;
-  await updateShot(sceneId, shotId, (s) => {
-    if (!s.waiting) return s;
-    claimed = true;
-    const { waiting: _w, ...rest } = s;
-    return rest;
-  });
-  return claimed;
+// A waiting shot keeps its flag until its take is recorded (animateShot
+// clears it then), so a page closed halfway through starting it starts it
+// again next time. One starter per shot: in this tab, and across tabs with a
+// Web Lock when the browser has them.
+const starting = new Set<string>();
+
+async function startWaiting(sceneId: string, shotId: string): Promise<void> {
+  if (starting.has(shotId)) return;
+  starting.add(shotId);
+  const work = async () => {
+    const shot = (await loadScene(sceneId))?.shots.find((s) => s.id === shotId);
+    if (!shot?.waiting) return;
+    // A re-roll when the shot already has a take, so it gets a new seed.
+    await animateShot(sceneId, shotId, Boolean(shot.takeJobId));
+  };
+  try {
+    const locks = globalThis.navigator?.locks;
+    if (locks) await locks.request(`portraius-shot-${shotId}`, { ifAvailable: true }, async (lock) => (lock ? work() : undefined));
+    else await work();
+  } catch (err) {
+    console.warn("a continued shot didn't start", { shot: shotId, error: (err as Error).message });
+  } finally {
+    starting.delete(shotId);
+  }
 }
 
 // Starts every waiting shot whose previous shot now has a finished take.
@@ -382,12 +396,7 @@ export async function resumeWaitingShots(): Promise<void> {
   for (const scene of await listScenes()) {
     for (const shot of scene.shots) {
       const previous = shot.waiting ? previousShot(scene, shot) : undefined;
-      if (!previous || !(await chainSourceJob(previous))) continue;
-      if (!(await claimWait(scene.id, shot.id))) continue;
-      // A re-roll when the shot already has a take, so it gets a new seed.
-      await animateShot(scene.id, shot.id, Boolean(shot.takeJobId)).catch((err) => {
-        console.warn("a continued shot didn't start", { shot: shot.id, error: (err as Error).message });
-      });
+      if (previous && (await chainSourceJob(previous))) await startWaiting(scene.id, shot.id);
     }
   }
 }
