@@ -35,9 +35,12 @@ export const REGISTRY: readonly RegistryEntry[] = [
   { id: MODEL_IDS.identityJudge, label: "Gemini 3.8 Flash", capabilities: ["vision.judge"], delivery: "sync" },
 ];
 
-// Seedance 2.5 is the default in every video mode. H3 is selectable, never the default.
+// Seedance 2.5 is the default for video without people. It refuses photoreal
+// people as input images (M3 notes), so every video with a person in it
+// renders on MiniMax H3 (Marzuwq's decision, October 19).
 export const DEFAULT_IMAGE_MODEL = MODEL_IDS.nanoBanana;
 export const DEFAULT_VIDEO_MODEL = MODEL_IDS.seedance;
+export const PEOPLE_VIDEO_MODEL = MODEL_IDS.minimaxH3;
 
 const BLOCKED_PROVIDERS = ["higgsfield"];
 

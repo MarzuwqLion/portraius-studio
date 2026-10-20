@@ -108,6 +108,11 @@ export function sharpness(source: HTMLCanvasElement, box: Box): number {
   return sumSq / n - mean * mean;
 }
 
+// Whether an image shows a person's face at all (any face 60 px or taller).
+export async function hasFace(image: HTMLCanvasElement): Promise<boolean> {
+  return (await detectFaces(image, 60)).length > 0;
+}
+
 export interface PhotoCheck {
   quality: PhotoQuality;
   descriptor?: number[];

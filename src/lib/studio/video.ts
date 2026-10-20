@@ -1,13 +1,14 @@
 // The Video studio's work (spec: Video studio): Seedance 2.5 drafts then
 // finals, MiniMax H3 as the selectable second model, Still first chaining,
 // Continue, and the last frame when a final has none (Unknowns row 9).
+import { hasFace } from "@/lib/identity/embed";
 import { onJobDone, retryJob, startJob, type JobInput } from "@/lib/jobs/runner";
-import { blobToBase64, prepareImage } from "@/lib/media/image-prep";
+import { blobToBase64, drawToCanvas, prepareImage } from "@/lib/media/image-prep";
 import { lastFrame } from "@/lib/media/video-frames";
 import { isStylised, type CameraSelection } from "@/lib/prompts/camera";
 import { compileImagePrompt, compileVideoPrompt } from "@/lib/prompts/compile";
 import type { GenerateVideoInput, H3Input, ImageAspectRatio, RenderFinalInput, VideoRatio } from "@/lib/registry/inputs";
-import { DEFAULT_VIDEO_MODEL, MODEL_IDS } from "@/lib/registry/models";
+import { DEFAULT_VIDEO_MODEL, MODEL_IDS, PEOPLE_VIDEO_MODEL } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
 import { getSettings } from "@/lib/store/settings";
 import type { Job } from "@/lib/types/jobs";
@@ -38,6 +39,28 @@ export interface VideoRequest {
 }
 
 type VideoJobInput = JobInput & { request: VideoRequest };
+
+// ---- Which model ----
+
+// Seedance refuses photoreal people as input images, so anything with a
+// person goes to H3: a cast (Still first, References) or a face in the first
+// frame. Text to video keeps the chosen model.
+export function modelFor(request: Pick<VideoRequest, "mode" | "cast" | "model">, firstFrameHasPerson: boolean): VideoModel {
+  if ((request.mode === "still" || request.mode === "references") && request.cast.length) return PEOPLE_VIDEO_MODEL;
+  if (request.mode === "image" && firstFrameHasPerson) return PEOPLE_VIDEO_MODEL;
+  return request.model;
+}
+
+export async function blobHasPerson(blobId: string | undefined): Promise<boolean> {
+  const row = blobId ? await db.blobs.get(blobId) : undefined;
+  return row ? hasFace(await drawToCanvas(row.blob, 1024)) : false;
+}
+
+function routed(request: VideoRequest, person: boolean): VideoRequest {
+  const model = modelFor(request, person);
+  const [min, max] = VIDEO_MODELS.find((m) => m.id === model)!.duration;
+  return { ...request, model, durationSec: Math.min(max, Math.max(min, request.durationSec)) };
+}
 
 // A frame for a video request: prepped JPEG as a data URI.
 async function frameUri(blob: Blob): Promise<string> {
@@ -91,7 +114,8 @@ function stillAspect(ratio: VideoRatio): ImageAspectRatio {
   return ratio === "9:21" ? "9:16" : ratio;
 }
 
-export async function startVideo(request: VideoRequest): Promise<string> {
+export async function startVideo(asked: VideoRequest): Promise<string> {
+  const request = routed(asked, asked.mode === "image" && (await blobHasPerson(asked.sourceBlobId)));
   if (request.mode === "still") {
     const cast = await buildCast(request.cast);
     const { movement: _still, ...camera } = request.camera;

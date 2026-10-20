@@ -44,7 +44,7 @@ Marzuwq settled every open decision on October 19. Claude Code builds to these; 
 | Decision | Answer |
 | --- | --- |
 | Name | Portraius Studio. Repo `portraius-studio`. |
-| Video models | Seedance 2.5 is the default and core video model. MiniMax H3 ships as the second selectable video model (useful for its 2K output). H3 is not the core model, so the H3 bonus isn't pursued. |
+| Video models | Seedance 2.5 is the default video model for anything without people. Seedance refuses photoreal people as input images (M3 notes), so every video with a cast or a face in its first frame renders on MiniMax H3 (768P or 2K, 4 to 15 s, no draft mode). Decided by Marzuwq on October 19 after M3; it replaces "H3 is selectable, never the default". |
 | Open weights | Not pursued. No open-weights profile, no Open Weights Only entry. |
 | Hosting | GitHub Pages, as a static site. See Architecture for what that changes. |
 | Keys | The visitor's own Comfy API key, plus a no-key Tour mode with pre-made samples. |
@@ -56,7 +56,7 @@ Marzuwq settled every open decision on October 19. Claude Code builds to these; 
 - **Stack:** Vite + React + TypeScript, built as a static site. Node 22 or newer for local dev and scripts.
 - **Router access:** `@comfyorg/sdk` (0.5.0 on npm today) if it bundles and runs in the browser; its package declares Node 22+, so M1 checks. Otherwise a small `fetch` client over the documented Router REST routes.
 - **Image model:** Nano Banana 2.1, `vertexai/gemini-nano-banana-2.1`. Never `vertexai/gemini-3.1-flash-image` or the `*-nano-banana-2` partner IDs: Nano Banana 2 shuts down October 29, one day before the deadline.
-- **Video models:** Seedance 2.5 (`byteplus/dreamina-seedance-2-5-260628`) by default; MiniMax H3 (`minimax/minimax-h3`) selectable.
+- **Video models:** Seedance 2.5 (`byteplus/dreamina-seedance-2-5-260628`) by default for videos without people; MiniMax H3 (`minimax/minimax-h3`) for every video with a person in it.
 - **Users:** single user, local-first. No accounts and no backend of our own.
 - **License:** MIT, same as both Comfy example repos.
 - **Entries:** one submission (the earlier version of this challenge allowed one per person).
@@ -1188,7 +1188,8 @@ This file is `docs/SPEC.md`. The repo root carries this same `CLAUDE.md`:
 - All generation goes through src/lib/router/client.ts. No other file imports @comfyorg/sdk.
 - Model IDs live only in src/lib/registry/models.ts. Never add a higgsfield/* ID. Never send model_provider.
 - Nano Banana means vertexai/gemini-nano-banana-2.1. Never vertexai/gemini-3.1-flash-image.
-- Video: Seedance 2.5 is the default. MiniMax H3 is selectable, never the default.
+- Video: Seedance 2.5 is the default for videos without people. Any video with a cast or a face in its
+  first frame renders on MiniMax H3 (Seedance refuses photoreal people; Marzuwq decided October 19).
 - Queue every model that supports it. Sync only for byte-returning models, with fallback_provider=false.
 - Download every asset on completion. Never persist a provider URL as the asset.
 - Only src/lib/jobs/machine.ts changes a job's status.

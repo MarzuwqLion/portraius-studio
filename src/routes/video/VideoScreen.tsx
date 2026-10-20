@@ -21,6 +21,8 @@ import { generationImageBlobId, storeUpload } from "@/lib/studio/uploads";
 import {
   DEFAULT_MODEL,
   VIDEO_MODELS,
+  blobHasPerson,
+  modelFor,
   isDraft,
   isFinal,
   lastFrameBlobId,
@@ -109,7 +111,20 @@ export function VideoScreen() {
   const top = useRef<HTMLDivElement>(null);
   const sourceUrl = useBlobUrl(sourceBlobId);
   const jobs = useRecentJobs(60);
-  const spec = VIDEO_MODELS.find((m) => m.id === model)!;
+  const [sourcePerson, setSourcePerson] = useState(false);
+  // People go to H3 whatever is chosen: Seedance refuses them (M3 notes).
+  const effective = modelFor({ mode, cast, model }, sourcePerson);
+  const routedForPeople = effective !== model;
+  const spec = VIDEO_MODELS.find((m) => m.id === effective)!;
+
+  useEffect(() => {
+    let live = true;
+    setSourcePerson(false);
+    if (mode === "image" && sourceBlobId) void blobHasPerson(sourceBlobId).then((person) => live && setSourcePerson(person));
+    return () => {
+      live = false;
+    };
+  }, [mode, sourceBlobId]);
 
   // ?from=<generationId>: that image becomes the first frame.
   useEffect(() => {
@@ -133,16 +148,16 @@ export function VideoScreen() {
   useEffect(() => {
     const [min, max] = spec.duration;
     setDurationSec((d) => Math.min(max, Math.max(min, d)));
-  }, [model]);
+  }, [effective]);
 
-  const request: VideoRequest = { mode, model, scene, cast, ...(sourceBlobId ? { sourceBlobId } : {}), durationSec, ratio, audio, seed, h3Resolution, camera };
+  const request: VideoRequest = { mode, model: effective, scene, cast, ...(sourceBlobId ? { sourceBlobId } : {}), durationSec, ratio, audio, seed, h3Resolution, camera };
   const needsCast = mode === "still" || mode === "references";
   const ready = Boolean(scene.trim()) && (!needsCast || cast.length > 0) && (mode !== "image" || Boolean(sourceBlobId));
   const estimateInput = async () =>
-    model === MODEL_IDS.minimaxH3
+    effective === MODEL_IDS.minimaxH3
       ? { stage: "generate", prompt: scene, durationSec, ratio, resolution: h3Resolution }
       : { stage: "draft", prompt: scene, durationSec, ratio, generateAudio: audio };
-  const price = useEstimateLabel(model, ready ? estimateInput : undefined, `${model}:${durationSec}:${h3Resolution}:${audio}:${ready}`);
+  const price = useEstimateLabel(effective, ready ? estimateInput : undefined, `${effective}:${durationSec}:${h3Resolution}:${audio}:${ready}`);
 
   async function generate() {
     if (!ready || busy) return;
@@ -209,8 +224,14 @@ export function VideoScreen() {
         </Field>
       )}
 
-      <Field label="Model">
-        {(id) => <Select id={id} value={model} onChange={(v) => v && setModel(v)} options={VIDEO_MODELS.map((m) => ({ value: m.id, label: m.label }))} />}
+      <Field label="Model" hint={routedForPeople ? "People render on H3: Seedance 2.5 doesn't accept images of real-looking people." : undefined}>
+        {(id) =>
+          routedForPeople ? (
+            <Select id={id} value={effective} onChange={() => undefined} options={VIDEO_MODELS.filter((m) => m.id === effective).map((m) => ({ value: m.id, label: m.label }))} />
+          ) : (
+            <Select id={id} value={model} onChange={(v) => v && setModel(v)} options={VIDEO_MODELS.map((m) => ({ value: m.id, label: m.label }))} />
+          )
+        }
       </Field>
 
       <Field label={`Duration: ${durationSec} s`}>
@@ -221,7 +242,7 @@ export function VideoScreen() {
         {(mode === "text" || mode === "references" || mode === "still") && (
           <Field label="Aspect ratio">{(id) => <Select id={id} value={ratio} onChange={(v) => v && setRatio(v)} options={RATIOS.map((r) => ({ value: r, label: r }))} />}</Field>
         )}
-        {model === MODEL_IDS.minimaxH3 && (
+        {effective === MODEL_IDS.minimaxH3 && (
           <Field label="Resolution">
             {(id) => <Select id={id} value={h3Resolution} onChange={(v) => v && setH3Resolution(v)} options={[{ value: "768P", label: "768P" }, { value: "2K", label: "2K" }]} />}
           </Field>
