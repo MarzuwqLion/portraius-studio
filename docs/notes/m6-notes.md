@@ -65,8 +65,8 @@ deflated (`CompressionStream("deflate-raw")`) and base64url-encoded: 420 charact
 **Acceptance (round trip, passes in a new tab):** the link decoded into the recipe card (prompt,
 85 mm, soft key, medium close-up, 4:5), the slot took Walt Harmon from the vault, and the run (at 1K
 fast, to keep test spend low) finished in 32 s with identity 89 and `remixOf: e89b366b7e690531` on
-the generation. Everything the remix needs is in the URL, so a fresh browser differs only in its
-vault: with no person in it, the screen offers "Design a character" instead of the slot picker.
+the generation. The same link opened on the GitHub Pages site (another origin: no key, empty vault) showed the
+same recipe card and, with no person in that vault, "Design a character" instead of the slot picker.
 
 ## Follow-ups
 
