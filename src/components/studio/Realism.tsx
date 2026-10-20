@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
-import { useEstimateLabel } from "@/lib/jobs/hooks";
+import { useEstimateLabel, useJob } from "@/lib/jobs/hooks";
 import { retryJob } from "@/lib/jobs/runner";
 import { toInlineImage } from "@/lib/media/image-prep";
 import { MODEL_IDS } from "@/lib/registry/models";
@@ -36,7 +36,9 @@ export function RealismAction({ generationId, onStarted, className }: { generati
     setBusy(true);
     setError(undefined);
     try {
-      onStarted?.(await startRealism(generationId, strength));
+      // Not onStarted?.(await ...): with no listener that skips the call itself.
+      const job = await startRealism(generationId, strength);
+      onStarted?.(job);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -60,6 +62,22 @@ export function RealismAction({ generationId, onStarted, className }: { generati
         </p>
       )}
     </div>
+  );
+}
+
+// A started pass, as a line on proof: its status, then a link to the result.
+export function RealismStatus({ jobId }: { jobId: string }) {
+  const job = useJob(jobId);
+  if (!job) return null;
+  return (
+    <p className="text-control" role="status">
+      Make it real: {job.status === "done" ? "done. " : jobStatusText(job)}
+      {job.status === "done" && job.generationIds[0] && (
+        <Link to={`/library/${job.generationIds[0]}`} className="font-semibold underline underline-offset-4">
+          See before and after
+        </Link>
+      )}
+    </p>
   );
 }
 

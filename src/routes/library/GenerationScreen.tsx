@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Screen } from "@/components/shell/Screen";
-import { RealismAction, RealismTake } from "@/components/studio/Realism";
+import { RealismAction, RealismStatus, RealismTake } from "@/components/studio/Realism";
 import { RemixActions } from "@/components/studio/RemixActions";
 import { SaveAsElement } from "@/components/studio/SaveAsElement";
 import { SocialExport } from "@/components/studio/SocialExport";
@@ -29,6 +29,7 @@ export function GenerationScreen() {
   const [confirming, setConfirming] = useState(false);
   const job = useJob(generation?.jobId);
   const realism = job?.kind === "enhance" ? job : undefined;
+  const [startedRealism, setStartedRealism] = useState<string>();
 
   if (missing) {
     return (
@@ -114,7 +115,8 @@ export function GenerationScreen() {
             )}
             {image && <SaveAsElement generationId={generation.id} size="default" />}
           </div>
-          {image && !realism && <RealismAction generationId={generation.id} />}
+          {image && !realism && <RealismAction generationId={generation.id} onStarted={(j) => setStartedRealism(j.id)} />}
+          {startedRealism && <RealismStatus jobId={startedRealism} />}
           {video && <SocialExport generationId={generation.id} />}
           <RemixActions generationId={generation.id} />
           {confirming ? (
