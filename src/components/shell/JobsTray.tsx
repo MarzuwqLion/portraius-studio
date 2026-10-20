@@ -12,6 +12,7 @@ const STUDIO: Partial<Record<Job["kind"], string>> = {
   video: "/video",
   recast: "/recast",
   shot: "/director",
+  enhance: "/image",
   sheet: "/characters",
 };
 
@@ -30,14 +31,14 @@ function Frame({ job }: { job: Job }) {
 
   return (
     <li className="flex h-14 shrink-0 items-center gap-2 rounded-media border border-rule pr-2">
-      <Link to={STUDIO[job.kind] ?? "/library"} className="flex h-full items-center gap-2" title={job.status === "failed" ? jobStatusText(job) : undefined}>
+      <Link to={job.kind === "enhance" && job.status === "done" ? `/library/${job.generationIds[0]}` : (STUDIO[job.kind] ?? "/library")} className="flex h-full items-center gap-2" title={job.status === "failed" ? jobStatusText(job) : undefined}>
         <span className="relative h-full w-12 overflow-hidden rounded-l-media bg-seamless">
           {url && <img src={url} alt="" className="develop absolute inset-0 size-full object-cover" />}
           {videoUrl && <video src={`${videoUrl}#t=0.1`} muted playsInline preload="metadata" aria-hidden className="develop absolute inset-0 size-full object-cover" />}
         </span>
         <span className="flex flex-col text-control">
           <span className={cn("font-semibold", job.status === "failed" && "text-drift")}>{job.status === "failed" ? "Failed" : jobStatusText(job)}</span>
-          <span className="text-ink-muted">{job.kind === "sheet" ? "character" : job.kind}</span>
+          <span className="text-ink-muted">{job.kind === "sheet" ? "character" : job.kind === "enhance" ? "make it real" : job.kind}</span>
         </span>
       </Link>
       {canCancel && (

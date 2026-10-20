@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Screen } from "@/components/shell/Screen";
+import { RealismAction, RealismTake } from "@/components/studio/Realism";
 import { RemixActions } from "@/components/studio/RemixActions";
 import { ScoreBadge } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
+import { useJob } from "@/lib/jobs/hooks";
 import { deleteGeneration, generationFiles, saveFile } from "@/lib/library/library";
 import { modelLabel } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
@@ -23,6 +25,8 @@ export function GenerationScreen() {
   const videoUrl = useBlobUrl(video?.blobId);
   const posterUrl = useBlobUrl(frame?.blobId);
   const [confirming, setConfirming] = useState(false);
+  const job = useJob(generation?.jobId);
+  const realism = job?.kind === "enhance" ? job : undefined;
 
   if (missing) {
     return (
@@ -46,7 +50,11 @@ export function GenerationScreen() {
     <Screen title={generation.type === "scene" ? "Scene" : generation.type === "image" ? "Take" : "Clip"}>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="flex items-center justify-center rounded-media bg-seamless p-6">
-          {videoUrl ? (
+          {realism ? (
+            <div className="w-full max-w-3xl">
+              <RealismTake job={realism} linkToLibrary={false} />
+            </div>
+          ) : videoUrl ? (
             <video src={videoUrl} poster={posterUrl} controls loop playsInline className="develop max-h-[70vh] max-w-full rounded-media border border-rule" aria-label={generation.prompt || "Clip"} />
           ) : imageUrl ? (
             <img src={imageUrl} alt={generation.prompt || "Image"} className="develop max-h-[70vh] max-w-full rounded-media border border-rule" />
@@ -103,6 +111,7 @@ export function GenerationScreen() {
               </Button>
             )}
           </div>
+          {image && !realism && <RealismAction generationId={generation.id} />}
           <RemixActions generationId={generation.id} />
           {confirming ? (
             <div className="grid gap-2">

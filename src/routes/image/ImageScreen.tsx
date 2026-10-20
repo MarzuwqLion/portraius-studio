@@ -7,6 +7,7 @@ import { CastPicker } from "@/components/studio/CastPicker";
 import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
 import { PresetPicker } from "@/components/studio/PresetPicker";
+import { RealismAction, RealismTake } from "@/components/studio/Realism";
 import { Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { useEstimateLabel, useRecentJobs } from "@/lib/jobs/hooks";
@@ -68,6 +69,7 @@ export function ImageScreen() {
   const upload = useRef<HTMLInputElement>(null);
   const sourceUrl = useBlobUrl(sourceBlobId);
   const groups = useImageGroups();
+  const realism = useRecentJobs(24).filter((j) => j.kind === "enhance");
 
   function applyPreset(p: Preset | undefined) {
     setPresetId(p?.id);
@@ -214,7 +216,7 @@ export function ImageScreen() {
 
   const set = (
     <div className="h-full w-full self-stretch overflow-auto">
-      {groups.length === 0 ? (
+      {groups.length === 0 && realism.length === 0 ? (
         <p className="flex h-full items-center justify-center text-body">Takes appear here.</p>
       ) : (
         <div className="grid gap-6">
@@ -230,6 +232,14 @@ export function ImageScreen() {
               <Button size="sm" variant="secondary" onClick={() => navigate(`/video?from=${pickedJob.generationIds[0]}`)}>
                 Animate
               </Button>
+              <RealismAction generationId={pickedJob.generationIds[0]!} className="border-l border-rule pl-3" />
+            </div>
+          )}
+          {realism.length > 0 && (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-6">
+              {realism.map((job) => (
+                <RealismTake key={job.id} job={job} />
+              ))}
             </div>
           )}
           <div className="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6">

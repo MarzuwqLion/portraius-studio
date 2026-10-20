@@ -39,6 +39,17 @@ export async function prepareImage(source: Blob, options: { maxEdge?: number; qu
   return { blob: await toBlob(c, "image/jpeg", options.quality ?? 0.9), width: c.width, height: c.height };
 }
 
+// An oversized result (the skin enhancer's 4x PNG) as a JPEG of at most
+// maxEdge px. Smaller images, and anything outside a browser, pass through.
+export async function fitLargeImage(source: Blob, maxEdge = 4096, maxBytes = 12 * 1024 * 1024): Promise<Blob> {
+  if (!source.type.startsWith("image/") || typeof createImageBitmap === "undefined" || typeof document === "undefined") return source;
+  const bitmap = await decodeImage(source);
+  const { width, height } = bitmap;
+  bitmap.close();
+  if (Math.max(width, height) <= maxEdge && source.size <= maxBytes) return source;
+  return (await prepareImage(source, { maxEdge, quality: 0.92 })).blob;
+}
+
 export async function makeThumb(source: Blob, edge = 480): Promise<Blob> {
   return (await prepareImage(source, { maxEdge: edge, quality: 0.85 })).blob;
 }

@@ -83,3 +83,10 @@ export interface VideoEditInput {
   referenceImageUrl?: string;  // public URL of the replacement; BFL takes none
   keepAudio?: boolean;
 }
+
+// The realism pass on one still (Freepik skin enhancer). Strength runs 0 to
+// 100; 80 gives the spec's defaults (skin detail 80, sharpen 10, grain 4).
+export interface EnhanceImageInput {
+  image: InlineImage;
+  strength: number;
+}

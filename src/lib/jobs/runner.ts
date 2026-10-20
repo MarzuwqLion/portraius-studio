@@ -2,6 +2,7 @@
 // score (spec: Rules for every call; Contracts: Job state machine). Framework-
 // free; the UI starts jobs here and reads them through lib/jobs/hooks.ts.
 // Every status change goes through machine.applyEvent().
+import { fitLargeImage } from "@/lib/media/image-prep";
 import { adapterFor } from "@/lib/registry/adapters";
 import type { AssetRef } from "@/lib/registry/capabilities";
 import * as router from "@/lib/router/client";
@@ -248,7 +249,10 @@ async function downloadStep(id: string): Promise<void> {
     const type = GENERATION_TYPE[job.kind];
     if (!type) throw appError("unsupported", `${job.kind} results are saved from M7.`, { retry: "never" });
 
-    const blobs = await Promise.all(refs.map((ref) => downloadAsset(ref)));
+    const downloaded = await Promise.all(refs.map((ref) => downloadAsset(ref)));
+    // The skin enhancer upscales about 4x into a 30 MB PNG (M6 notes), so the
+    // library keeps a JPEG of at most 4096 px instead.
+    const blobs = job.kind === "enhance" ? await Promise.all(downloaded.map((blob) => fitLargeImage(blob))) : downloaded;
     const assets: GenerationAsset[] = blobs.map((blob, i) => ({ blobId: `${job.id}-a${i}`, kind: refs[i]!.kind, mime: blob.type, bytes: blob.size }));
     const generation: Generation = {
       id: generationId,

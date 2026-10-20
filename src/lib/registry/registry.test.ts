@@ -25,11 +25,10 @@ describe("registry", () => {
   });
 
   it("stubs adapters whose milestone hasn't come", () => {
-    expect(() => adapterFor(MODEL_IDS.freepikSkin).buildBody({})).toThrow(/M6/);
     expect(() => adapterFor(MODEL_IDS.sync3).buildBody({})).toThrow(/M7/);
   });
 
-  it("reads a recorded Freepik result already", () => {
+  it("reads a recorded Freepik result", () => {
     expect(adapterFor(MODEL_IDS.freepikSkin).extractAssets(freepikRecorded)).toEqual([
       { kind: "image", url: freepikRecorded.data.generated[0] },
     ]);
