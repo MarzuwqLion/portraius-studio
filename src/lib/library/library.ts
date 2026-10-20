@@ -3,7 +3,7 @@
 // so they keep playing after Router's links expire.
 import JSZip from "jszip";
 import { band, type Band } from "@/lib/identity/score";
-import { registryEntry } from "@/lib/registry/models";
+import { modelLabel } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
 import type { Generation } from "@/lib/types/records";
 
@@ -83,7 +83,7 @@ export async function exportZip(ids: string[]): Promise<Blob> {
     manifest.push({
       files,
       type: generation.type,
-      model: registryEntry(generation.modelId)?.label ?? generation.modelId,
+      model: modelLabel(generation.modelId),
       prompt: generation.prompt ?? "",
       characters: generation.characterIds.map((c) => names.get(c) ?? "Deleted character"),
       identityScore: generation.identityScore ?? null,

@@ -30,7 +30,7 @@ export interface RegistryEntry {
 export const REGISTRY: readonly RegistryEntry[] = [
   { id: MODEL_IDS.nanoBanana, label: "Nano Banana 2.1", capabilities: ["character.sheet", "image.generate", "image.edit"], delivery: "queue" },
   { id: MODEL_IDS.seedance, label: "Seedance 2.5", capabilities: ["video.generate"], delivery: "queue" },
-  { id: MODEL_IDS.minimaxH3, label: "H3 (2K)", capabilities: ["video.generate"], delivery: "queue" },
+  { id: MODEL_IDS.minimaxH3, label: "MiniMax H3", capabilities: ["video.generate"], delivery: "queue" },
   { id: MODEL_IDS.klingOmni, label: "Kling V3 Omni", capabilities: ["video.multishot", "video.edit"], delivery: "queue" },
   { id: MODEL_IDS.freepikSkin, label: "Skin enhancer", capabilities: ["image.enhance"], delivery: "queue" },
   { id: MODEL_IDS.elevenLabs, label: "ElevenLabs v4", capabilities: ["audio.tts"], delivery: "sync" },
@@ -48,6 +48,15 @@ export const REGISTRY: readonly RegistryEntry[] = [
 export const DEFAULT_IMAGE_MODEL = MODEL_IDS.nanoBanana;
 export const DEFAULT_VIDEO_MODEL = MODEL_IDS.seedance;
 export const PEOPLE_VIDEO_MODEL = MODEL_IDS.minimaxH3;
+
+// Not a Router model: the "model" of a Director scene joined in the browser.
+// Kept out of REGISTRY, so the Router client never accepts it.
+export const SCENE_EXPORT_ID = "portraius/director-export";
+export const SCENE_EXPORT_LABEL = "Director scene (joined in the browser)";
+
+export function modelLabel(id: string): string {
+  return id === SCENE_EXPORT_ID ? SCENE_EXPORT_LABEL : (registryEntry(id)?.label ?? id);
+}
 
 const BLOCKED_PROVIDERS = ["higgsfield"];
 

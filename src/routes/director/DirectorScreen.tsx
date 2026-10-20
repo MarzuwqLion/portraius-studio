@@ -1,18 +1,551 @@
-import { useParams } from "react-router";
-import { Note, WorkScreen } from "@/components/shell/Screen";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Link, useNavigate, useParams } from "react-router";
+import { useLiveQuery } from "dexie-react-hooks";
+import { ArrowDown, ArrowLeft, ArrowUp, Trash2 } from "lucide-react";
+import { Note, Screen, ScreenTitle } from "@/components/shell/Screen";
+import { CameraPicker } from "@/components/studio/CameraPicker";
+import { CastPicker } from "@/components/studio/CastPicker";
+import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
+import { OutputTake } from "@/components/studio/OutputTake";
+import { Take } from "@/components/studio/Take";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { useEstimateLabel, useJob, useJobImageUrl, useJobs } from "@/lib/jobs/hooks";
+import { MODEL_IDS, registryEntry } from "@/lib/registry/models";
+import { db } from "@/lib/store/db";
+import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
+import {
+  animateShot,
+  deleteScene,
+  drawAnchors,
+  exportJobId,
+  exportScene,
+  finalizeShot,
+  listScenes,
+  loadScene,
+  newScene,
+  newShot,
+  pickAnchor,
+  retryAnchor,
+  retryShotJob,
+  saveEdits,
+  saveScene,
+  shotCamera,
+  shotCast,
+  shotScene,
+  takeIsDraft,
+  type Scene,
+  type SceneRatio,
+  type Shot,
+} from "@/lib/studio/director";
+import { compileImageRequest, randomSeed } from "@/lib/studio/image";
+import type { Job } from "@/lib/types/jobs";
+import { cn } from "@/lib/utils";
+
+const RATIOS: { value: SceneRatio; label: string }[] = [
+  { value: "16:9", label: "16:9" },
+  { value: "21:9", label: "21:9" },
+  { value: "9:16", label: "9:16" },
+];
+const DURATIONS = [4, 5, 6, 8, 10, 12, 15].map((s) => ({ value: String(s), label: `${s} s` }));
+const ANCHOR_COUNTS = ["2", "3", "4"].map((n) => ({ value: n, label: `${n} stills` }));
+const aspectOf = (ratio: SceneRatio) => ratio.replace(":", " / ");
 
 export function DirectorScreen() {
   const { sceneId } = useParams();
+  return sceneId ? <SceneEditor key={sceneId} sceneId={sceneId} /> : <SceneList />;
+}
+
+// ---- Scenes ----
+
+function SceneList() {
+  const navigate = useNavigate();
+  const scenes = useLiveQuery(listScenes, []);
+  async function create() {
+    const scene = await saveScene(newScene(randomSeed()));
+    navigate(`/director/${scene.id}`);
+  }
   return (
-    <div className="flex h-full flex-col">
-      <p className="border-b border-rule px-6 py-3 text-control md:hidden">Director works best on a desktop screen.</p>
-      <div className="min-h-0 flex-1">
-        <WorkScreen
-          title="Director"
-          callSheet={<Note>{sceneId ? `Scene ${sceneId}: scene card and shot list go here.` : "Scene card and shot list go here."}</Note>}
-          set={<p className="text-panel">Anchors and the timeline strip appear here.</p>}
-        />
-      </div>
+    <Screen title="Director" actions={<Button onClick={() => void create()}>New scene</Button>}>
+      <p className="mb-6 text-body text-ink-muted md:hidden">Director works best on a desktop screen.</p>
+      {scenes && !scenes.length && (
+        <Note>A scene is a short sequence of shots: set the film once, plan the shots, pick an anchor still for each, animate them, and export one stitched MP4.</Note>
+      )}
+      <ul className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
+        {scenes?.map((scene) => (
+          <li key={scene.id}>
+            <Link to={`/director/${scene.id}`} className="grid gap-1 rounded-media border border-rule p-4 hover:bg-tint-hover">
+              <span className="font-display text-panel font-extrabold">{scene.title}</span>
+              {scene.logline && <span className="line-clamp-2 text-body">{scene.logline}</span>}
+              <span className="text-control text-ink-muted">
+                {scene.shots.length} {scene.shots.length === 1 ? "shot" : "shots"} · {scene.shots.reduce((t, s) => t + s.durationSec, 0)} s
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Screen>
+  );
+}
+
+// Edits apply locally at once and save shortly after; an action (draw,
+// animate, export) saves first, runs, then reloads what it wrote.
+function useSceneEditor(id: string) {
+  const [scene, setScene] = useState<Scene | null>();
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState<string>();
+  const pending = useRef<Scene | undefined>(undefined);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    let live = true;
+    void loadScene(id).then((s) => live && setScene(s ?? null));
+    return () => {
+      live = false;
+    };
+  }, [id]);
+
+  const flush = useCallback(async () => {
+    clearTimeout(timer.current);
+    const next = pending.current;
+    pending.current = undefined;
+    if (next) await saveEdits(next);
+  }, []);
+
+  useEffect(() => () => void flush(), [flush]);
+
+  const edit = useCallback(
+    (change: (s: Scene) => Scene) => {
+      setScene((prev) => {
+        if (!prev) return prev;
+        const next = change(prev);
+        pending.current = next;
+        clearTimeout(timer.current);
+        timer.current = setTimeout(() => void flush(), 400);
+        return next;
+      });
+    },
+    [flush],
+  );
+
+  const run = useCallback(
+    async (label: string, action: () => Promise<unknown>) => {
+      setBusy(label);
+      setError(undefined);
+      try {
+        await flush();
+        await action();
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        await flush();
+        setScene((await loadScene(id)) ?? null);
+        setBusy(undefined);
+      }
+    },
+    [flush, id],
+  );
+
+  return { scene, edit, run, error, busy };
+}
+
+type Editor = ReturnType<typeof useSceneEditor>;
+
+function SceneEditor({ sceneId }: { sceneId: string }) {
+  const editor = useSceneEditor(sceneId);
+  const navigate = useNavigate();
+  const { scene, edit, run, error } = editor;
+
+  if (scene === undefined) return null;
+  if (scene === null) {
+    return (
+      <Screen title="Director">
+        <Note>This scene isn't on this device.</Note>
+        <Link to="/director" className="mt-4 inline-block text-body underline">
+          All scenes
+        </Link>
+      </Screen>
+    );
+  }
+
+  const set = (patch: Partial<Scene>) => edit((s) => ({ ...s, ...patch }));
+  const setShot = (shotId: string, patch: Partial<Shot>) => edit((s) => ({ ...s, shots: s.shots.map((shot) => (shot.id === shotId ? { ...shot, ...patch } : shot)) }));
+  const move = (from: number, to: number) =>
+    edit((s) => {
+      if (to < 0 || to >= s.shots.length) return s;
+      const shots = [...s.shots];
+      const [shot] = shots.splice(from, 1);
+      shots.splice(to, 0, shot!);
+      return { ...s, shots };
+    });
+  const addShot = () => edit((s) => ({ ...s, nextShot: s.nextShot + 1, shots: [...s.shots, newShot(s, s.shots.at(-1))] }));
+  const removeShot = (shotId: string) => edit((s) => ({ ...s, shots: s.shots.filter((shot) => shot.id !== shotId) }));
+
+  const callSheet = (
+    <div className="grid gap-5">
+      <Link to="/director" className="inline-flex items-center gap-1 text-control font-semibold">
+        <ArrowLeft className="size-4" aria-hidden /> All scenes
+      </Link>
+      <Field label="Title">{(id) => <Input id={id} value={scene.title} maxLength={80} onChange={(e) => set({ title: e.target.value })} />}</Field>
+      <Field label="Logline">{(id) => <TextArea id={id} value={scene.logline} rows={2} maxLength={300} placeholder="A retired harbour pilot finds a letter he never sent." onChange={(logline) => set({ logline })} />}</Field>
+      <Field label="Cast" hint="Name them in a shot's action with their slot, like {lead}.">{() => <CastPicker value={scene.cast} onChange={(cast) => set({ cast })} />}</Field>
+      <Field label="Location" hint="Added to every shot, word for word.">
+        {(id) => <TextArea id={id} value={scene.location} rows={2} maxLength={300} placeholder="A late-night diner with red vinyl booths" onChange={(location) => set({ location })} />}
+      </Field>
+      <Field label="Film">{() => <CameraPicker groups={["genre", "body", "era", "pacing"]} value={scene.film} onChange={(film) => set({ film: { ...scene.film, ...film } })} />}</Field>
+      <Field label="Frame">{() => <Segmented label="Frame" value={scene.ratio} options={RATIOS} onChange={(ratio) => set({ ratio })} />}</Field>
+      <label className="flex items-center gap-3 text-body">
+        <Checkbox checked={scene.sound} onCheckedChange={(v) => set({ sound: v === true })} />
+        Generate sound (Seedance shots)
+      </label>
+      <Button
+        variant="ghost"
+        className="justify-self-start text-drift"
+        onClick={() =>
+          void run("delete", async () => {
+            await deleteScene(scene.id);
+            navigate("/director");
+          })
+        }
+      >
+        <Trash2 className="size-4" aria-hidden /> Delete scene
+      </Button>
     </div>
+  );
+
+  return (
+    <div className="flex h-full min-h-0 flex-col md:flex-row">
+      <section aria-label="Call sheet" className="shrink-0 overflow-auto border-rule p-6 md:w-80 md:border-r">
+        <ScreenTitle className="mb-6">Director</ScreenTitle>
+        {callSheet}
+      </section>
+      <section aria-label="Set" className="min-h-64 flex-1 overflow-auto bg-seamless p-6 text-on-seamless">
+        <p className="mb-4 border-b border-rule pb-3 text-control md:hidden">Director works best on a desktop screen.</p>
+        {error && (
+          <p role="alert" className="mb-4 rounded-control bg-proof px-3 py-2 text-body text-drift">
+            {error}
+          </p>
+        )}
+        <div className="grid gap-6">
+          {scene.shots.map((shot, i) => (
+            <ShotCard key={shot.id} scene={scene} shot={shot} index={i} editor={editor} onChange={(patch) => setShot(shot.id, patch)} onMove={(to) => move(i, to)} onRemove={() => removeShot(shot.id)} />
+          ))}
+          <Button variant="secondary" className="justify-self-start border-on-seamless text-on-seamless" onClick={addShot}>
+            Add shot
+          </Button>
+          {scene.shots.length > 0 && <Timeline scene={scene} editor={editor} onMove={move} />}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// ---- Shots ----
+
+function ShotCard({
+  scene,
+  shot,
+  index,
+  editor,
+  onChange,
+  onMove,
+  onRemove,
+}: {
+  scene: Scene;
+  shot: Shot;
+  index: number;
+  editor: Editor;
+  onChange: (patch: Partial<Shot>) => void;
+  onMove: (to: number) => void;
+  onRemove: () => void;
+}) {
+  const [count, setCount] = useState("2");
+  const { run, busy } = editor;
+  const take = useJob(shot.takeJobId);
+  const final = useJob(shot.finalJobId);
+  const anchors = useAnchorJobs(shot.anchorJobIds);
+  const castSlots = shotCast(scene, shot).map((c) => c.slot);
+  const named = scene.cast.length ? scene.cast.map((c) => `{${c.slot}}`).join(", ") : "Add cast in the scene card";
+  const aspect = aspectOf(scene.ratio);
+  const ready = Boolean(shot.action.trim());
+
+  const stillsPrice = useEstimateLabel(
+    MODEL_IDS.nanoBanana,
+    ready
+      ? async () =>
+          (
+            await compileImageRequest({
+              scene: shotScene(scene, shot),
+              cast: shotCast(scene, shot),
+              aspectRatio: scene.ratio,
+              size: "2K",
+              quality: "fast",
+              count: 1,
+              camera: shotCamera(scene, shot, false),
+            })
+          ).input
+      : undefined,
+    `${shot.id}:${shot.action}:${castSlots.join()}:${scene.ratio}`,
+  );
+  const motionModel = castSlots.length ? MODEL_IDS.minimaxH3 : MODEL_IDS.seedance;
+  const motionPrice = useEstimateLabel(
+    motionModel,
+    shot.anchorJobId
+      ? async () =>
+          motionModel === MODEL_IDS.minimaxH3
+            ? { stage: "generate", prompt: shot.action, firstFrame: "https://example.invalid/anchor.jpg", durationSec: shot.durationSec, resolution: "768P" }
+            : { stage: "draft", prompt: shot.action, firstFrame: "https://example.invalid/anchor.jpg", durationSec: shot.durationSec, generateAudio: scene.sound }
+      : undefined,
+    `${shot.id}:${motionModel}:${shot.durationSec}:${scene.sound}:${Boolean(shot.anchorJobId)}`,
+  );
+
+  const takeDone = take?.status === "done";
+  const canFinal = takeDone && takeIsDraft(take) && !shot.finalJobId;
+  const failed = (job: typeof take) => (job?.status === "failed" || job?.status === "expired") && job.error?.retry !== "never";
+
+  return (
+    <article aria-label={`Shot ${index + 1}`} className="grid overflow-hidden rounded-media border border-rule bg-proof text-ink lg:grid-cols-[24rem_minmax(0,1fr)]">
+      <div className="grid content-start gap-4 p-4">
+        <header className="flex items-center justify-between gap-2">
+          <h2 className="font-display text-panel font-extrabold">Shot {index + 1}</h2>
+          <span className="flex gap-1">
+            <Button variant="ghost" size="icon" aria-label="Move shot earlier" disabled={index === 0} onClick={() => onMove(index - 1)}>
+              <ArrowUp className="size-4" />
+            </Button>
+            <Button variant="ghost" size="icon" aria-label="Move shot later" disabled={index === scene.shots.length - 1} onClick={() => onMove(index + 1)}>
+              <ArrowDown className="size-4" />
+            </Button>
+            <Button variant="ghost" size="icon" aria-label="Remove shot" onClick={onRemove}>
+              <Trash2 className="size-4" />
+            </Button>
+          </span>
+        </header>
+        <Field label="Action" hint={`What happens. Cast: ${named}.`}>
+          {(id) => <TextArea id={id} value={shot.action} rows={3} maxLength={600} placeholder="{lead} slides the envelope across the table" onChange={(action) => onChange({ action })} />}
+        </Field>
+        <CameraPicker
+          groups={["size", "angle", "lens", "aperture", "movement", "lighting"]}
+          withLook={false}
+          value={{ size: shot.size, angle: shot.angle, lens: shot.lens, aperture: shot.aperture, movement: shot.movement, lighting: shot.lighting }}
+          onChange={(c) => onChange({ size: c.size ?? shot.size, angle: c.angle ?? shot.angle, lens: c.lens ?? shot.lens, aperture: c.aperture, movement: c.movement ?? "static", lighting: c.lighting })}
+        />
+        <Field label="Length">{(id) => <Select id={id} value={String(shot.durationSec)} options={DURATIONS} onChange={(v) => onChange({ durationSec: Number(v ?? 5) })} />}</Field>
+      </div>
+
+      <div className="grid content-start gap-4 bg-seamless p-4 text-on-seamless lg:border-l lg:border-rule">
+        <section aria-label="Anchor stills" className="grid gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="mr-auto text-control font-semibold">Anchor</h3>
+            <span className="w-32">
+              <Select value={count} options={ANCHOR_COUNTS} onChange={(v) => setCount(v ?? "2")} />
+            </span>
+            <Button size="sm" disabled={!ready || busy !== undefined} onClick={() => void run(`stills:${shot.id}`, () => drawAnchors(scene.id, shot.id, Number(count)))}>
+              {shot.anchorJobIds.length ? "Draw more" : "Draw stills"} · {stillsPrice}
+            </Button>
+          </div>
+          {anchors.length > 0 ? (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-3">
+              {anchors.map((job) => (
+                <OutputTake
+                  key={job.id}
+                  job={job}
+                  alt={`Shot ${index + 1} still`}
+                  aspect={aspect}
+                  picked={shot.anchorJobId === job.id}
+                  onPick={() => void run(`pick:${shot.id}`, () => pickAnchor(scene.id, shot.id, job.id))}
+                  label={job.parentJobId ? "Retry" : undefined}
+                  actions={
+                    failed(job) ? (
+                      <Button size="sm" variant="secondary" className="justify-self-start" onClick={() => void run(`retry:${job.id}`, () => retryAnchor(job.id))}>
+                        Retry
+                      </Button>
+                    ) : undefined
+                  }
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-control">{ready ? "Draw stills, then pick the one to animate." : "Describe the action first."}</p>
+          )}
+        </section>
+
+        <section aria-label="Motion" className="grid gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="mr-auto text-control font-semibold">Motion</h3>
+            {!shot.takeJobId ? (
+              <Button size="sm" disabled={!shot.anchorJobId || busy !== undefined} onClick={() => void run(`animate:${shot.id}`, () => animateShot(scene.id, shot.id))}>
+                Animate · {motionPrice}
+              </Button>
+            ) : (
+              <>
+                <Button size="sm" variant="secondary" disabled={busy !== undefined || !shot.anchorJobId} onClick={() => void run(`animate:${shot.id}`, () => animateShot(scene.id, shot.id, true))}>
+                  Re-roll · {motionPrice}
+                </Button>
+                {canFinal && (
+                  <Button size="sm" disabled={busy !== undefined} onClick={() => void run(`final:${shot.id}`, () => finalizeShot(scene.id, shot.id))}>
+                    Render final 1080p
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+          {!shot.anchorJobId && shot.anchorJobIds.length > 0 && <p className="text-control">Pick an anchor still to animate.</p>}
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-3">
+            {take && (
+              <OutputTake
+                job={take}
+                alt={`Shot ${index + 1} take`}
+                aspect={aspect}
+                label={takeIsDraft(take) ? "Draft, 480p" : take.modelId === MODEL_IDS.minimaxH3 ? "MiniMax H3, 768P" : (registryEntry(take.modelId)?.label ?? "Take")}
+                actions={
+                  failed(take) ? (
+                    <Button size="sm" variant="secondary" className="justify-self-start" onClick={() => void run(`retry:${shot.id}`, () => retryShotJob(scene.id, shot.id, "take"))}>
+                      Retry
+                    </Button>
+                  ) : undefined
+                }
+              />
+            )}
+            {final && (
+              <OutputTake
+                job={final}
+                alt={`Shot ${index + 1} final`}
+                aspect={aspect}
+                label="Final, 1080p"
+                actions={
+                  failed(final) ? (
+                    <Button size="sm" variant="secondary" className="justify-self-start" onClick={() => void run(`retry:${shot.id}`, () => retryShotJob(scene.id, shot.id, "final"))}>
+                      Retry
+                    </Button>
+                  ) : undefined
+                }
+              />
+            )}
+          </div>
+        </section>
+      </div>
+    </article>
+  );
+}
+
+// A shot's stills, with retries (automatic drift retries and manual ones)
+// beside them; a failed still that was retried steps aside.
+function useAnchorJobs(ids: string[]) {
+  const roots = useJobs(ids);
+  const retries = useLiveQuery(() => (ids.length ? db.jobs.where("parentJobId").anyOf(ids).toArray() : []), [ids.join(",")]) ?? [];
+  const retried = new Set(retries.map((j) => j.parentJobId));
+  const shown = (roots ?? []).filter((j): j is Job => j !== undefined && !(j.status === "failed" && retried.has(j.id)));
+  return [...shown, ...retries];
+}
+
+// ---- Timeline and export ----
+
+function Timeline({ scene, editor, onMove }: { scene: Scene; editor: Editor; onMove: (from: number, to: number) => void }) {
+  const [crossfade, setCrossfade] = useState(true);
+  const [progress, setProgress] = useState<number>();
+  const dragFrom = useRef<number | undefined>(undefined);
+  const jobs = useJobs(scene.shots.map((s) => exportJobId(s) ?? ""));
+  const readyCount = (jobs ?? []).filter((j) => j?.status === "done").length;
+  const allReady = readyCount === scene.shots.length;
+  const total = scene.shots.reduce((t, s) => t + s.durationSec, 0);
+  const { run, busy } = editor;
+
+  return (
+    <section aria-label="Timeline" className="grid gap-4 border-t border-rule pt-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="font-display text-panel font-extrabold">Timeline</h2>
+        <span className="text-control">
+          {scene.shots.length} shots · about {total} s · {readyCount} of {scene.shots.length} ready
+        </span>
+      </div>
+      <ol className="flex gap-2 overflow-x-auto pb-2" aria-label="Shots in order. Drag to reorder, or use the arrows on each shot.">
+        {scene.shots.map((shot, i) => (
+          <li
+            key={shot.id}
+            draggable
+            onDragStart={() => (dragFrom.current = i)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => {
+              if (dragFrom.current !== undefined && dragFrom.current !== i) onMove(dragFrom.current, i);
+              dragFrom.current = undefined;
+            }}
+            className="w-40 shrink-0 cursor-grab"
+          >
+            <StripFrame shot={shot} index={i} aspect={aspectOf(scene.ratio)} />
+          </li>
+        ))}
+      </ol>
+      <div className="flex flex-wrap items-center gap-4">
+        <label className="flex items-center gap-3 text-body">
+          <Checkbox checked={crossfade} onCheckedChange={(v) => setCrossfade(v === true)} className="border-on-seamless" />
+          6-frame crossfades
+        </label>
+        <Button
+          disabled={!allReady || busy !== undefined}
+          onClick={() =>
+            void run("export", async () => {
+              setProgress(0);
+              try {
+                await exportScene(scene.id, crossfade, setProgress);
+              } finally {
+                setProgress(undefined);
+              }
+            })
+          }
+        >
+          {progress !== undefined ? `Joining ${Math.round(progress * 100)}%` : "Export scene"}
+        </Button>
+        {!allReady && <span className="text-control">Every shot needs a finished take first.</span>}
+      </div>
+      {scene.exportGenerationIds.length > 0 && (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
+          {scene.exportGenerationIds.map((id) => (
+            <ExportTake key={id} generationId={id} title={scene.title} aspect={aspectOf(scene.ratio)} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function StripFrame({ shot, index, aspect }: { shot: Shot; index: number; aspect: string }) {
+  const still = useJobImageUrl(shot.anchorJobId);
+  const job = useJob(exportJobId(shot));
+  const status = !shot.anchorJobId ? "No anchor" : !job ? "Not animated" : job.status === "done" ? (shot.finalJobId ? "Final" : takeIsDraft(job) ? "Draft" : "Ready") : "Working";
+  return (
+    <figure className="grid gap-1">
+      <Take src={still} alt={`Shot ${index + 1}`} aspect={aspect}>
+        {index + 1}
+      </Take>
+      <figcaption className="text-control">
+        <span className="font-semibold">{index + 1}</span> · {shot.durationSec} s · <span className={cn(job?.status === "done" && "font-semibold")}>{status}</span>
+      </figcaption>
+    </figure>
+  );
+}
+
+function ExportTake({ generationId, title, aspect }: { generationId: string; title: string; aspect: string }): ReactNode {
+  const generation = useGeneration(generationId);
+  const asset = generation?.assets.find((a) => a.kind === "video");
+  const url = useBlobUrl(asset?.blobId);
+  if (!generation) return null;
+  return (
+    <figure className="grid gap-2">
+      <span className="relative block overflow-hidden rounded-media border border-rule" style={{ aspectRatio: aspect }}>
+        {url && <video src={url} controls playsInline className="develop absolute inset-0 size-full object-contain" aria-label={`${title}, exported`} />}
+      </span>
+      <figcaption className="flex flex-wrap items-center gap-3 text-control">
+        <span>{new Date(generation.createdAt).toLocaleString()}</span>
+        {url && (
+          <a href={url} download={`${title.replace(/[^\w -]+/g, "").trim() || "scene"}.mp4`} className="font-semibold underline">
+            Download
+          </a>
+        )}
+        <Link to={`/library/${generation.id}`} className="underline">
+          In the library
+        </Link>
+      </figcaption>
+    </figure>
   );
 }

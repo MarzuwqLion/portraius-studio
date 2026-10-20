@@ -5,7 +5,7 @@ import { Screen } from "@/components/shell/Screen";
 import { ScoreBadge } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { deleteGeneration, fileName } from "@/lib/library/library";
-import { registryEntry } from "@/lib/registry/models";
+import { modelLabel } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
 import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
 
@@ -51,7 +51,7 @@ export function GenerationScreen() {
   }
 
   return (
-    <Screen title={generation.type === "video" ? "Clip" : "Take"}>
+    <Screen title={generation.type === "scene" ? "Scene" : generation.type === "image" ? "Take" : "Clip"}>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="flex items-center justify-center rounded-media bg-seamless p-6">
           {videoUrl ? (
@@ -72,7 +72,7 @@ export function GenerationScreen() {
           {generation.prompt && <p className="max-w-[70ch] text-body">{generation.prompt}</p>}
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-control">
             <dt className="text-ink-muted">Model</dt>
-            <dd>{registryEntry(generation.modelId)?.label ?? generation.modelId}</dd>
+            <dd>{modelLabel(generation.modelId)}</dd>
             <dt className="text-ink-muted">Made</dt>
             <dd>{new Date(generation.createdAt).toLocaleString()}</dd>
             {names && names.length > 0 && (
