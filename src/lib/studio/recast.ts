@@ -5,14 +5,15 @@
 // Engines differ from the spec: Seedance 2.5 refuses photoreal people in any
 // input (M3 notes, and a person reference video in M4), so Motion Transfer and
 // style run on MiniMax H3, which kept motion, timing and camera in M4's test.
-// Object Swap stays on Kling V3 Omni's clip edit.
+// Object Swap runs on HappyHorse 1.0 video edit, the A/B winner over Kling
+// (which retimes the clip), Wan 2.7 and BFL (docs/notes/recast-ab.md).
 import { onJobDone, startJob, type JobInput } from "@/lib/jobs/runner";
-import { blobToBase64, prepareImage } from "@/lib/media/image-prep";
+import { prepareImage } from "@/lib/media/image-prep";
 import { loadFfmpeg } from "@/lib/media/video-prep";
 import { preset as findPreset } from "@/lib/presets/load";
 import type { Preset } from "@/lib/presets/schema";
 import { compileVideoPrompt } from "@/lib/prompts/compile";
-import type { H3Input, KlingInput, VideoRatio } from "@/lib/registry/inputs";
+import type { H3Input, VideoEditInput, VideoRatio } from "@/lib/registry/inputs";
 import { MODEL_IDS } from "@/lib/registry/models";
 import { uploadAsset } from "@/lib/router/client";
 import { db } from "@/lib/store/db";
@@ -29,11 +30,12 @@ export interface ClipLimits {
   fps?: number;
 }
 
-// Kling's edit input: 3 to 10 s, 720 to 2160 px, 24 to 60 fps (spec: Input).
+// H3 renders 4 to 15 s. Object Swap keeps the spec's 3 to 10 s (Kling's edit
+// limits), which the A/B clips sat inside; HappyHorse edits at 720P.
 export const LIMITS: Record<RecastMode, ClipLimits> = {
   motion: { minSec: 4, maxSec: 15, maxHeight: 1080 },
   style: { minSec: 4, maxSec: 15, maxHeight: 1080 },
-  swap: { minSec: 3, maxSec: 10, minHeight: 720, maxHeight: 2160, fps: 30 },
+  swap: { minSec: 3, maxSec: 10, maxHeight: 1080, fps: 30 },
 };
 
 export function modeOf(p: Preset): RecastMode {
@@ -81,26 +83,25 @@ export async function startRecast(request: RecastRequest): Promise<string> {
   const direction = request.direction?.trim() ? ` ${request.direction.trim()}` : "";
   const stylised = p.recipe.params?.stylised === true;
 
-  let modelId: typeof MODEL_IDS.minimaxH3 | typeof MODEL_IDS.klingOmni;
-  let model: H3Input | KlingInput;
+  let modelId: typeof MODEL_IDS.minimaxH3 | typeof MODEL_IDS.happyHorseEdit;
+  let model: H3Input | VideoEditInput;
   let characterIds: string[] = [];
-  let swapImage: string | undefined;
-  if (mode === "swap") {
-    const { blob } = await prepareImage(await requireBlob(request.swapImageBlobId, "replacement image"));
-    swapImage = await blobToBase64(blob);
-  }
+  const swapImage = mode === "swap" ? (await prepareImage(await requireBlob(request.swapImageBlobId, "replacement image"))).blob : undefined;
 
   // Upload last, so a refused input never leaves a file behind.
   const hosted = await uploadAsset(new Blob([clip], { type: "video/mp4" }), { filePath: "recast.mp4", contentType: "video/mp4" });
+  const uploads = [hosted.id];
 
   if (mode === "swap") {
-    modelId = MODEL_IDS.klingOmni;
+    modelId = MODEL_IDS.happyHorseEdit;
+    const reference = await uploadAsset(swapImage!, { filePath: "replacement.jpg", contentType: "image/jpeg" });
+    uploads.push(reference.id);
     const target = String(p.recipe.slots[0]?.slot ?? "replacement");
     model = {
       prompt: p.recipe.prompt.replace(/\{([a-z][a-z0-9_-]*)\}/g, () => target) + direction,
-      referenceImages: [swapImage!],
-      video: { url: hosted.url, use: "base", keepSound: true },
-      quality: "std",
+      videoUrl: hosted.url,
+      referenceImageUrl: reference.url,
+      keepAudio: true,
     };
   } else {
     modelId = MODEL_IDS.minimaxH3;
@@ -123,7 +124,7 @@ export async function startRecast(request: RecastRequest): Promise<string> {
   const job = await startJob({
     kind: "recast",
     modelId,
-    uploads: [hosted.id],
+    uploads,
     input: { model, characterIds, prompt: p.title, stylised, request } satisfies RecastJobInput,
   });
   return job.id;

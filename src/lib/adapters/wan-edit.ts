@@ -17,7 +17,7 @@ export const wanEdit: AdapterImpl<VideoEditInput, WanEditResult> = {
         prompt: input.prompt,
         media: [{ type: "video", url: input.videoUrl }, ...(input.referenceImageUrl ? [{ type: "reference_image" as const, url: input.referenceImageUrl }] : [])],
       },
-      parameters: { resolution: "720P", audio_setting: input.keepAudio ? "origin" : "auto", prompt_extend: false },
+      parameters: { resolution: "720P", audio_setting: input.keepAudio ? "origin" : "auto", prompt_extend: false, watermark: false },
     };
   },
   extractAssets(raw): AssetRef[] {

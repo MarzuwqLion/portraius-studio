@@ -129,11 +129,11 @@ export function RecastScreen() {
   const lengthOk = length >= limits.minSec - 0.05 && length <= limits.maxSec + 0.05;
   const ready = Boolean(prepared && rights && (!people || cast.length) && (mode !== "swap" || swapImageBlobId));
   const price = useEstimateLabel(
-    mode === "swap" ? MODEL_IDS.klingOmni : MODEL_IDS.minimaxH3,
+    mode === "swap" ? MODEL_IDS.happyHorseEdit : MODEL_IDS.minimaxH3,
     ready
       ? async () =>
           mode === "swap"
-            ? { prompt: preset.recipe.prompt, video: { url: "https://example.invalid/clip.mp4", use: "base" }, quality: "std" }
+            ? { prompt: preset.recipe.prompt, videoUrl: "https://example.invalid/clip.mp4" }
             : { stage: "generate", prompt: preset.recipe.prompt, referenceVideos: ["https://example.invalid/clip.mp4"], durationSec: Math.round(prepared!.info.durationSec), ratio: "16:9", resolution: h3Resolution }
       : undefined,
     `${presetId}:${h3Resolution}:${ready}`,
@@ -293,7 +293,7 @@ export function RecastScreen() {
       <Button onClick={() => void recast()} disabled={!ready || busy}>
         Recast · {price}
       </Button>
-      <p className="text-control text-ink-muted">{mode === "swap" ? "Object Swap runs on Kling V3 Omni." : "Recasts with people run on H3; Seedance doesn't accept them."}</p>
+      <p className="text-control text-ink-muted">{mode === "swap" ? "Object Swap runs on HappyHorse 1.0 video edit." : "Recasts with people run on H3; Seedance doesn't accept them."}</p>
     </div>
   );
 

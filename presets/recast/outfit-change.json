@@ -8,14 +8,14 @@
   "license": "CC0-1.0",
   "recipe": {
     "capability": "video.edit",
-    "model": "kling/kling-v3-omni",
+    "model": "wan/happyhorse-1.0-video-edit",
     "slots": [
       {
         "slot": "outfit",
         "kind": "element"
       }
     ],
-    "prompt": "Replace the outfit worn in <<<video_1>>> with the {outfit} in <<<image_1>>>. Keep the person, their motion and everything else unchanged.",
+    "prompt": "Replace the outfit worn in the video with the {outfit} from the reference image. Keep the person, their motion and everything else unchanged.",
     "params": {
       "mode": "swap",
       "target": "outfit"

@@ -50,8 +50,8 @@ Every call goes through [Comfy Router](https://docs.comfy.org). Model IDs live i
 | Nano Banana 2.1 | `vertexai/gemini-nano-banana-2.1` | Character sheets, designed faces, every image, Still first's opening frame |
 | Seedance 2.5 | `byteplus/dreamina-seedance-2-5-260628` | Default video without people: 480p draft, then a 1080p final from the draft's ID |
 | MiniMax H3 | `minimax/minimax-h3` | Every video with a person in it, and Recast's Motion Transfer (Seedance refuses photoreal people) |
-| Kling V3 Omni | `kling/kling-v3-omni` | Recast's Object Swap (clip edit with a reference image) |
-| Wan 2.7, HappyHorse 1.0, BFL video edit | `wan/wan2.7-videoedit`, `wan/happyhorse-1.0-video-edit`, `bfl/video-edit-v1` | Object Swap candidates, compared in `docs/notes/recast-ab.md` |
+| HappyHorse 1.0 video edit | `wan/happyhorse-1.0-video-edit` | Recast's Object Swap: edits the clip from a reference image and keeps its timing |
+| Kling V3 Omni, Wan 2.7, BFL video edit | `kling/kling-v3-omni`, `wan/wan2.7-videoedit`, `bfl/video-edit-v1` | Object Swap alternatives, compared in `docs/notes/recast-ab.md` |
 
 No request ever sends `model_provider`; queued requests are always served by the model's own provider.
 
@@ -66,7 +66,7 @@ when you like the draft.
 ```
 Browser (GitHub Pages)                          Comfy Router          Provider
 Studio UI -> Router client -------------------> queue --------------> Google, BytePlus,
-(prompt,     (model allowlist, your key)        (request ID)          MiniMax, Kling
+(prompt,     (model allowlist, your key)        (request ID)          MiniMax, Alibaba
  image prep)
 Library   <- download (bytes saved in IndexedDB) <- result <-----------+
  + identity score (face-api, in the browser)

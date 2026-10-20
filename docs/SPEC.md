@@ -687,6 +687,8 @@ Comfy lists its own Genjutsu rebuild, "Openjutsu", as coming soon on the competi
 
 ### Modes and engines
 
+M4 changed the engines (docs/notes/recast-ab.md): Seedance refuses people, so Motion Transfer and style swap run on MiniMax H3; the Object Swap A/B picked HappyHorse 1.0 video edit over Kling, which retimes the clip. The table below is the original plan.
+
 | Mode | What changes | Engine (default) | Request shape |
 | --- | --- | --- | --- |
 | Motion Transfer | The performer, and optionally the setting | Seedance 2.5 reference-to-video | `reference_video` (the clip, as a hosted URL from `lib/media/host.ts`) + `reference_image` (sheet composite and best photo) + prompt: "Recreate the motion, timing and camera movement of the reference video exactly, with LEAD as the performer." Seedance only accepts `duration: -1` for editing tasks; confirm in M4 whether this mode counts as one. |
