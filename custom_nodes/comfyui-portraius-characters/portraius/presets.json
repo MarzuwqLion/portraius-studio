@@ -1,0 +1,358 @@
+{
+  "note": "Generated from the app's presets/ by npm run nodepack. Don't edit.",
+  "camera": {
+    "genre": [
+      {
+        "id": "drama",
+        "label": "Drama",
+        "phrase": "a grounded, dramatic tone"
+      },
+      {
+        "id": "action",
+        "label": "Action",
+        "phrase": "kinetic action-film energy"
+      },
+      {
+        "id": "thriller",
+        "label": "Thriller",
+        "phrase": "a tense thriller atmosphere"
+      },
+      {
+        "id": "comedy",
+        "label": "Comedy",
+        "phrase": "a light, comedic tone"
+      },
+      {
+        "id": "horror",
+        "label": "Horror",
+        "phrase": "an unsettling horror atmosphere"
+      },
+      {
+        "id": "documentary",
+        "label": "Documentary",
+        "phrase": "an observational documentary feel"
+      }
+    ],
+    "body": [
+      {
+        "id": "digital-cinema",
+        "label": "Digital cinema",
+        "phrase": "shot on a digital cinema camera, clean and detailed"
+      },
+      {
+        "id": "film-35mm",
+        "label": "35mm film",
+        "phrase": "shot on 35mm film with fine natural grain"
+      },
+      {
+        "id": "film-16mm",
+        "label": "16mm film",
+        "phrase": "shot on 16mm film with visible grain and soft halation"
+      },
+      {
+        "id": "vhs",
+        "label": "VHS camcorder",
+        "phrase": "VHS camcorder footage with tape noise and soft colour bleed"
+      },
+      {
+        "id": "phone",
+        "label": "Phone",
+        "phrase": "shot on a phone camera, slightly wide and crisp"
+      }
+    ],
+    "era": [
+      {
+        "id": "1970s",
+        "label": "1970s",
+        "phrase": "set in the 1970s, with period clothing, cars and signage"
+      },
+      {
+        "id": "1990s",
+        "label": "1990s",
+        "phrase": "set in the 1990s, with period clothing, cars and signage"
+      },
+      {
+        "id": "present",
+        "label": "Present day",
+        "phrase": "set in the present day"
+      }
+    ],
+    "pacing": [
+      {
+        "id": "calm",
+        "label": "Calm",
+        "phrase": "unhurried, calm pacing"
+      },
+      {
+        "id": "standard",
+        "label": "Standard",
+        "phrase": ""
+      },
+      {
+        "id": "fast",
+        "label": "Fast",
+        "phrase": "fast pacing with quick, energetic action"
+      }
+    ],
+    "size": [
+      {
+        "id": "ECU",
+        "label": "Extreme close-up",
+        "phrase": "extreme close-up on the eyes and face"
+      },
+      {
+        "id": "CU",
+        "label": "Close-up",
+        "phrase": "close-up of the face"
+      },
+      {
+        "id": "MCU",
+        "label": "Medium close-up",
+        "phrase": "medium close-up from the chest up"
+      },
+      {
+        "id": "MS",
+        "label": "Medium",
+        "phrase": "medium shot from the waist up"
+      },
+      {
+        "id": "WS",
+        "label": "Wide",
+        "phrase": "wide shot showing the full figure in the setting"
+      },
+      {
+        "id": "EWS",
+        "label": "Extreme wide",
+        "phrase": "extreme wide shot, the figure small in a vast setting"
+      }
+    ],
+    "angle": [
+      {
+        "id": "eye",
+        "label": "Eye level",
+        "phrase": "eye-level camera"
+      },
+      {
+        "id": "low",
+        "label": "Low",
+        "phrase": "low-angle shot looking up at the subject"
+      },
+      {
+        "id": "high",
+        "label": "High",
+        "phrase": "high-angle shot looking down at the subject"
+      },
+      {
+        "id": "overhead",
+        "label": "Overhead",
+        "phrase": "overhead top-down shot"
+      },
+      {
+        "id": "dutch",
+        "label": "Dutch",
+        "phrase": "Dutch angle with a tilted horizon"
+      }
+    ],
+    "lens": [
+      {
+        "id": "24mm",
+        "label": "24 mm",
+        "phrase": "24mm wide-angle lens"
+      },
+      {
+        "id": "35mm",
+        "label": "35 mm",
+        "phrase": "35mm lens"
+      },
+      {
+        "id": "50mm",
+        "label": "50 mm",
+        "phrase": "50mm lens with a natural perspective"
+      },
+      {
+        "id": "85mm",
+        "label": "85 mm",
+        "phrase": "85mm portrait lens with a compressed background"
+      },
+      {
+        "id": "135mm",
+        "label": "135 mm",
+        "phrase": "135mm telephoto lens with a softly blurred background"
+      },
+      {
+        "id": "anamorphic",
+        "label": "Anamorphic",
+        "phrase": "anamorphic lens with oval bokeh and horizontal flares"
+      }
+    ],
+    "aperture": [
+      {
+        "id": "f1.4",
+        "label": "f/1.4",
+        "phrase": "shot at f/1.4 with a very shallow depth of field"
+      },
+      {
+        "id": "f2",
+        "label": "f/2",
+        "phrase": "shot at f/2 with a shallow depth of field"
+      },
+      {
+        "id": "f2.8",
+        "label": "f/2.8",
+        "phrase": "shot at f/2.8"
+      },
+      {
+        "id": "f4",
+        "label": "f/4",
+        "phrase": "shot at f/4"
+      },
+      {
+        "id": "f5.6",
+        "label": "f/5.6",
+        "phrase": "shot at f/5.6"
+      },
+      {
+        "id": "f8",
+        "label": "f/8",
+        "phrase": "shot at f/8 with most of the scene in focus"
+      },
+      {
+        "id": "f11",
+        "label": "f/11",
+        "phrase": "shot at f/11 with deep focus"
+      }
+    ],
+    "movement": [
+      {
+        "id": "static",
+        "label": "Static",
+        "phrase": "locked-off static camera"
+      },
+      {
+        "id": "slow-push-in",
+        "label": "Slow push-in",
+        "phrase": "the camera slowly pushes in toward the subject",
+        "overrides": {
+          "kling/kling-v3-omni": "slow dolly-in, steady"
+        }
+      },
+      {
+        "id": "pull-back",
+        "label": "Pull-back",
+        "phrase": "the camera slowly pulls back from the subject"
+      },
+      {
+        "id": "dolly-left",
+        "label": "Dolly left",
+        "phrase": "the camera dollies smoothly to the left"
+      },
+      {
+        "id": "dolly-right",
+        "label": "Dolly right",
+        "phrase": "the camera dollies smoothly to the right"
+      },
+      {
+        "id": "orbit",
+        "label": "Orbit",
+        "phrase": "the camera orbits slowly around the subject"
+      },
+      {
+        "id": "crane-up",
+        "label": "Crane up",
+        "phrase": "the camera cranes up and away"
+      },
+      {
+        "id": "handheld-follow",
+        "label": "Handheld follow",
+        "phrase": "handheld camera following the subject"
+      },
+      {
+        "id": "whip-pan",
+        "label": "Whip pan",
+        "phrase": "a fast whip pan"
+      }
+    ],
+    "lighting": [
+      {
+        "id": "soft-key",
+        "label": "Soft key",
+        "phrase": "soft key light from one side"
+      },
+      {
+        "id": "noon-sun",
+        "label": "Hard noon sun",
+        "phrase": "hard noon sunlight with crisp shadows"
+      },
+      {
+        "id": "golden-hour",
+        "label": "Golden hour",
+        "phrase": "warm golden-hour light"
+      },
+      {
+        "id": "neon",
+        "label": "Neon",
+        "phrase": "neon light in magenta and cyan"
+      },
+      {
+        "id": "practicals",
+        "label": "Practicals only",
+        "phrase": "lit only by practical lamps in the scene"
+      },
+      {
+        "id": "moonlight",
+        "label": "Moonlight",
+        "phrase": "cool, low moonlight"
+      }
+    ]
+  },
+  "looks": [
+    {
+      "id": "black-and-white",
+      "label": "Black and white",
+      "phrase": "black-and-white photography with rich mid-tones",
+      "stylised": false
+    },
+    {
+      "id": "bleach-bypass",
+      "label": "Bleach bypass",
+      "phrase": "bleach-bypass look: desaturated colour, deep blacks and high contrast",
+      "stylised": false
+    },
+    {
+      "id": "clean-digital",
+      "label": "Clean digital",
+      "phrase": "clean digital colour with neutral, accurate skin tones",
+      "stylised": false
+    },
+    {
+      "id": "cool-film",
+      "label": "Cool film",
+      "phrase": "cool film look with green-cyan shadows and soft contrast",
+      "stylised": false
+    },
+    {
+      "id": "warm-film",
+      "label": "Warm film",
+      "phrase": "warm colour-negative film look with golden highlights and gentle contrast",
+      "stylised": false
+    },
+    {
+      "id": "anime",
+      "label": "Anime",
+      "phrase": "anime illustration style with clean line art and cel colour",
+      "stylised": true
+    },
+    {
+      "id": "cel-shaded",
+      "label": "Cel-shaded",
+      "phrase": "cel-shaded 3D animation style",
+      "stylised": true
+    },
+    {
+      "id": "claymation",
+      "label": "Claymation",
+      "phrase": "claymation style: handmade clay figures and miniature sets",
+      "stylised": true
+    }
+  ]
+}

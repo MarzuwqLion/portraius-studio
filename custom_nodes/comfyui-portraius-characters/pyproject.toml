@@ -1,0 +1,22 @@
+[project]
+name = "portraius-characters"
+description = "Portraius Studio's character files in ComfyUI: load a .portraius character (consent enforced), build the app's own prompt with its reference images, and score how closely a result matches the character's face."
+version = "0.1.0"
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.10"
+# Everything it needs (torch, torchvision, numpy, Pillow) comes with ComfyUI. The face models are
+# vendored from facenet-pytorch (MIT) because that package pins an old torch.
+dependencies = []
+classifiers = ["Operating System :: OS Independent"]
+
+[project.urls]
+Repository = "https://github.com/MarzuwqLion/portraius-studio"
+Documentation = "https://github.com/MarzuwqLion/portraius-studio/tree/main/custom_nodes/comfyui-portraius-characters"
+"Bug Tracker" = "https://github.com/MarzuwqLion/portraius-studio/issues"
+
+[tool.comfy]
+# Must match the publisher created on registry.comfy.org before the first publish.
+PublisherId = "marzuwqlion"
+DisplayName = "Portraius Characters"
+Icon = ""

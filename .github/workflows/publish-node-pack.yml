@@ -1,0 +1,40 @@
+# Publishes custom_nodes/comfyui-portraius-characters to the Comfy Registry.
+# Run by hand only (Actions → Publish node pack → Run workflow). It needs a
+# publisher on registry.comfy.org whose ID matches [tool.comfy] PublisherId in
+# the pack's pyproject.toml, and that publisher's API key saved as the
+# REGISTRY_ACCESS_TOKEN repository secret. The same steps as
+# Comfy-Org/publish-node-action, run from the pack's folder.
+name: Publish node pack
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: custom_nodes/comfyui-portraius-characters
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test the pack
+        run: |
+          pip install pytest pillow numpy
+          python -m pytest tests
+      - name: Publish to the Comfy Registry
+        env:
+          REGISTRY_ACCESS_TOKEN: ${{ secrets.REGISTRY_ACCESS_TOKEN }}
+        run: |
+          if [ -z "$REGISTRY_ACCESS_TOKEN" ]; then
+            echo "Add the REGISTRY_ACCESS_TOKEN secret (a Comfy Registry publisher API key) first."
+            exit 1
+          fi
+          pip install comfy-cli
+          comfy --skip-prompt --no-enable-telemetry env
+          comfy node publish --token "$REGISTRY_ACCESS_TOKEN"

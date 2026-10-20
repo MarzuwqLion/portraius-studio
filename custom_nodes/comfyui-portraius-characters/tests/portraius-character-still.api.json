@@ -1,0 +1,84 @@
+{
+  "2": {
+    "class_type": "PortraiusLoadCharacter",
+    "inputs": {
+      "character": "walt-harmon.portraius"
+    },
+    "_meta": {
+      "title": "Load Portraius Character"
+    }
+  },
+  "3": {
+    "class_type": "PortraiusCharacterPrompt",
+    "inputs": {
+      "scene": "{lead} reads a paperback in a corner booth of a late-night diner, rain on the window behind",
+      "size": "Medium close-up",
+      "angle": "none",
+      "lens": "85 mm",
+      "aperture": "f/2",
+      "lighting": "Soft key",
+      "look": "Warm film",
+      "character_1": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Character Prompt"
+    }
+  },
+  "4": {
+    "class_type": "GeminiNanoBanana2V2",
+    "inputs": {
+      "prompt": [
+        "3",
+        0
+      ],
+      "model": "Gemini Nano Banana 2.1",
+      "model.aspect_ratio": "4:5",
+      "model.resolution": "2K",
+      "model.thinking_level": "HIGH",
+      "seed": 1,
+      "response_modalities": "IMAGE",
+      "system_prompt": "",
+      "temperature": 1,
+      "top_p": 0.95,
+      "model.images.image_1": [
+        "3",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "Nano Banana 2.1"
+    }
+  },
+  "5": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "portraius/still",
+      "images": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save image"
+    }
+  },
+  "6": {
+    "class_type": "PortraiusIdentityScore",
+    "inputs": {
+      "image": [
+        "4",
+        0
+      ],
+      "character": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Identity Score"
+    }
+  }
+}

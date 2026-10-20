@@ -52,7 +52,9 @@ Plus core nodes: Load Image, Save Image, Save Video, Preview as Text and a note.
   bypassed. Paste the draft's `draft_task_id` from **Preview as Text**, turn the final and its Save Video back on,
   and run again. The draft node's seed is fixed, so it isn't drawn again.
 - **What the graphs don't do.** No webcam consent check, identity score, automatic drift retry or realism pass:
-  those live in the app. The `.portraius` node pack that would bring them into ComfyUI is P2 and isn't built.
+  those live in the app. The node pack in [`custom_nodes/comfyui-portraius-characters`](../custom_nodes/comfyui-portraius-characters/)
+  brings characters, the app's prompt and an identity score into ComfyUI: it loads a `.portraius` file instead of
+  loose images.
 - **Partner nodes go through Comfy's API proxy** rather than Comfy Router, so they bill to the signed-in account
   and serve the same models through ComfyUI's own integration.
 
@@ -62,6 +64,10 @@ Plus core nodes: Load Image, Save Image, Save Video, Preview as Text and a note.
 definitions ComfyUI publishes at Comfy Cloud's `/api/object_info`. It checks that every node exists, that every
 input name is one the node takes (including the dotted names of dynamic inputs like `model.images.image_1`), and
 that every choice is one of its options. It ran clean on October 20, 2026. Nothing executes, so it costs nothing.
+`OBJECT_INFO_URL=http://127.0.0.1:8188/object_info` checks against a local ComfyUI instead, no key needed; where that
+ComfyUI has the node pack, its example graph is checked too. All three ran clean against a current local ComfyUI on
+October 20.
 
-The graphs haven't been run end to end yet: Comfy Cloud's API refuses keys from free-tier accounts, and there's no
-local ComfyUI on the build machine. Opening a graph in Comfy Cloud and pressing Run is the quickest full check.
+The partner-node graphs haven't been run end to end yet: Comfy Cloud's API refuses keys from free-tier accounts, and
+a local ComfyUI needs a signed-in Comfy account to run partner nodes. Opening a graph in Comfy Cloud and pressing Run
+is the quickest full check.

@@ -21,6 +21,7 @@ interface Slot {
   type: string;
   optional?: boolean;
   label?: string;
+  widget?: boolean; // a widget that takes a link instead (another node's output)
 }
 
 interface NodeSpec {
@@ -46,7 +47,7 @@ interface UiNode {
   flags: Record<string, never>;
   order: number;
   mode: number;
-  inputs: { name: string; type: string; link: number | null; shape?: number; label?: string }[];
+  inputs: { name: string; type: string; link: number | null; shape?: number; label?: string; widget?: { name: string } }[];
   outputs: { name: string; type: string; links: number[] | null }[];
   properties: { "Node name for S&R": string };
   widgets_values: Value[];
@@ -89,7 +90,14 @@ class Graph {
       flags: {},
       order: this.nodes.length,
       mode: spec.mode ?? 0,
-      inputs: (spec.inputs ?? []).map((s) => ({ name: s.name, type: s.type, link: null, ...(s.optional ? { shape: 7 } : {}), ...(s.label ? { label: s.label } : {}) })),
+      inputs: (spec.inputs ?? []).map((s) => ({
+        name: s.name,
+        type: s.type,
+        link: null,
+        ...(s.optional ? { shape: 7 } : {}),
+        ...(s.label ? { label: s.label } : {}),
+        ...(s.widget ? { widget: { name: s.name } } : {}),
+      })),
       outputs: (spec.outputs ?? []).map((s) => ({ name: s.name, type: s.type, links: null })),
       properties: { "Node name for S&R": spec.type },
       widgets_values: widgets.map(([, v]) => v),
@@ -171,7 +179,7 @@ const loadImage = (file: string, title: string, pos: [number, number]): NodeSpec
 
 // Nano Banana 2.1 the way the app calls it: no system prompt, image output,
 // "Best" quality (HIGH thinking) unless asked otherwise.
-function nanoBanana(o: { title: string; prompt: string; aspect: string; images: number; pos: [number, number]; seed: number }): NodeSpec {
+function nanoBanana(o: { title: string; prompt: string; aspect: string; images: number; pos: [number, number]; seed: number; promptInput?: boolean }): NodeSpec {
   const slots = o.images + 1; // the node always offers one more image slot
   return {
     type: "GeminiNanoBanana2V2",
@@ -179,6 +187,7 @@ function nanoBanana(o: { title: string; prompt: string; aspect: string; images: 
     pos: o.pos,
     size: [420, 620],
     inputs: [
+      ...(o.promptInput ? [{ name: "prompt", type: "STRING", widget: true }] : []),
       ...Array.from({ length: slots }, (_, i) => ({ name: `model.images.image_${i + 1}`, type: "IMAGE", optional: true, label: `image_${i + 1}` })),
       { name: "model.files", type: "GEMINI_INPUT_FILES", optional: true },
     ],
@@ -391,6 +400,91 @@ export function stillFirstVideoWorkflow(): { ui: UiWorkflow; api: ApiWorkflow } 
   const saveFinal = g.add(saveVideo("video/portraius-final", [1820, y + 220], 4));
   g.link(final, 0, saveFinal, "video");
   g.group("Without people: Seedance 2.5 draft, then the final from its ID", [-20, y - 60, 2300, 820]);
+  return g.build();
+}
+
+// ---- The node pack's example: a character file to a scored still ----
+
+// Ships in custom_nodes/comfyui-portraius-characters/example_workflows/, so
+// ComfyUI lists it under the pack's templates.
+export const PACK_SCENE = "{lead} reads a paperback in a corner booth of a late-night diner, rain on the window behind";
+
+const NOTE_PACK = `## Portraius Studio: a character file to a still
+
+A character you made in Portraius Studio is one \`.portraius\` file. This graph uses it the way the app does.
+
+1. Put the file in \`ComfyUI/input/characters/\` and pick it in **Load Portraius Character**. The sample character, Walt Harmon, is \`public/samples/walt-harmon.portraius\` in the app's repo.
+2. Write the scene in **Character Prompt**: people are \`{lead}\`, \`{second}\` and \`{third}\`, elements are named for their type, like \`{outfit}\`.
+3. Run. Nano Banana 2.1 draws the still from the app's own prompt and references, and **Identity Score** rates the face against the character's, 0 to 100.
+
+A person made from photos needs their consent record, as in the app. Nano Banana 2.1 is a partner node: it needs a Comfy account with credits.`;
+
+export function portraiusStillWorkflow(): { ui: UiWorkflow; api: ApiWorkflow } {
+  const g = new Graph("7d1b6c2e-4a7e-4f0e-9a51-5c3d2b1a0003");
+  g.add(note(NOTE_PACK, [-560, 0]));
+  const character = g.add({
+    type: "PortraiusLoadCharacter",
+    title: "Load Portraius Character",
+    pos: [0, 0],
+    size: [320, 200],
+    outputs: [
+      { name: "character", type: "PORTRAIUS_CHARACTER" },
+      { name: "sheet", type: "IMAGE" },
+      { name: "views", type: "IMAGE" },
+      { name: "photos", type: "IMAGE" },
+      { name: "name", type: "STRING" },
+      { name: "description", type: "STRING" },
+    ],
+    widgets: [["character", "walt-harmon.portraius"]],
+  });
+  const prompt = g.add({
+    type: "PortraiusCharacterPrompt",
+    title: "Character Prompt",
+    pos: [380, 0],
+    size: [400, 520],
+    inputs: [
+      { name: "character_1", type: "PORTRAIUS_CHARACTER" },
+      { name: "character_2", type: "PORTRAIUS_CHARACTER", optional: true },
+      { name: "character_3", type: "PORTRAIUS_CHARACTER", optional: true },
+      { name: "character_4", type: "PORTRAIUS_CHARACTER", optional: true },
+    ],
+    outputs: [
+      { name: "prompt", type: "STRING" },
+      { name: "references", type: "IMAGE" },
+      { name: "cast", type: "STRING" },
+    ],
+    widgets: [
+      ["scene", PACK_SCENE],
+      ["size", "Medium close-up"],
+      ["angle", "none"],
+      ["lens", "85 mm"],
+      ["aperture", "f/2"],
+      ["lighting", "Soft key"],
+      ["look", "Warm film"],
+    ],
+  });
+  g.link(character, 0, prompt, "character_1");
+  const still = g.add(nanoBanana({ title: "Nano Banana 2.1", prompt: "", aspect: "4:5", images: 1, pos: [840, 0], seed: 1, promptInput: true }));
+  g.link(prompt, 0, still, "prompt");
+  g.link(prompt, 1, still, "model.images.image_1");
+  const save = g.add(saveImage("portraius/still", [1320, 0]));
+  g.link(still, 0, save, "images");
+  const score = g.add({
+    type: "PortraiusIdentityScore",
+    title: "Identity Score",
+    pos: [1320, 440],
+    size: [400, 240],
+    inputs: [
+      { name: "image", type: "IMAGE" },
+      { name: "character", type: "PORTRAIUS_CHARACTER" },
+    ],
+    outputs: [
+      { name: "score", type: "FLOAT" },
+      { name: "report", type: "STRING" },
+    ],
+  });
+  g.link(still, 0, score, "image");
+  g.link(character, 0, score, "character");
   return g.build();
 }
 

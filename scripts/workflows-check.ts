@@ -3,19 +3,24 @@
 // type exists, every input name is one the node takes, and every choice is
 // one of its options. Free to run; nothing executes. Reads COMFY_API_KEY from
 // the shell, like smoke.
-import { readdirSync, readFileSync } from "node:fs";
+//
+// OBJECT_INFO_URL points it at another ComfyUI instead, such as a local one
+// (http://127.0.0.1:8188/object_info, no key). Where that ComfyUI has the
+// Portraius node pack installed, the pack's example graph is checked too.
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 type Spec = [unknown, Record<string, unknown>?];
 type Inputs = { required?: Record<string, Spec>; optional?: Record<string, Spec> };
 type Allowed = { options?: unknown[]; min?: number; max?: number; link?: boolean };
 
+const source = process.env.OBJECT_INFO_URL?.trim() || "https://cloud.comfy.org/api/object_info";
 const key = process.env.COMFY_API_KEY?.trim();
-if (!key) {
-  console.error("Set COMFY_API_KEY in your shell first.");
+if (!process.env.OBJECT_INFO_URL && !key) {
+  console.error("Set COMFY_API_KEY in your shell first, or OBJECT_INFO_URL to a local ComfyUI's /object_info.");
   process.exit(2);
 }
-const res = await fetch("https://cloud.comfy.org/api/object_info", { headers: { "X-API-Key": key } });
+const res = await fetch(source, { headers: key && !process.env.OBJECT_INFO_URL ? { "X-API-Key": key } : {} });
 if (!res.ok) throw new Error(`object_info: HTTP ${res.status}`);
 const catalog = (await res.json()) as Record<string, { input: Inputs }>;
 
@@ -39,9 +44,16 @@ function flatten(inputs: Inputs, prefix: string, chosen: Record<string, unknown>
   }
 }
 
+const PACK_EXAMPLE = "custom_nodes/comfyui-portraius-characters/tests/portraius-character-still.api.json";
+const files = readdirSync("workflows")
+  .filter((f) => f.endsWith(".api.json"))
+  .map((f) => join("workflows", f));
+if (catalog.PortraiusLoadCharacter && existsSync(PACK_EXAMPLE)) files.push(PACK_EXAMPLE);
+else console.log(`skipped ${PACK_EXAMPLE}: this ComfyUI doesn't have the Portraius node pack`);
+
 const problems: string[] = [];
-for (const file of readdirSync("workflows").filter((f) => f.endsWith(".api.json"))) {
-  const prompt = JSON.parse(readFileSync(join("workflows", file), "utf8")) as Record<string, { class_type: string; inputs: Record<string, unknown> }>;
+for (const file of files) {
+  const prompt = JSON.parse(readFileSync(file, "utf8")) as Record<string, { class_type: string; inputs: Record<string, unknown> }>;
   for (const [id, node] of Object.entries(prompt)) {
     const where = `${file} node ${id} (${node.class_type})`;
     const def = catalog[node.class_type];
@@ -67,4 +79,4 @@ if (problems.length) {
   for (const p of problems) console.error(`✗ ${p}`);
   process.exit(1);
 }
-console.log("Every node, input and option matches ComfyUI's published definitions.");
+console.log(`Every node, input and option matches the definitions at ${source}.`);
