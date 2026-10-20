@@ -111,7 +111,11 @@ export function stitchArgs(inputs: string[], clips: StitchClip[], o: StitchOptio
         graph.push(`[${a}][a${i}]acrossfade=d=${fixed(fade)}[${na}]`);
         length += lengths[i]! - fade;
       } else {
-        graph.push(`[${v}][${a}][v${i}][a${i}]concat=n=2:v=1:a=1[${nv}][${na}]`);
+        // concat outputs microsecond timestamps, and a later xfade refuses to
+        // mix them with the 1/24 of the shots, so they're put back.
+        graph.push(`[${v}][${a}][v${i}][a${i}]concat=n=2:v=1:a=1[c${i}][d${i}]`);
+        graph.push(`[c${i}]settb=1/${STITCH_FPS}[${nv}]`);
+        graph.push(`[d${i}]asettb=1/48000[${na}]`);
         length += lengths[i]!;
       }
       v = nv;

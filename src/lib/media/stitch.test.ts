@@ -79,7 +79,7 @@ describe("stitchArgs", () => {
     // shot 3 still fades in, 0.25 s before the 5 + 3.958 s already joined.
     expect(graph).toContain("trim=start_frame=1:duration=3.958");
     expect(graph).toContain("anullsrc=r=48000:cl=stereo,atrim=duration=3.958");
-    expect(graph).toContain("[v0][a0][v1][a1]concat=n=2:v=1:a=1[x1][y1]");
+    expect(graph).toContain("[v0][a0][v1][a1]concat=n=2:v=1:a=1[c1][d1];[c1]settb=1/24[x1];[d1]asettb=1/48000[y1]");
     expect(graph).toContain("[x1][v2]xfade=transition=fade:duration=0.250:offset=8.708[v]");
     expect(graph).toContain("[y1][a2]acrossfade=d=0.250[a]");
     expect(graph).not.toContain("trim=start_frame=1:duration=5.000");

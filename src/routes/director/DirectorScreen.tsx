@@ -247,7 +247,8 @@ function SceneEditor({ sceneId }: { sceneId: string }) {
       <section aria-label="Set" className="min-h-64 flex-1 overflow-auto bg-seamless p-6 text-on-seamless">
         <p className="mb-4 border-b border-rule pb-3 text-control md:hidden">Director works best on a desktop screen.</p>
         {error && (
-          <p role="alert" className="mb-4 rounded-control bg-proof px-3 py-2 text-body text-drift">
+          // Sticky, so a failure from Export or One take at the bottom shows.
+          <p role="alert" className="sticky top-0 z-10 mb-4 rounded-control bg-proof px-3 py-2 text-body text-drift">
             {error}
           </p>
         )}
