@@ -15,7 +15,7 @@
         "kind": "person"
       }
     ],
-    "prompt": "{lead} performs exactly the movement and timing of the reference video.",
+    "prompt": "{lead} performs exactly the movement, timing and camera of the reference video.",
     "params": {
       "mode": "motion",
       "keepAudio": true,
