@@ -1,0 +1,30 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "noir-office",
+  "type": "image",
+  "title": "Film noir",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "image.generate",
+    "model": "vertexai/gemini-nano-banana-2.1",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "{lead} in a 1940s film noir private eye's office: venetian-blind shadows across the face, a desk lamp, rain on the window, a fedora on the desk.",
+    "camera": {
+      "size": "MCU",
+      "angle": "low",
+      "lighting": "practicals",
+      "genre": "thriller",
+      "look": "black-and-white"
+    },
+    "params": {
+      "aspectRatio": "4:5"
+    }
+  }
+}

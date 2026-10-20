@@ -1,0 +1,29 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "walk-in",
+  "type": "video",
+  "title": "Walk-in",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "video.generate",
+    "model": "byteplus/dreamina-seedance-2-5-260628",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "{lead} walks into frame from the left, stops at the centre and looks straight at the camera.",
+    "camera": {
+      "size": "WS",
+      "movement": "static"
+    },
+    "params": {
+      "mode": "still",
+      "durationSec": 5,
+      "ratio": "16:9"
+    }
+  }
+}

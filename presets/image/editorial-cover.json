@@ -1,0 +1,28 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "editorial-cover",
+  "type": "image",
+  "title": "Editorial cover",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "image.generate",
+    "model": "vertexai/gemini-nano-banana-2.1",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "An editorial magazine cover of {lead} in a confident three-quarter pose against a bold coral backdrop, with an invented masthead reading \"MERIDIAN\" across the top and two short invented cover lines.",
+    "camera": {
+      "size": "MS",
+      "lens": "85mm",
+      "lighting": "soft-key"
+    },
+    "params": {
+      "aspectRatio": "3:4"
+    }
+  }
+}

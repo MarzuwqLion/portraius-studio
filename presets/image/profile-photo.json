@@ -1,0 +1,29 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "profile-photo",
+  "type": "image",
+  "title": "Professional profile photo",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "image.generate",
+    "model": "vertexai/gemini-nano-banana-2.1",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "{lead} in a professional profile photo outdoors, smart casual clothes, a warm open expression, softly blurred city street behind.",
+    "camera": {
+      "size": "MCU",
+      "lens": "85mm",
+      "aperture": "f1.4",
+      "lighting": "golden-hour"
+    },
+    "params": {
+      "aspectRatio": "1:1"
+    }
+  }
+}

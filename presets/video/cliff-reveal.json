@@ -1,0 +1,30 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "cliff-reveal",
+  "type": "video",
+  "title": "Cliff reveal",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "video.generate",
+    "model": "byteplus/dreamina-seedance-2-5-260628",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "{lead} stands at the edge of a sea cliff at sunrise; the camera cranes up to reveal the ocean stretching to the horizon.",
+    "camera": {
+      "size": "EWS",
+      "movement": "crane-up",
+      "lighting": "golden-hour"
+    },
+    "params": {
+      "mode": "still",
+      "durationSec": 8,
+      "ratio": "16:9"
+    }
+  }
+}

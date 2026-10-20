@@ -1,0 +1,29 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "film-still",
+  "type": "image",
+  "title": "Film still",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "image.generate",
+    "model": "vertexai/gemini-nano-banana-2.1",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "A cinematic film still: {lead} at a rain-streaked window at night, lit by passing car lights, lost in thought.",
+    "camera": {
+      "size": "MS",
+      "lens": "anamorphic",
+      "lighting": "practicals",
+      "genre": "drama"
+    },
+    "params": {
+      "aspectRatio": "21:9"
+    }
+  }
+}

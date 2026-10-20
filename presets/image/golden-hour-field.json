@@ -1,0 +1,29 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "golden-hour-field",
+  "type": "image",
+  "title": "Golden hour",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "image.generate",
+    "model": "vertexai/gemini-nano-banana-2.1",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "{lead} standing in a field of tall grass at golden hour, backlit hair glowing, gentle lens flare, a quiet smile.",
+    "camera": {
+      "size": "MS",
+      "lens": "50mm",
+      "aperture": "f2",
+      "lighting": "golden-hour"
+    },
+    "params": {
+      "aspectRatio": "4:5"
+    }
+  }
+}

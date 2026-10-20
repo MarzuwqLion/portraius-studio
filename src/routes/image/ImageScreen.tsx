@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useLiveQuery } from "dexie-react-hooks";
 import { WorkScreen } from "@/components/shell/Screen";
 import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
 import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
+import { PresetPicker } from "@/components/studio/PresetPicker";
 import { Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { useEstimateLabel, useRecentJobs } from "@/lib/jobs/hooks";
 import type { JobInput } from "@/lib/jobs/runner";
+import { IMAGE_PRESETS } from "@/lib/presets/load";
+import type { Preset } from "@/lib/presets/schema";
 import type { CameraSelection } from "@/lib/prompts/camera";
 import { compileImagePrompt, slotsIn } from "@/lib/prompts/compile";
 import type { GenerateImageInput, ImageAspectRatio } from "@/lib/registry/inputs";
@@ -60,9 +63,26 @@ export function ImageScreen() {
   const [picked, setPicked] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const [presetId, setPresetId] = useState<string>();
+  const [params] = useSearchParams();
   const upload = useRef<HTMLInputElement>(null);
   const sourceUrl = useBlobUrl(sourceBlobId);
   const groups = useImageGroups();
+
+  function applyPreset(p: Preset | undefined) {
+    setPresetId(p?.id);
+    if (!p) return;
+    setScene(p.recipe.prompt);
+    setCamera({ ...p.recipe.camera });
+    const ratio = p.recipe.params?.aspectRatio;
+    if (typeof ratio === "string" && RATIOS.includes(ratio as ImageAspectRatio)) setAspectRatio(ratio as ImageAspectRatio);
+  }
+
+  // #/image?recipe=<id> preloads a preset (Contracts: routes).
+  const recipeParam = params.get("recipe");
+  useEffect(() => {
+    if (recipeParam) applyPreset(IMAGE_PRESETS.find((p) => p.id === recipeParam));
+  }, [recipeParam]);
 
   // The compiled prompt, kept current as the controls change.
   useEffect(() => {
@@ -114,6 +134,8 @@ export function ImageScreen() {
         void generate();
       }}
     >
+      <PresetPicker presets={IMAGE_PRESETS} value={presetId} onPick={applyPreset} />
+
       <Field label="Prompt" hint={cast.length ? `Name cast members with ${cast.map((c) => `{${c.slot}}`).join(", ")}.` : "Add characters below to put them in the shot."}>
         {(id) => <TextArea id={id} value={scene} onChange={setScene} rows={4} maxLength={2000} placeholder="{lead} reading in a corner booth of a late-night diner" />}
       </Field>

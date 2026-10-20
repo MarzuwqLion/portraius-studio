@@ -1,0 +1,30 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "talking-to-camera",
+  "type": "video",
+  "title": "Talking to camera",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "video.generate",
+    "model": "byteplus/dreamina-seedance-2-5-260628",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "{lead} talks to the camera with natural hand gestures, as if recording a video diary at home.",
+    "camera": {
+      "size": "MCU",
+      "movement": "static",
+      "lighting": "soft-key"
+    },
+    "params": {
+      "mode": "still",
+      "durationSec": 8,
+      "ratio": "9:16"
+    }
+  }
+}

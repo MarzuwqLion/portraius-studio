@@ -1,0 +1,27 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "instant-photo-1970s",
+  "type": "image",
+  "title": "1970s instant photo",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "image.generate",
+    "model": "vertexai/gemini-nano-banana-2.1",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "An instant photo from the 1970s of {lead} at a backyard summer party, faded warm colours, soft flash falloff, the square print's white border visible.",
+    "camera": {
+      "size": "MS",
+      "era": "1970s"
+    },
+    "params": {
+      "aspectRatio": "1:1"
+    }
+  }
+}

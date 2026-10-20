@@ -1,0 +1,28 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "yearbook-1996",
+  "type": "image",
+  "title": "1996 yearbook photo",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "image.generate",
+    "model": "vertexai/gemini-nano-banana-2.1",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "A 1996 school yearbook portrait of {lead}: mottled blue-grey studio backdrop, on-camera flash, slightly soft focus, a shy smile, mid-90s clothes and hair.",
+    "camera": {
+      "size": "MCU",
+      "body": "film-35mm",
+      "era": "1990s"
+    },
+    "params": {
+      "aspectRatio": "4:5"
+    }
+  }
+}

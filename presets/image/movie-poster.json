@@ -1,0 +1,30 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "movie-poster",
+  "type": "image",
+  "title": "Action poster",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "image.generate",
+    "model": "vertexai/gemini-nano-banana-2.1",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "A dramatic action-film poster: {lead} striding toward the camera down a smoky city street at night, sparks in the air, with the invented title \"LAST SIGNAL\" in bold letters at the bottom.",
+    "camera": {
+      "size": "WS",
+      "angle": "low",
+      "lens": "24mm",
+      "lighting": "neon",
+      "genre": "action"
+    },
+    "params": {
+      "aspectRatio": "2:3"
+    }
+  }
+}

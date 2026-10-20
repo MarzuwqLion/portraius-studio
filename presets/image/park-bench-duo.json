@@ -1,0 +1,32 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "park-bench-duo",
+  "type": "image",
+  "title": "Two on a bench",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "image.generate",
+    "model": "vertexai/gemini-nano-banana-2.1",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      },
+      {
+        "slot": "second",
+        "kind": "person"
+      }
+    ],
+    "prompt": "{lead} and {second} share a laugh on a park bench in autumn, leaves falling, coffee cups in hand.",
+    "camera": {
+      "size": "MS",
+      "lens": "35mm",
+      "lighting": "golden-hour"
+    },
+    "params": {
+      "aspectRatio": "3:2"
+    }
+  }
+}

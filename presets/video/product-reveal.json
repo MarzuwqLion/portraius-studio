@@ -1,0 +1,30 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "product-reveal",
+  "type": "video",
+  "title": "Product reveal",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "video.generate",
+    "model": "byteplus/dreamina-seedance-2-5-260628",
+    "slots": [
+      {
+        "slot": "product",
+        "kind": "element"
+      }
+    ],
+    "prompt": "{product} on a matte black pedestal; a narrow beam of studio light sweeps across it as the camera orbits slowly.",
+    "camera": {
+      "size": "MS",
+      "movement": "orbit",
+      "lighting": "soft-key"
+    },
+    "params": {
+      "mode": "references",
+      "durationSec": 5,
+      "ratio": "16:9"
+    }
+  }
+}

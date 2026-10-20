@@ -1,0 +1,30 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "night-walk",
+  "type": "video",
+  "title": "Night walk",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "video.generate",
+    "model": "byteplus/dreamina-seedance-2-5-260628",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "{lead} walks toward the camera down a neon-lit street at night, confident, coat moving with each step.",
+    "camera": {
+      "size": "MS",
+      "movement": "pull-back",
+      "lighting": "neon"
+    },
+    "params": {
+      "mode": "still",
+      "durationSec": 6,
+      "ratio": "16:9"
+    }
+  }
+}

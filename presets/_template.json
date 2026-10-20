@@ -1,0 +1,27 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "my-preset",
+  "type": "image",
+  "title": "My preset",
+  "author": "your-github-handle",
+  "license": "CC0-1.0",
+  "thumbnail": "my-preset.webp",
+  "recipe": {
+    "capability": "image.generate",
+    "model": "vertexai/gemini-nano-banana-2.1",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "{lead} ...",
+    "camera": {
+      "size": "MS"
+    },
+    "params": {
+      "aspectRatio": "4:5"
+    }
+  }
+}

@@ -5,6 +5,8 @@ import { CAMERA_GROUPS, cameraFile, lookFile, presetFile, type CameraGroup, type
 const cameraModules = import.meta.glob("/presets/camera/*.json", { eager: true, import: "default" });
 const lookModules = import.meta.glob("/presets/looks/*.json", { eager: true, import: "default" });
 const recastModules = import.meta.glob("/presets/recast/*.json", { eager: true, import: "default" });
+const imageModules = import.meta.glob("/presets/image/*.json", { eager: true, import: "default" });
+const videoModules = import.meta.glob("/presets/video/*.json", { eager: true, import: "default" });
 
 function parseAll<T>(modules: Record<string, unknown>, parse: (data: unknown) => T): T[] {
   return Object.entries(modules).map(([path, data]) => {
@@ -32,8 +34,13 @@ export function look(id: string | undefined): Look | undefined {
   return id ? LOOKS.find((l) => l.id === id) : undefined;
 }
 
-export const RECAST_PRESETS: Preset[] = parseAll(recastModules, (d) => presetFile.parse(d));
+const byTitle = (a: Preset, b: Preset) => a.title.localeCompare(b.title);
 
+export const RECAST_PRESETS: Preset[] = parseAll(recastModules, (d) => presetFile.parse(d));
+export const IMAGE_PRESETS: Preset[] = parseAll(imageModules, (d) => presetFile.parse(d)).sort(byTitle);
+export const VIDEO_PRESETS: Preset[] = parseAll(videoModules, (d) => presetFile.parse(d)).sort(byTitle);
+
+// Preset IDs are unique across folders (presets:check enforces it).
 export function preset(id: string | undefined): Preset | undefined {
-  return id ? RECAST_PRESETS.find((p) => p.id === id) : undefined;
+  return id ? [...RECAST_PRESETS, ...IMAGE_PRESETS, ...VIDEO_PRESETS].find((p) => p.id === id) : undefined;
 }

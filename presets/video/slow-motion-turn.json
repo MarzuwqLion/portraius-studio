@@ -1,0 +1,30 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "slow-motion-turn",
+  "type": "video",
+  "title": "Slow-motion turn",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "video.generate",
+    "model": "byteplus/dreamina-seedance-2-5-260628",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "{lead} turns slowly toward the camera in slow motion, hair and clothes moving in a light wind.",
+    "camera": {
+      "size": "MCU",
+      "movement": "slow-push-in",
+      "lighting": "golden-hour"
+    },
+    "params": {
+      "mode": "still",
+      "durationSec": 5,
+      "ratio": "16:9"
+    }
+  }
+}

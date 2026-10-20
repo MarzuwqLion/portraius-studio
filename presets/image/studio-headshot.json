@@ -1,0 +1,29 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "studio-headshot",
+  "type": "image",
+  "title": "Studio headshot",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "image.generate",
+    "model": "vertexai/gemini-nano-banana-2.1",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "{lead} in a clean studio headshot against a seamless mid-grey backdrop, relaxed natural expression, sharp eyes, simple dark top.",
+    "camera": {
+      "size": "MCU",
+      "lens": "85mm",
+      "aperture": "f2.8",
+      "lighting": "soft-key"
+    },
+    "params": {
+      "aspectRatio": "4:5"
+    }
+  }
+}

@@ -6,11 +6,14 @@ import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
 import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
+import { PresetPicker } from "@/components/studio/PresetPicker";
 import { Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEstimateLabel, useRecentJobs } from "@/lib/jobs/hooks";
 import { retryJob, type JobInput } from "@/lib/jobs/runner";
+import { VIDEO_PRESETS } from "@/lib/presets/load";
+import type { Preset } from "@/lib/presets/schema";
 import type { CameraSelection } from "@/lib/prompts/camera";
 import type { H3Input, VideoRatio } from "@/lib/registry/inputs";
 import { MODEL_IDS } from "@/lib/registry/models";
@@ -112,6 +115,18 @@ export function VideoScreen() {
   const sourceUrl = useBlobUrl(sourceBlobId);
   const jobs = useRecentJobs(60);
   const [sourcePerson, setSourcePerson] = useState(false);
+  const [presetId, setPresetId] = useState<string>();
+
+  function applyPreset(p: Preset | undefined) {
+    setPresetId(p?.id);
+    if (!p) return;
+    setScene(p.recipe.prompt);
+    setCamera({ ...p.recipe.camera });
+    const { mode: m, durationSec: d, ratio: r } = p.recipe.params ?? {};
+    if (MODES.some((o) => o.value === m)) setMode(m as VideoMode);
+    if (typeof d === "number") setDurationSec(d);
+    if (typeof r === "string") setRatio(r as VideoRatio);
+  }
   // People go to H3 whatever is chosen: Seedance refuses them (M3 notes).
   const effective = modelFor({ mode, cast, model }, sourcePerson);
   const routedForPeople = effective !== model;
@@ -192,6 +207,7 @@ export function VideoScreen() {
       }}
     >
       <div ref={top} />
+      <PresetPicker presets={VIDEO_PRESETS} value={presetId} onPick={applyPreset} />
       <Segmented label="Mode" value={mode} onChange={setMode} options={MODES} columns={2} />
       <Field label="Prompt" hint={cast.length ? `Name cast members with ${cast.map((c) => `{${c.slot}}`).join(", ")}.` : undefined}>
         {(id) => <TextArea id={id} value={scene} onChange={setScene} rows={4} maxLength={2000} placeholder="{lead} steps out of the rain into a lit doorway and looks back" />}
