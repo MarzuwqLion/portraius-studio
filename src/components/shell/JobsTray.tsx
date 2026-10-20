@@ -21,6 +21,8 @@ function Frame({ job }: { job: Job }) {
   const generation = useGeneration(job.status === "done" ? job.generationIds[0] : undefined);
   const still = generation?.assets.find((a) => a.kind === "image") ?? generation?.assets.find((a) => a.kind === "frame");
   const url = useBlobUrl(still?.blobId);
+  // A video with no saved frame (Recast, H3) shows its own first frame.
+  const videoUrl = useBlobUrl(still ? undefined : generation?.assets.find((a) => a.kind === "video")?.blobId);
   const [busy, setBusy] = useState(false);
   const working = WORKING.includes(job.status);
   const canCancel = job.status === "queued" || job.status === "running";
@@ -31,6 +33,7 @@ function Frame({ job }: { job: Job }) {
       <Link to={STUDIO[job.kind] ?? "/library"} className="flex h-full items-center gap-2" title={job.status === "failed" ? jobStatusText(job) : undefined}>
         <span className="relative h-full w-12 overflow-hidden rounded-l-media bg-seamless">
           {url && <img src={url} alt="" className="develop absolute inset-0 size-full object-cover" />}
+          {videoUrl && <video src={`${videoUrl}#t=0.1`} muted playsInline preload="metadata" aria-hidden className="develop absolute inset-0 size-full object-cover" />}
         </span>
         <span className="flex flex-col text-control">
           <span className={cn("font-semibold", job.status === "failed" && "text-drift")}>{job.status === "failed" ? "Failed" : jobStatusText(job)}</span>
