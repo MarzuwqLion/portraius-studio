@@ -9,6 +9,7 @@ import { db } from "@/lib/store/db";
 import type { CharacterBundle, CharacterRecord } from "@/lib/types/records";
 import { jobImage } from "./create";
 import { THUMB, exportCharacter, importCharacter, type ImportSummary } from "./format";
+import { elementViewInput } from "./element-sheet";
 import { SHEET_PATHS, viewInput, type SheetView } from "./sheet";
 
 async function requireBundle(id: string): Promise<CharacterBundle> {
@@ -36,9 +37,19 @@ export async function startRedraw(record: CharacterRecord, view: SheetView): Pro
   const job = await startJob({
     kind: "sheet",
     modelId: MODEL_IDS.nanoBanana,
-    input: { model: viewInput(view, references, composite), characterIds: [record.id], prompt: `Redraw ${view} view of ${record.name}` },
+    input: {
+      model: record.kind === "element" ? elementViewInput(elementType(record), view, references, composite) : viewInput(view, references, composite),
+      // An element has no face to score.
+      characterIds: record.kind === "person" ? [record.id] : [],
+      prompt: `Redraw ${view} view of ${record.name}`,
+    },
   });
   return job.id;
+}
+
+function elementType(record: CharacterRecord) {
+  const type = record.file.elementType;
+  return type === "outfit" || type === "location" ? type : "prop";
 }
 
 // Puts a finished redraw into the character in place of the old view.

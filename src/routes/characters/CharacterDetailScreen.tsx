@@ -8,14 +8,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { jobImage, scoreImage } from "@/lib/characters/create";
 import { CONSENT_CLIP } from "@/lib/characters/format";
 import { applyRedraw, exportFile, startRedraw } from "@/lib/characters/manage";
-import { SHEET_PATHS, SHEET_VIEWS, VIEW_LABEL, type SheetView } from "@/lib/characters/sheet";
+import { SHEET_PATHS, SHEET_VIEWS, viewAspect, viewLabel, type SheetView } from "@/lib/characters/sheet";
 import { useJobs } from "@/lib/jobs/hooks";
 import { deleteCharacter, isUsable, loadBundle } from "@/lib/store/characters";
 import { useBlobUrl, useCharacter } from "@/lib/store/hooks";
 import type { CharacterRecord } from "@/lib/types/records";
 import { CharacterBadges } from "./CharactersScreen";
 
-const VIEW_ASPECT: Record<SheetView, string> = { front: "4 / 5", threeQuarter: "4 / 5", profile: "4 / 5", fullBody: "9 / 16" };
 const CURRENT = "current";
 
 function ViewPanel({ record, view }: { record: CharacterRecord; view: SheetView }) {
@@ -28,6 +27,7 @@ function ViewPanel({ record, view }: { record: CharacterRecord; view: SheetView 
   const jobs = useJobs(redraws);
   const references = record.file.identity?.descriptors ?? [];
   const scored = references.length > 0;
+  const elementType = record.kind === "element" ? (record.file.elementType === "outfit" || record.file.elementType === "location" ? record.file.elementType : "prop") : undefined;
 
   // Score the current view, and each redraw once it lands.
   useEffect(() => {
@@ -84,7 +84,7 @@ function ViewPanel({ record, view }: { record: CharacterRecord; view: SheetView 
         <ScoreBadge score={scores[key]} />
         {view === "profile" && <span className="text-control text-ink-muted">Profiles score low by design.</span>}
       </span>
-    ) : (
+    ) : elementType ? null : (
       <span className="text-control text-ink-muted">No face data to score against</span>
     );
   const working = jobs?.some((j) => j && !["done", "failed", "cancelled", "expired"].includes(j.status));
@@ -93,7 +93,7 @@ function ViewPanel({ record, view }: { record: CharacterRecord; view: SheetView 
   return (
     <div className="grid content-start gap-3">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-body font-semibold">{VIEW_LABEL[view]}</h3>
+        <h3 className="text-body font-semibold">{viewLabel(view, elementType)}</h3>
         {isUsable(record) && (
           <Button variant="ghost" size="sm" onClick={() => void redraw()} disabled={busy || working}>
             Redraw
@@ -104,8 +104,8 @@ function ViewPanel({ record, view }: { record: CharacterRecord; view: SheetView 
         <div className="grid gap-2">
           <Take
             src={url}
-            alt={`${VIEW_LABEL[view]} view of ${record.name}`}
-            aspect={VIEW_ASPECT[view]}
+            alt={`${viewLabel(view, elementType)} view of ${record.name}`}
+            aspect={viewAspect(view, elementType)}
             picked={choosing && picked === CURRENT}
             rejected={choosing && picked !== CURRENT}
             onPick={choosing ? () => setPicked(CURRENT) : undefined}
@@ -118,8 +118,8 @@ function ViewPanel({ record, view }: { record: CharacterRecord; view: SheetView 
           <JobTake
             key={id}
             jobId={id}
-            alt={`${VIEW_LABEL[view]} view, new take ${i + 1}`}
-            aspect={VIEW_ASPECT[view]}
+            alt={`${viewLabel(view, elementType)} view, new take ${i + 1}`}
+            aspect={viewAspect(view, elementType)}
             seed={22 + i}
             picked={picked === id}
             rejected={picked !== id && jobs?.find((j) => j?.id === id)?.status === "done"}
@@ -167,8 +167,9 @@ function ExportPanel({ record }: { record: CharacterRecord }) {
     <section className="grid gap-3">
       <h2 className="text-panel font-semibold">Export</h2>
       <p className="max-w-[70ch] text-body text-ink-muted">
-        A .portraius file holds the photos, sheet, face data and consent record. Keep it as a backup, or send it to someone you're making things
-        with.
+        {record.kind === "element"
+          ? "A .portraius file holds the photos and the sheet. Keep it as a backup, or send it to someone you're making things with."
+          : "A .portraius file holds the photos, sheet, face data and consent record. Keep it as a backup, or send it to someone you're making things with."}
       </p>
       {hasClip && (
         <label className="flex items-start gap-3 text-body">

@@ -6,18 +6,45 @@ import { useKeyStore } from "@/lib/session/key";
 import { cn } from "@/lib/utils";
 import { ConsentStep } from "./wizard/ConsentStep";
 import { DesignStep, PickStep } from "./wizard/DesignSteps";
+import { ElementPhotosStep } from "./wizard/ElementPhotosStep";
 import { DescribeStep, SaveStep } from "./wizard/FinishSteps";
 import { PhotosStep } from "./wizard/PhotosStep";
 import { SheetStep } from "./wizard/SheetStep";
 import { useDraft } from "./wizard/useDraft";
 
-const STEPS: Record<CreatePath, string[]> = {
-  photos: ["Photos", "Consent", "Sheet", "Describe", "Save"],
-  text: ["Design", "Pick", "Sheet", "Describe", "Save"],
+type StepName = "photos" | "consent" | "design" | "pick" | "elementPhotos" | "sheet" | "describe" | "save";
+
+const STEPS: Record<CreatePath, { name: StepName; label: string }[]> = {
+  photos: [
+    { name: "photos", label: "Photos" },
+    { name: "consent", label: "Consent" },
+    { name: "sheet", label: "Sheet" },
+    { name: "describe", label: "Describe" },
+    { name: "save", label: "Save" },
+  ],
+  text: [
+    { name: "design", label: "Design" },
+    { name: "pick", label: "Pick" },
+    { name: "sheet", label: "Sheet" },
+    { name: "describe", label: "Describe" },
+    { name: "save", label: "Save" },
+  ],
+  element: [
+    { name: "elementPhotos", label: "Photos" },
+    { name: "sheet", label: "Sheet" },
+    { name: "describe", label: "Describe" },
+    { name: "save", label: "Save" },
+  ],
 };
 
 // Steps that send work to Router.
-const NEEDS_KEY: Record<CreatePath, number[]> = { photos: [2], text: [0, 1, 2] };
+const NEEDS_KEY: StepName[] = ["design", "pick", "sheet"];
+
+const TITLE: Record<CreatePath, string> = {
+  photos: "Make a character from photos",
+  text: "Design a character",
+  element: "Make an element",
+};
 
 function Chooser() {
   return (
@@ -31,12 +58,16 @@ function Chooser() {
           <span className="text-panel font-semibold">Design from a description</span>
           <span className="text-body text-ink-muted">An original person who isn't real. No photos and no camera needed.</span>
         </Link>
+        <Link to="?from=element" className="grid gap-2 rounded-media border border-rule p-6 hover:bg-tint-hover md:col-span-2">
+          <span className="text-panel font-semibold">An element</span>
+          <span className="text-body text-ink-muted">An outfit, prop or location from 1 to 6 photos, saved like a character and used in any shot.</span>
+        </Link>
       </div>
     </Screen>
   );
 }
 
-function Stepper({ labels, current }: { labels: string[]; current: number }) {
+function Stepper({ labels, current }: { labels: readonly string[]; current: number }) {
   return (
     <ol className="mb-8 flex flex-wrap gap-x-6 gap-y-2" aria-label="Steps">
       {labels.map((label, i) => (
@@ -54,14 +85,16 @@ function Wizard({ path }: { path: CreatePath }) {
   const keyLocation = useKeyStore((s) => s.location);
   if (!draft) return <Screen title="Make a character" />;
 
-  const step = Math.min(draft.step, STEPS[path].length - 1);
+  const steps = STEPS[path];
+  const step = Math.min(draft.step, steps.length - 1);
+  const name = steps[step]!.name;
   const go = (next: number) => update({ step: next });
-  const needsKey = keyLocation === "none" && NEEDS_KEY[path].includes(step);
+  const needsKey = keyLocation === "none" && NEEDS_KEY.includes(name);
   const props = { draft, update, onNext: () => go(step + 1) };
 
   return (
     <Screen
-      title={path === "photos" ? "Make a character from photos" : "Design a character"}
+      title={TITLE[path]}
       actions={
         <div className="flex gap-2">
           {step > 0 && (
@@ -75,7 +108,7 @@ function Wizard({ path }: { path: CreatePath }) {
         </div>
       }
     >
-      <Stepper labels={STEPS[path]} current={step} />
+      <Stepper labels={steps.map((s) => s.label)} current={step} />
       {needsKey && (
         <p className="mb-6 max-w-[70ch] text-body">
           This step draws with Nano Banana 2.1, which needs your Comfy API key.{" "}
@@ -85,20 +118,14 @@ function Wizard({ path }: { path: CreatePath }) {
           , then come back. Your progress is kept.
         </p>
       )}
-      {path === "photos" ? (
-        <>
-          {step === 0 && <PhotosStep {...props} />}
-          {step === 1 && <ConsentStep {...props} />}
-        </>
-      ) : (
-        <>
-          {step === 0 && <DesignStep {...props} />}
-          {step === 1 && <PickStep {...props} onBack={() => go(0)} />}
-        </>
-      )}
-      {step === 2 && <SheetStep {...props} />}
-      {step === 3 && <DescribeStep {...props} />}
-      {step === 4 && <SaveStep draft={draft} />}
+      {name === "photos" && <PhotosStep {...props} />}
+      {name === "consent" && <ConsentStep {...props} />}
+      {name === "design" && <DesignStep {...props} />}
+      {name === "pick" && <PickStep {...props} onBack={() => go(step - 1)} />}
+      {name === "elementPhotos" && <ElementPhotosStep {...props} />}
+      {name === "sheet" && <SheetStep {...props} />}
+      {name === "describe" && <DescribeStep {...props} />}
+      {name === "save" && <SaveStep draft={draft} />}
     </Screen>
   );
 }
@@ -106,7 +133,7 @@ function Wizard({ path }: { path: CreatePath }) {
 export function CharacterNewScreen() {
   const [params] = useSearchParams();
   const from = params.get("from");
-  if (from !== "photos" && from !== "text") return <Chooser />;
+  if (from !== "photos" && from !== "text" && from !== "element") return <Chooser />;
   // A key per path, so switching paths starts that path's own draft.
   return <Wizard key={from} path={from} />;
 }

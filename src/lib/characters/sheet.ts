@@ -1,6 +1,7 @@
 // Turnaround sheets (spec: Character vault, Turnaround sheet and Design from
 // text). Builds the Nano Banana 2.1 inputs; the runner sends them.
 import type { GenerateImageInput, ImageAspectRatio, InlineImage } from "@/lib/registry/inputs";
+import { elementViewAspect, elementViewLabel, type ElementType } from "./element-sheet";
 
 export type SheetView = "front" | "threeQuarter" | "profile" | "fullBody";
 
@@ -21,6 +22,15 @@ export const VIEW_LABEL: Record<SheetView, string> = {
   profile: "Profile",
   fullBody: "Full body",
 };
+
+// A view's label and CSS aspect ratio: a person's, or an element type's.
+export function viewLabel(view: SheetView, elementType?: ElementType): string {
+  return elementType ? elementViewLabel(elementType, view) : VIEW_LABEL[view];
+}
+
+export function viewAspect(view: SheetView, elementType?: ElementType): string {
+  return elementType ? elementViewAspect(elementType, view) : view === "fullBody" ? "9 / 16" : "4 / 5";
+}
 
 // Every image is scored, but profiles score low by design (spec: Where scoring
 // is skipped), so a low profile score is never flagged for a redraw.

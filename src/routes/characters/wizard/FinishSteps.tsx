@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { goodPhotos, pickedViews, saveFromDraft } from "@/lib/characters/create";
 import type { WizardDraft } from "@/lib/characters/draft";
-import { VIEW_LABEL } from "@/lib/characters/sheet";
+import { ELEMENT_TYPE_LABEL } from "@/lib/characters/element-sheet";
+import { viewAspect, viewLabel } from "@/lib/characters/sheet";
 import type { UpdateDraft } from "./useDraft";
 
 const parseTags = (text: string) =>
@@ -32,7 +33,11 @@ export function DescribeStep({ draft, update, onNext }: { draft: WizardDraft; up
       </div>
       <div className="grid gap-2">
         <Label htmlFor={ids.description}>Description</Label>
-        <p className="text-control text-ink-muted">Goes into every prompt with this character: what doesn't show in a face, like build, style or a usual outfit.</p>
+        <p className="text-control text-ink-muted">
+          {draft.path === "element"
+            ? "Goes into every prompt with this element: what it's made of and anything the pictures don't show."
+            : "Goes into every prompt with this character: what doesn't show in a face, like build, style or a usual outfit."}
+        </p>
         <textarea
           id={ids.description}
           value={draft.description}
@@ -44,7 +49,7 @@ export function DescribeStep({ draft, update, onNext }: { draft: WizardDraft; up
       </div>
       <div className="grid gap-2">
         <Label htmlFor={ids.tags}>Tags</Label>
-        <Input id={ids.tags} value={tags} onChange={(e) => setTags(e.target.value)} placeholder="lead, noir, pilot" />
+        <Input id={ids.tags} value={tags} onChange={(e) => setTags(e.target.value)} placeholder={draft.path === "element" ? "wardrobe, noir, 1970s" : "lead, noir, pilot"} />
       </div>
       <Button type="submit" disabled={!draft.name.trim()} className="justify-self-start">
         Continue
@@ -59,6 +64,7 @@ export function SaveStep({ draft }: { draft: WizardDraft }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
   const picks = pickedViews(draft);
+  const elementType = draft.path === "element" ? (draft.elementType ?? "prop") : undefined;
 
   async function save() {
     setSaving(true);
@@ -77,7 +83,8 @@ export function SaveStep({ draft }: { draft: WizardDraft }) {
       <div className="grid gap-3">
         <h2 className="font-display text-screen font-extrabold">{draft.name}</h2>
         <div className="flex flex-wrap gap-2">
-          <Badge>{draft.path === "photos" ? `From ${goodPhotos(draft).length} photos` : "Designed"}</Badge>
+          {elementType && <Badge>{ELEMENT_TYPE_LABEL[elementType]}</Badge>}
+          <Badge>{draft.path === "text" ? "Designed" : `From ${goodPhotos(draft).length} ${goodPhotos(draft).length === 1 ? "photo" : "photos"}`}</Badge>
           {draft.consent ? <Badge>Consent on file</Badge> : null}
           {draft.tags.map((t) => (
             <Badge key={t}>{t}</Badge>
@@ -88,7 +95,7 @@ export function SaveStep({ draft }: { draft: WizardDraft }) {
       {picks && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {(Object.keys(picks) as (keyof typeof picks)[]).map((view) => (
-            <JobTake key={view} jobId={picks[view]} alt={`${VIEW_LABEL[view]} view of ${draft.name}`} aspect={view === "fullBody" ? "9 / 16" : "4 / 5"} />
+            <JobTake key={view} jobId={picks[view]} alt={`${viewLabel(view, elementType)} view of ${draft.name}`} aspect={viewAspect(view, elementType)} />
           ))}
         </div>
       )}
@@ -98,7 +105,7 @@ export function SaveStep({ draft }: { draft: WizardDraft }) {
         </p>
       )}
       <Button onClick={() => void save()} disabled={saving || !picks} className="justify-self-start">
-        {saving ? "Saving" : "Save character"}
+        {saving ? "Saving" : elementType ? "Save element" : "Save character"}
       </Button>
     </div>
   );

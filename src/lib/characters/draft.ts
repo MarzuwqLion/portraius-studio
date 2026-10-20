@@ -3,9 +3,12 @@
 // so the draft is a JSON blob in the blobs table, beside its photos.
 import { db } from "@/lib/store/db";
 import type { ConsentRecord } from "@/lib/types/records";
+import type { ElementType } from "./element-sheet";
 import type { SheetView } from "./sheet";
 
-export type CreatePath = "photos" | "text";
+// A person from photos, a person designed from text, or an element (an
+// outfit, prop or location) from photos.
+export type CreatePath = "photos" | "text" | "element";
 
 export type PhotoQuality = "good" | "no-face" | "several-faces" | "small-face" | "blurry";
 
@@ -21,6 +24,7 @@ export interface WizardDraft {
   id: string;                    // the character's ID once saved
   path: CreatePath;
   step: number;
+  elementType?: ElementType;     // element path only
   photos: DraftPhoto[];
   consent?: ConsentRecord;
   consentClipBlobId?: string;
@@ -47,6 +51,7 @@ export function newDraft(path: CreatePath): WizardDraft {
     id: crypto.randomUUID(),
     path,
     step: 0,
+    ...(path === "element" ? { elementType: "outfit" as const } : {}),
     photos: [],
     consentFailures: 0,
     personDescription: "",

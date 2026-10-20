@@ -4,6 +4,7 @@ import { Screen } from "@/components/shell/Screen";
 import { Badge } from "@/components/studio/Badge";
 import { Take } from "@/components/studio/Take";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { ELEMENT_TYPE_LABEL } from "@/lib/characters/element-sheet";
 import { THUMB } from "@/lib/characters/format";
 import { addImport, readImport, type PendingImport } from "@/lib/characters/manage";
 import { useBlobUrl, useCharacters } from "@/lib/store/hooks";
@@ -12,7 +13,11 @@ import type { CharacterRecord } from "@/lib/types/records";
 export function CharacterBadges({ record }: { record: CharacterRecord }) {
   return (
     <div className="flex flex-wrap gap-2">
-      <Badge>{record.file.origin === "photos" ? "From photos" : "Designed"}</Badge>
+      {record.kind === "element" ? (
+        <Badge>{record.file.elementType && record.file.elementType !== "style" ? ELEMENT_TYPE_LABEL[record.file.elementType] : "Element"}</Badge>
+      ) : (
+        <Badge>{record.file.origin === "photos" ? "From photos" : "Designed"}</Badge>
+      )}
       {record.file.consent && <Badge>Consent on file</Badge>}
       {record.locked && <Badge tone="warning">Locked</Badge>}
     </div>
@@ -23,7 +28,7 @@ function CharacterCard({ record }: { record: CharacterRecord }) {
   const thumb = useBlobUrl(record.blobIds[THUMB]);
   return (
     <Link to={`/characters/${record.id}`} className="grid gap-3 rounded-media p-2 hover:bg-tint-hover">
-      <Take src={thumb} alt={`${record.name}, front view`} aspect="4 / 5" />
+      <Take src={thumb} alt={`${record.name}, front view`} aspect={record.kind === "element" && record.file.elementType === "location" ? "16 / 9" : "4 / 5"} />
       <div className="grid gap-2">
         <span className="text-panel font-semibold">{record.name}</span>
         <CharacterBadges record={record} />
@@ -107,9 +112,14 @@ export function CharactersScreen() {
         <div className="flex items-start gap-3">
           <ImportButton onRead={setPending} />
           {!empty && (
-            <Link to="/characters/new" className={buttonVariants({ variant: "primary" })}>
-              Make a character
-            </Link>
+            <>
+              <Link to="/characters/new?from=element" className={buttonVariants({ variant: "secondary" })}>
+                Make an element
+              </Link>
+              <Link to="/characters/new" className={buttonVariants({ variant: "primary" })}>
+                Make a character
+              </Link>
+            </>
           )}
         </div>
       }

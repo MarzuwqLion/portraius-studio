@@ -8,6 +8,7 @@ import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
 import { PresetPicker } from "@/components/studio/PresetPicker";
 import { RealismAction, RealismTake } from "@/components/studio/Realism";
+import { SaveAsElement } from "@/components/studio/SaveAsElement";
 import { Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { useEstimateLabel, useRecentJobs } from "@/lib/jobs/hooks";
@@ -232,6 +233,7 @@ export function ImageScreen() {
               <Button size="sm" variant="secondary" onClick={() => navigate(`/video?from=${pickedJob.generationIds[0]}`)}>
                 Animate
               </Button>
+              <SaveAsElement generationId={pickedJob.generationIds[0]!} />
               <RealismAction generationId={pickedJob.generationIds[0]!} className="border-l border-rule pl-3" />
             </div>
           )}

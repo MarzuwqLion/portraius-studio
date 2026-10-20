@@ -11,16 +11,26 @@ import { saveCharacter } from "@/lib/store/characters";
 import { db } from "@/lib/store/db";
 import type { CharacterFile, CharacterRecord } from "@/lib/types/records";
 import { CONSENT_CLIP, THUMB, isLocked } from "./format";
-import { clearDraft, putDraftBlob, type DraftPhoto, type WizardDraft } from "./draft";
+import { clearDraft, loadDraft, newDraft, putDraftBlob, saveDraft, type CreatePath, type DraftPhoto, type WizardDraft } from "./draft";
+import { MAX_ELEMENT_PHOTOS, MIN_ELEMENT_PHOTOS, elementCompositeInput, elementViewInput } from "./element-sheet";
 import { CANDIDATE_COUNT, SHEET_PATHS, SHEET_VIEWS, candidateInput, compositeInput, viewInput, type SheetView } from "./sheet";
 
 export const MIN_PHOTOS = 3;
 export const MAX_PHOTOS = 10;
 
+export function photoLimits(path: CreatePath): { min: number; max: number } {
+  return path === "element" ? { min: MIN_ELEMENT_PHOTOS, max: MAX_ELEMENT_PHOTOS } : { min: MIN_PHOTOS, max: MAX_PHOTOS };
+}
+
 // ---- Photos ----
 
 export async function addPhoto(draft: WizardDraft, source: Blob): Promise<DraftPhoto> {
   const prepared = await prepareImage(source);
+  // An element has no face to check.
+  if (draft.path === "element") {
+    const blobId = await putDraftBlob(draft.path, `photo-${crypto.randomUUID()}`, prepared.blob);
+    return { blobId, width: prepared.width, height: prepared.height, quality: "good" };
+  }
   const check = await checkPhoto(await drawToCanvas(prepared.blob));
   const blobId = await putDraftBlob(draft.path, `photo-${crypto.randomUUID()}`, prepared.blob);
   return { blobId, width: prepared.width, height: prepared.height, quality: check.quality, ...(check.descriptor ? { descriptor: check.descriptor } : {}) };
@@ -34,6 +44,15 @@ async function blob(id: string): Promise<Blob> {
   const row = await db.blobs.get(id);
   if (!row) throw new Error("A photo for this character is missing. Add it again.");
   return row.blob;
+}
+
+// "Save as element" on a still: it joins the element being made (from its
+// first step, so the sheet is drawn with it), or starts a new one.
+export async function addStillToElement(image: Blob): Promise<void> {
+  const draft = (await loadDraft("element")) ?? newDraft("element");
+  if (draft.photos.length >= MAX_ELEMENT_PHOTOS) throw new Error(`The element you're making already has ${MAX_ELEMENT_PHOTOS} photos. Finish or start it over first.`);
+  const photo = await addPhoto(draft, image);
+  await saveDraft({ ...draft, step: 0, photos: [...draft.photos, photo] });
 }
 
 // ---- Job results ----
@@ -67,7 +86,8 @@ function sheetJob(input: ReturnType<typeof compositeInput>, prompt: string): Pro
 }
 
 export async function compositeInputFor(draft: WizardDraft): Promise<ReturnType<typeof compositeInput>> {
-  return compositeInput(await sheetReferences(draft));
+  const references = await sheetReferences(draft);
+  return draft.path === "element" ? elementCompositeInput(draft.elementType ?? "prop", references) : compositeInput(references);
 }
 
 export async function startComposite(draft: WizardDraft): Promise<string> {
@@ -76,7 +96,9 @@ export async function startComposite(draft: WizardDraft): Promise<string> {
 
 export async function startView(draft: WizardDraft, view: SheetView): Promise<string> {
   const composite = await toInlineImage(await requireJobImage(draft.compositeJobIds.at(-1), "turnaround sheet"));
-  return sheetJob(viewInput(view, await sheetReferences(draft), composite), `Sheet view: ${view}`);
+  const references = await sheetReferences(draft);
+  const input = draft.path === "element" ? elementViewInput(draft.elementType ?? "prop", view, references, composite) : viewInput(view, references, composite);
+  return sheetJob(input, `Sheet view: ${view}`);
 }
 
 export async function startCandidates(description: string): Promise<string[]> {
@@ -89,6 +111,7 @@ export async function startCandidates(description: string): Promise<string[]> {
 // ---- Identity ----
 
 export async function referenceDescriptors(draft: WizardDraft): Promise<number[][]> {
+  if (draft.path === "element") return [];
   if (draft.path === "text") return draft.candidateDescriptor ? [draft.candidateDescriptor] : [];
   return goodPhotos(draft).flatMap((p) => (p.descriptor ? [p.descriptor] : []));
 }
@@ -126,7 +149,7 @@ export async function saveFromDraft(draft: WizardDraft): Promise<CharacterRecord
   const now = new Date().toISOString();
   const files = new Map<string, Blob>();
 
-  const photos = draft.path === "photos" ? goodPhotos(draft) : [];
+  const photos = draft.path === "text" ? [] : goodPhotos(draft);
   const photoEntries = await Promise.all(
     photos.map(async (p, i) => {
       const path = `photos/${String(i + 1).padStart(3, "0")}.jpg`;
@@ -145,8 +168,9 @@ export async function saveFromDraft(draft: WizardDraft): Promise<CharacterRecord
     format: "portraius.character",
     version: 1,
     id: draft.id,
-    kind: "person",
-    origin: draft.path === "photos" ? "photos" : "designed",
+    kind: draft.path === "element" ? "element" : "person",
+    ...(draft.path === "element" ? { elementType: draft.elementType ?? "prop" } : {}),
+    origin: draft.path === "text" ? "designed" : "photos",
     name: draft.name.trim(),
     description: draft.description.trim(),
     createdAt: now,
