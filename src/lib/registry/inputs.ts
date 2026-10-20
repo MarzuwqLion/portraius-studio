@@ -60,3 +60,18 @@ export interface H3Input {
   resolution: "768P" | "2K";
   seed?: number;
 }
+
+// Kling V3 Omni: reference images are named <<<image_1>>>... and a video
+// <<<video_1>>> in the prompt. A video is a motion reference ("feature") or
+// the clip to edit ("base", which keeps the clip's own length).
+export interface KlingInput {
+  prompt: string;
+  referenceImages?: string[];  // raw base64 or public URLs
+  firstFrame?: string;
+  endFrame?: string;           // needs firstFrame
+  video?: { url: string; use: "feature" | "base"; keepSound?: boolean };
+  durationSec?: number;        // 3 to 15; ignored when editing a clip
+  ratio?: "16:9" | "9:16" | "1:1"; // required without a first frame
+  quality: "std" | "pro";      // 720p or 1080p
+  sound?: boolean;
+}

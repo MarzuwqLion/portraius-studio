@@ -25,7 +25,7 @@ describe("registry", () => {
   });
 
   it("stubs adapters whose milestone hasn't come", () => {
-    expect(() => adapterFor(MODEL_IDS.klingOmni).buildBody({})).toThrow(/M4/);
+    expect(() => adapterFor(MODEL_IDS.freepikSkin).buildBody({})).toThrow(/M6/);
     expect(() => adapterFor(MODEL_IDS.sync3).buildBody({})).toThrow(/M7/);
   });
 
