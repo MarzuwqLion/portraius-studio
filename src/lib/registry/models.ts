@@ -10,6 +10,10 @@ export const MODEL_IDS = {
   freepikSkin: "freepik/ai-skin-enhancer-faithful",
   elevenLabs: "elevenlabs/eleven_v4",
   sync3: "synclabs/sync-3",
+  // Object Swap candidates, A/B-tested against Kling in M4 (docs/notes/recast-ab.md).
+  wanVideoEdit: "wan/wan2.7-videoedit",
+  happyHorseEdit: "wan/happyhorse-1.0-video-edit",
+  bflVideoEdit: "bfl/video-edit-v1",
   directorAgent: "anthropic/claude-sonnet-5-5",
   identityJudge: "vertexai/gemini-3.8-flash",
 } as const satisfies Record<string, ModelId>;
@@ -31,6 +35,9 @@ export const REGISTRY: readonly RegistryEntry[] = [
   { id: MODEL_IDS.freepikSkin, label: "Skin enhancer", capabilities: ["image.enhance"], delivery: "queue" },
   { id: MODEL_IDS.elevenLabs, label: "ElevenLabs v4", capabilities: ["audio.tts"], delivery: "sync" },
   { id: MODEL_IDS.sync3, label: "Sync-3", capabilities: ["video.lipsync"], delivery: "queue" },
+  { id: MODEL_IDS.wanVideoEdit, label: "Wan 2.7 video edit", capabilities: ["video.edit"], delivery: "queue" },
+  { id: MODEL_IDS.happyHorseEdit, label: "HappyHorse 1.0 video edit", capabilities: ["video.edit"], delivery: "queue" },
+  { id: MODEL_IDS.bflVideoEdit, label: "BFL video edit", capabilities: ["video.edit"], delivery: "queue" },
   { id: MODEL_IDS.directorAgent, label: "Claude Sonnet 5.5", capabilities: ["text.plan"], delivery: "sync" },
   { id: MODEL_IDS.identityJudge, label: "Gemini 3.8 Flash", capabilities: ["vision.judge"], delivery: "sync" },
 ];

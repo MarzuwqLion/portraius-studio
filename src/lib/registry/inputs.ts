@@ -75,3 +75,11 @@ export interface KlingInput {
   quality: "std" | "pro";      // 720p or 1080p
   sound?: boolean;
 }
+
+// A text- or image-guided edit of one clip (Object Swap candidates).
+export interface VideoEditInput {
+  prompt: string;
+  videoUrl: string;            // public URL (lib/media/host.ts)
+  referenceImageUrl?: string;  // public URL of the replacement; BFL takes none
+  keepAudio?: boolean;
+}

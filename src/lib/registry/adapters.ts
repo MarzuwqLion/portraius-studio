@@ -1,5 +1,6 @@
 // Attaches each adapter to its registry model ID, so adapters never hold an ID.
 // Director agent and identity judge return text, not assets, so they have none.
+import { bflEdit } from "@/lib/adapters/bfl-edit";
 import { elevenLabs } from "@/lib/adapters/elevenlabs";
 import { freepikSkin } from "@/lib/adapters/freepik-skin";
 import { klingOmni } from "@/lib/adapters/kling-omni";
@@ -7,6 +8,7 @@ import { minimaxH3 } from "@/lib/adapters/minimax-h3";
 import { nanoBanana } from "@/lib/adapters/nano-banana";
 import { seedance } from "@/lib/adapters/seedance";
 import { sync3 } from "@/lib/adapters/sync3";
+import { wanEdit } from "@/lib/adapters/wan-edit";
 import type { AdapterImpl, ModelAdapter } from "./capabilities";
 import { MODEL_IDS, type RegistryModelId } from "./models";
 
@@ -27,6 +29,9 @@ const ADAPTERS = new Map<string, AnyAdapter>(
     attach(MODEL_IDS.freepikSkin, freepikSkin),
     attach(MODEL_IDS.elevenLabs, elevenLabs),
     attach(MODEL_IDS.sync3, sync3),
+    attach(MODEL_IDS.wanVideoEdit, wanEdit),
+    attach(MODEL_IDS.happyHorseEdit, wanEdit),
+    attach(MODEL_IDS.bflVideoEdit, bflEdit),
   ].map((adapter) => [adapter.id, adapter]),
 );
 
