@@ -72,3 +72,34 @@ The second prompt is the one the app sends (`settingPrompt` in `lib/studio/recas
 | Motion Transfer to a new setting | MiniMax H3, then a HappyHorse 1.0 location edit |
 | Object Swap | HappyHorse 1.0 video edit, `watermark: false` |
 | Style swap | MiniMax H3 |
+
+## Acceptance (Recast row)
+
+Run on October 19 through `startRecast`, with clips prepared the way the Recast screen prepares them.
+Test clips are designed people made with H3 text to video; the performer is Walt Harmon.
+
+**Motion Transfer on an 8 s clip: passes.**
+
+| Clip | Preset, resolution | Timing side by side | Median (worst frame) |
+| --- | --- | --- | --- |
+| Street singer, waist up, locked-off | Swap me in, 768P | Same framing and beats: singing to camera, a head turn at 4.5 to 6 s (his goes the other way), a smile at the end | **82** (72) |
+| Rooftop dancer, full body, locked-off | Swap me in, 768P | Same side steps, spin, raised arms and point, beat for beat | 59 (36) |
+| Rooftop dancer | Swap me in, 2K | Follows the beats, a little looser than the 768P take | 75 (52) |
+| Rooftop dancer | Concert stage step 1 (before "camera" was in its prompt), 768P | Pushed in to a close-up and walked toward the lens: ignores the source camera | 89.5 (82) |
+
+Full-body clips put the face at 40 to 60 px at 768P, where face-api's descriptors are noisy; 2K
+doubles that and the median clears 70. The score is the bar the spec sets, so waist-up clips are the
+honest demo for Motion Transfer at 768P, and full-body ones want 2K.
+
+Frames where the face can't be seen (a spin, a turned head) used to score 0 and set the worst frame
+to 0; they're now skipped (`videoScores` in `lib/identity/score-output.ts`).
+
+**Object Swap changes only the target on 3 test clips: passes.** Besides the diner A/B above:
+
+| Clip | Preset | Result |
+| --- | --- | --- |
+| Sneaker walk, 6.5 s, tracking shot | Sneaker swap (red canvas high-tops) | Only the shoes changed: same legs, jeans, puddle step and reflections, frame for frame |
+| Rooftop dancer, 8 s | Outfit change (light-wash denim jacket) | Only the raincoat changed: same dancer, face, trousers, roof and timing |
+
+**Two-step setting change through the app:** Concert stage finished step 1 and the app started the
+HappyHorse location edit by itself (`afterRecast`); identity 73.5 (worst 62) after the edit.
