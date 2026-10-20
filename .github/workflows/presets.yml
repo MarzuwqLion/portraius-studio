@@ -1,0 +1,25 @@
+# Runs presets:check on every pull request that touches presets/ (spec:
+# Contribution flow). No key, no network calls.
+name: Check presets
+
+on:
+  pull_request:
+    paths:
+      - "presets/**"
+      - "src/lib/presets/**"
+      - "scripts/presets-check.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run presets:check

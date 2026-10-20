@@ -101,8 +101,9 @@ hosts that send no CORS headers. It never stores a key. See `proxy/README.md`.
 
 ## Contributing presets
 
-Copy any file in `presets/`, change it, and open a pull request. Presets are validated by the build;
-keep them free of brand and celebrity names.
+Copy `presets/_template.json` into `presets/image/`, `presets/video/` or `presets/recast/`, fill it in,
+run `npm run presets:check`, and open a pull request. The same check runs on every pull request. Keep
+presets free of brand and celebrity names. See `CONTRIBUTING.md`.
 
 ## License
 

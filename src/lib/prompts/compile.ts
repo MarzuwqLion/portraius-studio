@@ -2,6 +2,7 @@
 // the same structure: reference legend, identity lock, scene, camera and look,
 // realism.
 import { cameraPhrases, isStylised, type CameraSelection } from "./camera";
+import { SLOT, slotsIn } from "./slots";
 
 export type ReferenceKind = "sheet" | "photo" | "front";
 
@@ -27,12 +28,7 @@ export const REALISM = "Natural skin texture with visible pores, real lens imper
 
 export const role = (slot: string) => slot.toUpperCase();
 
-const SLOT = /\{([a-z][a-z0-9_-]*)\}/gi;
-
-// The slots a scene names, in order of first use.
-export function slotsIn(scene: string): string[] {
-  return [...new Set([...scene.matchAll(SLOT)].map((m) => m[1]!.toLowerCase()))];
-}
+export { slotsIn };
 
 function sentence(text: string): string {
   const t = text.trim();
