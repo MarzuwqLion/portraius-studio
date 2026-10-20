@@ -1,10 +1,11 @@
 // Distance to score (spec: Identity match score). face-api descriptors are
 // 128 numbers; two faces of the same person sit closer than different people.
-// DISTANCE_PERFECT and DISTANCE_ZERO are calibrated in M5 on 20 same-person and
-// 20 different-person pairs.
+// Calibrated on October 19 on generated faces (docs/notes/m5-calibration.md):
+// same person 0.27 to 0.55, different people 0.58 and up. 0.50 scores 80 and
+// 0.60 scores 60, so the bands fall between the two groups.
 
-export const DISTANCE_PERFECT = 0.35;
-export const DISTANCE_ZERO = 0.75;
+export const DISTANCE_PERFECT = 0.4;
+export const DISTANCE_ZERO = 0.9;
 
 // Bands: 80 to 100 strong match, 60 to 79 check, under 60 drift.
 export const MATCH_SCORE = 80;

@@ -4,11 +4,12 @@ import { eyeOpenness, pitch, yaw } from "./pose";
 import { band, bestDistance, distance, meanDescriptor, median, scoreFromDistance } from "./score";
 
 describe("score", () => {
-  it("maps 0.35 or less to 100 and 0.75 or more to 0, linearly between", () => {
+  it("maps 0.40 or less to 100 and 0.90 or more to 0, linearly between (calibrated)", () => {
     expect(scoreFromDistance(0.2)).toBe(100);
-    expect(scoreFromDistance(0.35)).toBe(100);
-    expect(scoreFromDistance(0.55)).toBe(50);
-    expect(scoreFromDistance(0.75)).toBe(0);
+    expect(scoreFromDistance(0.4)).toBe(100);
+    expect(scoreFromDistance(0.5)).toBe(80);
+    expect(scoreFromDistance(0.6)).toBe(60);
+    expect(scoreFromDistance(0.9)).toBe(0);
     expect(scoreFromDistance(1.2)).toBe(0);
   });
 

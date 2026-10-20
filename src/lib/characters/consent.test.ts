@@ -80,7 +80,7 @@ describe("verifyChallenge", () => {
 describe("verifyMatch", () => {
   it("passes when the median distance to the photos is under 0.55", () => {
     const samples = [0.41, 0.44, 0.39, 0.62, 0.43].map((distance, i) => ({ atMs: i, faceCount: 1, distance }));
-    expect(verifyMatch(samples)).toMatchObject({ passed: true, distance: 0.43, score: 80 });
+    expect(verifyMatch(samples)).toMatchObject({ passed: true, distance: 0.43, score: 94 });
   });
 
   it("fails a different person", () => {

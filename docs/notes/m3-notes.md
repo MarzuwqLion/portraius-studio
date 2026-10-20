@@ -71,6 +71,6 @@ redeployed Worker streamed that same link (1.3 MB).
 
 - **Video studio:** passes on both models (Seedance draft and final from the draft ID; H3 resumes after a
   reload).
-- **Image studio:** works with a cast (ten images of Walt, plus the drift retry), with no cast (a teapot)
-  and in edit mode (the night diner turned into a bright morning, Walt and the booth kept). "8 of 10 score
-  80 or more" waits on the identity calibration (Unknowns row 13, M5).
+- **Image studio:** passes. It works with a cast (ten images of Walt, plus the drift retry), with no cast (a
+  teapot) and in edit mode (the night diner turned into a bright morning, Walt and the booth kept). With
+  the calibrated constants (docs/notes/m5-calibration.md), 9 of the 10 Walt images score 80 or more.
