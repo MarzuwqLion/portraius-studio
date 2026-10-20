@@ -23,16 +23,19 @@ export function Select<T extends string>({
   onChange,
   options,
   placeholder,
+  label,
 }: {
   id?: string;
   value: T | undefined;
   onChange: (value: T | undefined) => void;
   options: readonly { value: T; label: string }[];
   placeholder?: string;
+  label?: string; // for a select with no visible label of its own
 }) {
   return (
     <select
       id={id}
+      aria-label={label}
       value={value ?? ""}
       onChange={(e) => onChange((e.target.value || undefined) as T | undefined)}
       className="h-10 w-full rounded-control border border-rule bg-proof px-3 text-body text-ink"

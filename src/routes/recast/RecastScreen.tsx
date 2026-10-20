@@ -53,7 +53,7 @@ function RecastResult({ job }: { job: Job }) {
           </>
         ) : null}
         {(job.status === "failed" || job.status === "expired") && job.error?.retry !== "never" && (
-          <Button size="sm" variant="secondary" onClick={() => void retryJob(job.id)}>
+          <Button size="sm" variant="secondary" className="border-on-seamless text-on-seamless" onClick={() => void retryJob(job.id)}>
             Retry
           </Button>
         )}
@@ -182,6 +182,7 @@ export function RecastScreen() {
                 <div className="min-w-40 flex-1">
                   <Select
                     value={undefined}
+                    label="Pick a clip from the library"
                     placeholder="Or pick from the library"
                     options={libraryClips.map((g) => ({ value: g.id, label: (g.prompt || g.type).slice(0, 40) }))}
                     onChange={(id) => {
@@ -197,6 +198,8 @@ export function RecastScreen() {
               type="file"
               accept="video/mp4,video/quicktime,video/webm"
               className="sr-only"
+              aria-label="Upload a clip"
+              tabIndex={-1}
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 e.target.value = "";
@@ -249,7 +252,7 @@ export function RecastScreen() {
         </Field>
       )}
 
-      {people && <Field label="Performer">{() => <CastPicker value={cast.slice(0, 1)} onChange={(picks) => setCast(picks.slice(-1))} />}</Field>}
+      {people && <Field label="Performer">{(id) => <CastPicker id={id} value={cast.slice(0, 1)} onChange={(picks) => setCast(picks.slice(-1))} />}</Field>}
 
       {mode === "swap" && (
         <Field label="Replacement" hint={`The ${String(preset.recipe.params?.target ?? "thing")} to put in the clip.`}>
@@ -264,6 +267,8 @@ export function RecastScreen() {
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 className="sr-only"
+                aria-label="Upload the replacement image"
+                tabIndex={-1}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   e.target.value = "";

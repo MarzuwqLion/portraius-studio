@@ -8,7 +8,7 @@ import { MAX_ELEMENTS, MAX_PEOPLE, nextSlot, type CastPick } from "@/lib/studio/
 
 // Characters for a generation, each on a {slot} the prompt can name. Locked
 // imports never appear (spec: Import and export).
-export function CastPicker({ value, onChange }: { value: CastPick[]; onChange: (picks: CastPick[]) => void }) {
+export function CastPicker({ id, value, onChange }: { id?: string; value: CastPick[]; onChange: (picks: CastPick[]) => void }) {
   const characters = useCharacters();
   const usable = (characters ?? []).filter(isUsable);
   const byId = new Map(usable.map((c) => [c.id, c]));
@@ -50,6 +50,7 @@ export function CastPicker({ value, onChange }: { value: CastPick[]; onChange: (
       )}
       {choices.length > 0 && (
         <Select
+          id={id}
           value={undefined}
           placeholder={picked.length ? "Add another" : "Add a character"}
           options={choices}

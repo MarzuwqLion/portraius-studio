@@ -54,6 +54,9 @@ function clipLabel(job: Job): string {
   return isFinal(job) ? "Final 1080p" : "Draft 480p";
 }
 
+// Secondary buttons in the set sit on Studio grey, so they take its text colour.
+const ON_SEAMLESS = "border-on-seamless text-on-seamless";
+
 function ClipActions({ job, followUps, onContinue }: { job: Job; followUps: Job[]; onContinue: (blobId: string) => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
@@ -75,22 +78,26 @@ function ClipActions({ job, followUps, onContinue }: { job: Job; followUps: Job[
           </Button>
         )}
         {job.status === "done" && job.kind === "video" && generationId && (
-          <Button size="sm" variant="secondary" onClick={() => run(async () => onContinue(await lastFrameBlobId(generationId)))} disabled={busy}>
+          <Button size="sm" variant="secondary" className={ON_SEAMLESS} onClick={() => run(async () => onContinue(await lastFrameBlobId(generationId)))} disabled={busy}>
             Continue
           </Button>
         )}
         {job.status === "failed" && job.error?.refusalSubject === "output_audio" && (
-          <Button size="sm" variant="secondary" onClick={() => run(() => retrySilent(job.id))} disabled={busy}>
+          <Button size="sm" variant="secondary" className={ON_SEAMLESS} onClick={() => run(() => retrySilent(job.id))} disabled={busy}>
             Retry silent
           </Button>
         )}
         {(job.status === "failed" || job.status === "expired") && job.error?.retry !== "never" && (
-          <Button size="sm" variant="secondary" onClick={() => run(() => retryJob(job.id))} disabled={busy}>
+          <Button size="sm" variant="secondary" className={ON_SEAMLESS} onClick={() => run(() => retryJob(job.id))} disabled={busy}>
             Retry
           </Button>
         )}
       </div>
-      {error && <p className="text-control text-drift">{error}</p>}
+      {error && (
+        <p className="justify-self-start rounded-control bg-proof px-2 py-1 text-control text-drift" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -213,7 +220,7 @@ export function VideoScreen() {
         {(id) => <TextArea id={id} value={scene} onChange={setScene} rows={4} maxLength={2000} placeholder="{lead} steps out of the rain into a lit doorway and looks back" />}
       </Field>
 
-      {needsCast && <Field label="Cast">{() => <CastPicker value={cast} onChange={setCast} />}</Field>}
+      {needsCast && <Field label="Cast">{(id) => <CastPicker id={id} value={cast} onChange={setCast} />}</Field>}
       {mode === "still" && <p className="text-control text-ink-muted">Nano Banana 2.1 draws the opening still with your cast, then the clip starts from it.</p>}
 
       {mode === "image" && (
@@ -229,6 +236,8 @@ export function VideoScreen() {
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 className="sr-only"
+                aria-label="Upload a first frame"
+                tabIndex={-1}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   e.target.value = "";

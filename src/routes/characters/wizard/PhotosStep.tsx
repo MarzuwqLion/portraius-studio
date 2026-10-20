@@ -95,6 +95,8 @@ export function PhotosStep({ draft, update, onNext }: { draft: WizardDraft; upda
           accept="image/jpeg,image/png,image/webp,image/heic"
           multiple
           className="sr-only"
+          aria-label="Choose photos of yourself"
+          tabIndex={-1}
           onChange={(e) => {
             void add([...(e.target.files ?? [])]);
             e.target.value = "";

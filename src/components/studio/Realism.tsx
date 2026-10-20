@@ -127,7 +127,7 @@ export function RealismTake({ job, linkToLibrary = true }: { job: Job; linkToLib
           </Link>
         )}
         {(job.status === "failed" || job.status === "expired") && job.error?.retry !== "never" && (
-          <Button size="sm" variant="secondary" onClick={() => void retryJob(job.id)}>
+          <Button size="sm" variant="secondary" className="border-on-seamless text-on-seamless" onClick={() => void retryJob(job.id)}>
             Retry
           </Button>
         )}

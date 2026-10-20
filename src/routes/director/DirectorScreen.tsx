@@ -189,7 +189,7 @@ function SceneEditor({ sceneId }: { sceneId: string }) {
       </Link>
       <Field label="Title">{(id) => <Input id={id} value={scene.title} maxLength={80} onChange={(e) => set({ title: e.target.value })} />}</Field>
       <Field label="Logline">{(id) => <TextArea id={id} value={scene.logline} rows={2} maxLength={300} placeholder="A retired harbour pilot finds a letter he never sent." onChange={(logline) => set({ logline })} />}</Field>
-      <Field label="Cast" hint="Name them in a shot's action with their slot, like {lead}.">{() => <CastPicker value={scene.cast} onChange={(cast) => set({ cast })} />}</Field>
+      <Field label="Cast" hint="Name them in a shot's action with their slot, like {lead}.">{(id) => <CastPicker id={id} value={scene.cast} onChange={(cast) => set({ cast })} />}</Field>
       <Field label="Location" hint="Added to every shot, word for word.">
         {(id) => <TextArea id={id} value={scene.location} rows={2} maxLength={300} placeholder="A late-night diner with red vinyl booths" onChange={(location) => set({ location })} />}
       </Field>
@@ -338,7 +338,7 @@ function ShotCard({
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="mr-auto text-control font-semibold">Anchor</h3>
             <span className="w-32">
-              <Select value={count} options={ANCHOR_COUNTS} onChange={(v) => setCount(v ?? "2")} />
+              <Select value={count} label="How many stills to draw" options={ANCHOR_COUNTS} onChange={(v) => setCount(v ?? "2")} />
             </span>
             <Button size="sm" disabled={!ready || busy !== undefined} onClick={() => void run(`stills:${shot.id}`, () => drawAnchors(scene.id, shot.id, Number(count)))}>
               {shot.anchorJobIds.length ? "Draw more" : "Draw stills"} · {stillsPrice}

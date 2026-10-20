@@ -50,6 +50,8 @@ function ImportButton({ onRead }: { onRead: (pending: PendingImport) => void }) 
         type="file"
         accept=".portraius,.zip,application/zip"
         className="sr-only"
+        aria-label="Import a .portraius file"
+        tabIndex={-1}
         onChange={(e) => {
           const file = e.target.files?.[0];
           e.target.value = "";
