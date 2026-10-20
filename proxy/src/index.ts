@@ -1,7 +1,8 @@
 // Portraius Studio's Cloudflare Worker (spec: Architecture, The Worker). M1
 // found two things the browser can't do alone: upload inputs that providers
-// must fetch by URL (Unknowns row 2) and download Comfy's rehosted Seedance
-// results, which send no CORS headers (row 3). This Worker does both and
+// must fetch by URL (Unknowns row 2) and download results from hosts that send
+// no CORS headers (row 3: Comfy's rehosted Seedance results, and from M7 Sync
+// Labs' lip syncs). This Worker does both and
 // nothing else. It never stores a key: uploads are checked against Router once
 // and only a hash of the key is remembered, for 10 minutes.
 import { needsWorkerFetch } from "../../src/lib/router/hosts";
@@ -19,6 +20,7 @@ const KEY_CHECK_TTL_MS = 10 * 60 * 1000;
 // The bucket's lifecycle rule deletes objects after 1 day (R2 rules count in
 // whole days); the app deletes each upload as soon as its job ends.
 const LINK_LIFETIME_MS = 24 * 60 * 60 * 1000;
+const MAX_REDIRECTS = 2;
 
 const UPLOAD_TYPES: Record<string, string> = {
   "video/mp4": "mp4",
@@ -164,9 +166,21 @@ async function proxyFetch(request: Request): Promise<Response> {
   if (!needsWorkerFetch(target)) {
     return fail(403, "host_not_allowed", "This Worker only fetches Portraius Studio's result hosts.");
   }
-  // Redirects aren't followed, so an allowed link can't lead anywhere else.
-  const upstream = await fetch(target.href, { redirect: "manual" });
-  if (upstream.status >= 300 && upstream.status < 400) return fail(502, "redirected", "The asset host answered with a redirect.");
+  // Redirects are followed only to links that are allowed too (Sync Labs
+  // sends its results on to S3), so an allowed link can't lead anywhere else.
+  let upstream = await fetch(target.href, { redirect: "manual" });
+  for (let hops = 0; upstream.status >= 300 && upstream.status < 400; hops++) {
+    const location = upstream.headers.get("Location");
+    let next: URL | undefined;
+    try {
+      next = location ? new URL(location, target) : undefined;
+    } catch {
+      next = undefined;
+    }
+    if (!next || hops >= MAX_REDIRECTS || !needsWorkerFetch(next)) return fail(502, "redirected", "The asset host answered with a redirect.");
+    target = next;
+    upstream = await fetch(target.href, { redirect: "manual" });
+  }
   const headers = new Headers({ "Cache-Control": "no-store" });
   for (const name of ["Content-Type", "Content-Length", "ETag", "Last-Modified"]) {
     const value = upstream.headers.get(name);

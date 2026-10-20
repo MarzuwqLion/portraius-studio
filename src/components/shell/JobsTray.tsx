@@ -16,6 +16,13 @@ const STUDIO: Partial<Record<Job["kind"], string>> = {
   sheet: "/characters",
 };
 
+const KIND_LABEL: Partial<Record<Job["kind"], string>> = {
+  sheet: "character",
+  enhance: "make it real",
+  lipsync: "speaking",
+  shot: "one take",
+};
+
 const WORKING: Job["status"][] = ["submitting", "queued", "running", "downloading", "scoring", "cancelling"];
 
 function Frame({ job }: { job: Job }) {
@@ -38,7 +45,7 @@ function Frame({ job }: { job: Job }) {
         </span>
         <span className="flex flex-col text-control">
           <span className={cn("font-semibold", job.status === "failed" && "text-drift")}>{job.status === "failed" ? "Failed" : jobStatusText(job)}</span>
-          <span className="text-ink-muted">{job.kind === "sheet" ? "character" : job.kind === "enhance" ? "make it real" : job.kind}</span>
+          <span className="text-ink-muted">{KIND_LABEL[job.kind] ?? job.kind}</span>
         </span>
       </Link>
       {canCancel && (

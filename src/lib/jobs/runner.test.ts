@@ -127,6 +127,39 @@ describe("a job from submit to done", () => {
     expect((await db.generations.get(job.generationIds[0]!))!.characterIds).toEqual(["char-1"]);
   });
 
+  it("keeps a saved line beside a lip sync's video, as the generation's own copy", async () => {
+    await db.blobs.put({ id: "audio:line", blob: new Blob(["mp3"], { type: "audio/mpeg" }), mime: "audio/mpeg", bytes: 3 });
+    router.status.mockResolvedValue(status("COMPLETED"));
+    router.result.mockResolvedValue({ data: { status: "COMPLETED", outputUrl: "https://sync.example/out.mp4" }, requestId: "r", creditsUsed: null });
+    const started = await startJob({
+      kind: "lipsync",
+      modelId: MODEL_IDS.sync3,
+      input: { model: { videoUrl: "https://w.example/m/a.mp4", audioUrl: "https://w.example/m/b.mp3" }, characterIds: [], keepAssets: [{ blobId: "audio:line", kind: "audio", mime: "audio/mpeg", bytes: 3 }] },
+    });
+    const job = await settled(started.id, 5000);
+    expect(job.status).toBe("done");
+    const generation = await db.generations.get(job.generationIds[0]!);
+    expect(generation).toMatchObject({ type: "video" });
+    expect(generation!.assets.map((a) => [a.kind, a.blobId])).toEqual([
+      ["video", `${job.id}-a0`],
+      ["audio", `${job.id}-k0`],
+    ]);
+    expect(await (await db.blobs.get(`${job.id}-k0`))!.blob.text()).toBe("mp3");
+  });
+
+  it("fails a lip sync whose line is gone, without asking again", async () => {
+    router.status.mockResolvedValue(status("COMPLETED"));
+    router.result.mockResolvedValue({ data: { status: "COMPLETED", outputUrl: "https://sync.example/out.mp4" }, requestId: "r", creditsUsed: null });
+    const started = await startJob({
+      kind: "lipsync",
+      modelId: MODEL_IDS.sync3,
+      input: { model: { videoUrl: "https://w.example/m/a.mp4", audioUrl: "https://w.example/m/b.mp3" }, characterIds: [], keepAssets: [{ blobId: "audio:gone", kind: "audio", mime: "audio/mpeg", bytes: 3 }] },
+    });
+    const job = await settled(started.id, 5000);
+    expect(job).toMatchObject({ status: "failed", error: { code: "download_failed" } });
+    expect(download.downloadAsset).toHaveBeenCalledTimes(1);
+  });
+
   it("deletes the job's uploads when it ends", async () => {
     router.status.mockResolvedValue(status("COMPLETED"));
     router.result.mockResolvedValue({ data: seedanceRecorded, requestId: "r", creditsUsed: null });

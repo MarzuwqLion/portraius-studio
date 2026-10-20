@@ -15,8 +15,14 @@ export const ASSET_HOSTS: readonly string[] = ["ai-statics.magnific.com", "*.kli
 
 // Result asset locations that send no CORS headers, so the browser fetches them
 // through the Worker's /fetch route (Unknowns row 3). Comfy rehosts Seedance
-// results in this bucket.
-export const WORKER_FETCH_PREFIXES: readonly string[] = ["https://storage.googleapis.com/partner-nodes-assets/"];
+// results in this bucket. Sync Labs' result link answers any request carrying
+// an Origin header (every browser fetch) with a 500, and otherwise redirects
+// to a presigned link in its S3 bucket, which the Worker follows (M7).
+export const WORKER_FETCH_PREFIXES: readonly string[] = [
+  "https://storage.googleapis.com/partner-nodes-assets/",
+  "https://api.sync.so/v2/generations/",
+  "https://private-sync-user-generations-v2.s3.amazonaws.com/generations/",
+];
 
 // When Comfy can't rehost a Seedance link it passes on BytePlus's own (M3: a
 // draft's video_url on ark-acg-ap-southeast-1.tos-ap-southeast-1.volces.com).

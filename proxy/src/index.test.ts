@@ -44,6 +44,7 @@ class FakeBucket {
 
 const GOOD_KEY = "Bearer good-key";
 const SEEDANCE_URL = "https://storage.googleapis.com/partner-nodes-assets/byteplus/a/b/c/video.mp4?Expires=1&Signature=x";
+const SYNC_S3_URL = "https://private-sync-user-generations-v2.s3.amazonaws.com/generations/u/9bcf/result.mp4?X-Amz-Signature=x";
 const VIDEO = new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 1, 2, 3, 4]);
 
 let bucket: FakeBucket;
@@ -83,6 +84,15 @@ beforeEach(() => {
     }
     if (url.startsWith("https://storage.googleapis.com/partner-nodes-assets/redirect")) {
       return new Response(null, { status: 302, headers: { Location: "https://example.com/" } });
+    }
+    if (url.startsWith("https://api.sync.so/v2/generations/loop")) {
+      return new Response(null, { status: 302, headers: { Location: url } });
+    }
+    if (url.startsWith("https://api.sync.so/v2/generations/")) {
+      return new Response(null, { status: 302, headers: { Location: SYNC_S3_URL } });
+    }
+    if (url.startsWith("https://private-sync-user-generations-v2.s3.amazonaws.com/")) {
+      return new Response(VIDEO, { headers: { "Content-Type": "video/mp4", "Content-Length": String(VIDEO.length) } });
     }
     if (url.startsWith("https://storage.googleapis.com/")) {
       return new Response(VIDEO, { headers: { "Content-Type": "video/mp4", "Content-Length": String(VIDEO.length) } });
@@ -222,9 +232,24 @@ describe("/fetch", () => {
     expect(upstream).not.toHaveBeenCalled();
   });
 
-  it("doesn't follow redirects", async () => {
+  it("doesn't follow redirects to links outside the allowlist", async () => {
     const res = await call(`/fetch?url=${encodeURIComponent("https://storage.googleapis.com/partner-nodes-assets/redirect")}`);
     expect(res.status).toBe(502);
+    expect(upstream).toHaveBeenCalledTimes(1);
+  });
+
+  it("follows Sync Labs' result link on to its S3 bucket", async () => {
+    const link = "https://api.sync.so/v2/generations/9bcf/result?token=t";
+    const res = await call(`/fetch?url=${encodeURIComponent(link)}`);
+    expect(res.status).toBe(200);
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(VIDEO);
+    expect(upstream.mock.calls.map((c) => c[0])).toEqual([link, SYNC_S3_URL]);
+  });
+
+  it("stops after two redirects", async () => {
+    const res = await call(`/fetch?url=${encodeURIComponent("https://api.sync.so/v2/generations/loop")}`);
+    expect(res.status).toBe(502);
+    expect(upstream).toHaveBeenCalledTimes(3);
   });
 
   it("passes an expired link's status through without its body", async () => {

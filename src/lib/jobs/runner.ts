@@ -25,6 +25,10 @@ export interface JobInput<I = unknown> {
   request?: unknown;       // the studio's own request, so retries and recipes can rebuild it
   // Work to start when this job is done, such as Still first's video draft.
   next?: unknown;
+  // Files already in the blobs table that the generation carries beside the
+  // model's result, such as the spoken line under a lip sync. Each generation
+  // gets its own copy, so deleting one never breaks another.
+  keepAssets?: GenerationAsset[];
 }
 
 export type StartJob<I> = Pick<NewJob, "kind" | "modelId" | "estimate" | "parentJobId" | "uploads"> & { input: JobInput<I> };
@@ -254,6 +258,14 @@ async function downloadStep(id: string): Promise<void> {
     // library keeps a JPEG of at most 4096 px instead.
     const blobs = job.kind === "enhance" ? await Promise.all(downloaded.map((blob) => fitLargeImage(blob))) : downloaded;
     const assets: GenerationAsset[] = blobs.map((blob, i) => ({ blobId: `${job.id}-a${i}`, kind: refs[i]!.kind, mime: blob.type, bytes: blob.size }));
+    const kept = await Promise.all(
+      (input.keepAssets ?? []).map(async (asset, i) => {
+        const row = await db.blobs.get(asset.blobId);
+        if (!row) throw appError("download_failed", "A file this result needs, such as its spoken line, is gone from this browser.", { retry: "never" });
+        return { ...row, id: `${job.id}-k${i}` };
+      }),
+    );
+    kept.forEach((row, i) => assets.push({ ...input.keepAssets![i]!, blobId: row.id }));
     const generation: Generation = {
       id: generationId,
       type,
@@ -267,7 +279,7 @@ async function downloadStep(id: string): Promise<void> {
     };
     // IDs come from the job, so a rerun after a reload overwrites, never duplicates.
     await db.transaction("rw", db.blobs, db.generations, async () => {
-      await db.blobs.bulkPut(blobs.map((blob, i) => ({ id: assets[i]!.blobId, blob, mime: blob.type, bytes: blob.size })));
+      await db.blobs.bulkPut([...blobs.map((blob, i) => ({ id: assets[i]!.blobId, blob, mime: blob.type, bytes: blob.size })), ...kept]);
       await db.generations.put(generation);
     });
   });

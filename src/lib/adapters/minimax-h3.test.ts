@@ -22,6 +22,18 @@ describe("minimaxH3.buildBody", () => {
     expect(body.content[1]).toEqual({ type: "image_url", role: "first_frame", image_url: { url: FRAME } });
   });
 
+  it("speaks a line from reference audio, with the cast as reference images", () => {
+    const AUDIO = "data:audio/mpeg;base64,SUQz";
+    const body = minimaxH3.buildBody({ ...base, referenceImages: [FRAME], referenceAudios: [AUDIO] }) as { ratio: string; content: unknown[] };
+    expect(body.content).toEqual([
+      { type: "text", text: "A paper lantern sways at dusk." },
+      { type: "image_url", role: "reference_image", image_url: { url: FRAME } },
+      { type: "audio_url", role: "reference_audio", audio_url: { url: AUDIO } },
+    ]);
+    expect(body.ratio).toBe("16:9");
+    expect(() => minimaxH3.buildBody({ ...base, firstFrame: FRAME, referenceAudios: [AUDIO] })).toThrow(/not both/);
+  });
+
   it("refuses what H3 refuses", () => {
     expect(() => minimaxH3.buildBody({ ...base, durationSec: 16 })).toThrow(/4 to 15/);
     expect(() => minimaxH3.buildBody({ ...base, durationSec: 3 })).toThrow(RangeError);

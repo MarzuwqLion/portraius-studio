@@ -1,0 +1,29 @@
+{
+  "createdAt": "2026-10-20T08:04:59.133Z",
+  "error": null,
+  "errorCode": null,
+  "id": "9bcfc92f-9937-44c0-9d65-1acd09a7a337",
+  "input": [
+    {
+      "type": "video",
+      "url": "https://portraius-proxy.marzuwq-muhammad.workers.dev/m/3ae4745d8c781f5ff91b1016294b6913.mp4"
+    },
+    {
+      "type": "audio",
+      "url": "https://portraius-proxy.marzuwq-muhammad.workers.dev/m/694e586cfdd9c21dca9f505826706770.mp3"
+    }
+  ],
+  "inputSnapshot": null,
+  "model": "sync-3",
+  "options": {
+    "sync_mode": "cut_off"
+  },
+  "outputDuration": 4.5833,
+  "outputFileName": null,
+  "outputUrl": "https://api.sync.so/v2/generations/9bcfc92f-9937-44c0-9d65-1acd09a7a337/result?signed-query-stripped",
+  "projectId": null,
+  "segmentOutputUrl": null,
+  "segments": null,
+  "status": "COMPLETED",
+  "webhookUrl": null
+}

@@ -22,7 +22,7 @@ export const minimaxH3: AdapterImpl<H3Input, MinimaxH3Result> = {
       throw new RangeError(`H3 clips run ${min} to ${max} seconds.`);
     }
     const keyframes = Boolean(input.firstFrame || input.lastFrame);
-    const references = Boolean(input.referenceImages?.length || input.referenceVideos?.length);
+    const references = Boolean(input.referenceImages?.length || input.referenceVideos?.length || input.referenceAudios?.length);
     if (keyframes && references) throw new RangeError("H3 takes a first or last frame, or reference media, not both.");
     if (input.lastFrame && !input.firstFrame) throw new RangeError("A last frame needs a first frame.");
     if (!keyframes && !input.ratio) throw new RangeError("Text to video on H3 needs an aspect ratio.");
@@ -32,6 +32,7 @@ export const minimaxH3: AdapterImpl<H3Input, MinimaxH3Result> = {
     if (input.lastFrame) content.push({ type: "image_url", role: "last_frame", image_url: { url: input.lastFrame } });
     for (const url of input.referenceImages ?? []) content.push({ type: "image_url", role: "reference_image", image_url: { url } });
     for (const url of input.referenceVideos ?? []) content.push({ type: "video_url", role: "reference_video", video_url: { url } });
+    for (const url of input.referenceAudios ?? []) content.push({ type: "audio_url", role: "reference_audio", audio_url: { url } });
 
     return {
       content,
