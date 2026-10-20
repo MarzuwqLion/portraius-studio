@@ -15,9 +15,10 @@
         "kind": "person"
       }
     ],
-    "prompt": "{lead} performs exactly the movement, timing and camera of the reference video, on a busy city street at night with neon signs and wet pavement.",
+    "prompt": "{lead} performs exactly the movement, timing and camera of the reference video.",
     "params": {
-      "mode": "motion"
+      "mode": "motion",
+      "setting": "a busy city street at night with neon signs and wet pavement"
     }
   }
 }

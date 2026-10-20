@@ -15,10 +15,11 @@
         "kind": "person"
       }
     ],
-    "prompt": "{lead} performs exactly the movement and timing of the reference video on a large concert stage, crowd lights and haze behind.",
+    "prompt": "{lead} performs exactly the movement and timing of the reference video.",
     "params": {
       "mode": "motion",
-      "keepAudio": true
+      "keepAudio": true,
+      "setting": "a large concert stage with crowd lights and haze behind"
     }
   }
 }

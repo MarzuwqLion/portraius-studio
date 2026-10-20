@@ -18,7 +18,7 @@ import { db } from "@/lib/store/db";
 import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
 import type { CastPick } from "@/lib/studio/cast";
 import { randomSeed } from "@/lib/studio/image";
-import { LIMITS, facesInClip, modeOf, startRecast, storeClip, type RecastMode, type RecastRequest } from "@/lib/studio/recast";
+import { LIMITS, facesInClip, isFirstOfTwo, modeOf, startRecast, storeClip, type RecastMode, type RecastRequest } from "@/lib/studio/recast";
 import { storeUpload } from "@/lib/studio/uploads";
 import type { Job } from "@/lib/types/jobs";
 import { cn } from "@/lib/utils";
@@ -36,7 +36,7 @@ function RecastResult({ job }: { job: Job }) {
   return (
     <div className="grid gap-2">
       {original && recast ? (
-        <SplitView original={original} recast={recast} aspect={aspect} label={preset?.title} />
+        <SplitView original={original} recast={recast} aspect={aspect} label={isFirstOfTwo(job) ? `${preset?.title}: changing the setting next` : preset?.title} />
       ) : (
         <Take alt={preset?.title ?? "Recast"} aspect={aspect}>
           {jobStatusText(job)}
@@ -80,7 +80,10 @@ export function RecastScreen() {
   const swapInput = useRef<HTMLInputElement>(null);
   const rawUrl = useBlobUrl(rawBlobId);
   const swapUrl = useBlobUrl(swapImageBlobId);
-  const jobs = useRecentJobs(40).filter((j) => j.kind === "recast");
+  const recent = useRecentJobs(40);
+  // Only jobs started here (they carry the clip to compare against). A
+  // two-step recast shows as one card: the first step until the second starts.
+  const jobs = recent.filter((j) => j.kind === "recast" && "request" in (j.input as object) && !(isFirstOfTwo(j) && recent.some((c) => c.parentJobId === j.id)));
   const libraryClips = useLiveQuery(async () => (await db.generations.where("type").anyOf("video", "recast").reverse().sortBy("createdAt")).slice(0, 20), []);
 
   const preset = RECAST_PRESETS.find((p) => p.id === presetId)!;

@@ -15,10 +15,11 @@
         "kind": "person"
       }
     ],
-    "prompt": "{lead} performs exactly the movement and timing of the reference video on a dark stage lit by neon tubes in magenta and cyan, with light haze.",
+    "prompt": "{lead} performs exactly the movement and timing of the reference video.",
     "params": {
       "mode": "motion",
-      "keepAudio": true
+      "keepAudio": true,
+      "setting": "a dark stage lit by neon tubes in magenta and cyan, with light haze"
     }
   }
 }

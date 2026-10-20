@@ -29,7 +29,7 @@ asking for "a busy city street at night with neon signs") came back as the diner
 (identity 80, worst frame 73). H3 reproduces the reference video's scene; it changes the performer
 when the reference image is someone else, but ignores a new setting in the prompt. The setting-change
 presets (Same move new city, Neon performance, Concert stage) need another engine or a two-step
-(swap the background with Object Swap afterwards). To decide after the A/B below.
+(swap the background with Object Swap afterwards). Decided below: a two-step.
 
 ## Object Swap A/B (Unknowns row 11)
 
@@ -51,10 +51,24 @@ keeps the timing exactly and is the fastest. Its first outputs carried a "Happy 
 corner; sending `parameters.watermark: false` removes it (checked on a rerun of the product swap).
 Wan 2.7 is the runner-up. The four swap presets now target HappyHorse.
 
+## Setting changes: H3, then a HappyHorse location edit
+
+The setting-change presets now carry a `setting` and run two jobs: H3 swaps in the performer and
+keeps the clip's scene, then HappyHorse 1.0 (text only, no reference image) moves the result to the
+new setting. The Recast screen shows the pair as one card. Tested on the diner result above:
+
+| Prompt | Result |
+| --- | --- |
+| "Replace the background with a busy city street at night..." | Only the view through the diner window changed; the booth stayed. Identity 85, worst frame 76 |
+| "Move the person to a new location: ... Replace everything around them, including walls, windows, furniture and props..." | Walt on a neon street at night, wet pavement, same motion and timing. Identity 84, worst frame 77. About 3 min |
+
+The second prompt is the one the app sends (`settingPrompt` in `lib/studio/recast.ts`).
+
 ## Defaults now
 
 | Mode | Engine |
 | --- | --- |
 | Motion Transfer | MiniMax H3 (performer swap; keeps the clip's setting) |
+| Motion Transfer to a new setting | MiniMax H3, then a HappyHorse 1.0 location edit |
 | Object Swap | HappyHorse 1.0 video edit, `watermark: false` |
 | Style swap | MiniMax H3 |

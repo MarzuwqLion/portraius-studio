@@ -61,6 +61,13 @@ export interface RecastRequest {
   direction?: string;        // extra words from the user
   h3Resolution: H3Input["resolution"];
   seed: number;
+  settingStep?: boolean;     // the second step of a setting-change preset
+}
+
+// A recast job whose result is the first of two steps (a setting change follows).
+export function isFirstOfTwo(job: Job): boolean {
+  const request = (job.input as Partial<RecastJobInput>).request;
+  return Boolean(request && !request.settingStep && typeof findPreset(request.presetId)?.recipe.params?.setting === "string");
 }
 
 type RecastJobInput = JobInput & { request: RecastRequest };
@@ -146,10 +153,43 @@ export async function muxAudio(video: Blob, audioSource: Blob): Promise<Blob> {
   }
 }
 
+// H3 keeps the reference video's setting, so presets that move the performer
+// somewhere new run a second step: a text-guided background edit on the H3
+// result (docs/notes/recast-ab.md). "Background" alone only changed what was
+// seen through a window, so the prompt names the whole surroundings.
+export function settingPrompt(setting: string): string {
+  return `Move the person to a new location: ${setting}. Replace everything around them, including walls, windows, furniture and props, with that location. Keep the person, their face, their hair, their clothes and their motion exactly as they are.`;
+}
+
+async function startSettingStep(job: Job, input: RecastJobInput, setting: string): Promise<void> {
+  const generation = await db.generations.get(job.generationIds[0] ?? "");
+  const asset = generation?.assets.find((a) => a.kind === "video");
+  const video = asset ? await db.blobs.get(asset.blobId) : undefined;
+  if (!video) return;
+  const hosted = await uploadAsset(video.blob, { filePath: "performer.mp4", contentType: "video/mp4" });
+  await startJob({
+    kind: "recast",
+    modelId: MODEL_IDS.happyHorseEdit,
+    uploads: [hosted.id],
+    parentJobId: job.id,
+    input: {
+      model: { prompt: settingPrompt(setting), videoUrl: hosted.url, keepAudio: true } satisfies VideoEditInput,
+      characterIds: input.characterIds,
+      prompt: input.prompt,
+      request: { ...input.request, settingStep: true },
+    } satisfies RecastJobInput,
+  });
+}
+
 async function afterRecast(job: Job): Promise<void> {
   if (job.kind !== "recast") return;
   const input = job.input as RecastJobInput;
   const p = findPreset(input.request?.presetId);
+  const setting = p?.recipe.params?.setting;
+  if (typeof setting === "string" && !input.request.settingStep) {
+    if (!(await db.jobs.where("parentJobId").equals(job.id).count())) await startSettingStep(job, input, setting);
+    return;
+  }
   if (!p?.recipe.params?.keepAudio) return;
   const generation = await db.generations.get(job.generationIds[0] ?? "");
   const asset = generation?.assets.find((a) => a.kind === "video");
