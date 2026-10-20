@@ -54,10 +54,9 @@ describe("compileImagePrompt", () => {
     expect(prompt).toContain("SECOND: Silver braids, green linen jacket.");
   });
 
-  it("is plain text-to-image with no cast", () => {
-    expect(compileImagePrompt({ scene: "a teapot on a windowsill", cast: [], camera: {}, modelId: NANO })).toBe(
-      "A teapot on a windowsill.\nNatural skin texture with visible pores, real lens imperfections.",
-    );
+  it("is plain text-to-image with no cast, without the skin realism line", () => {
+    expect(compileImagePrompt({ scene: "a teapot on a windowsill", cast: [], camera: {}, modelId: NANO })).toBe("A teapot on a windowsill.");
+    expect(compileImagePrompt({ scene: "make it morning", cast: [], camera: {}, modelId: NANO, editing: true })).toContain("visible pores");
   });
 
   it("drops the realism line for a stylised look", () => {

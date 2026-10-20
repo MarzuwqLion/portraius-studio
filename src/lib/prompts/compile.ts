@@ -89,7 +89,8 @@ export function compileImagePrompt(input: PromptInput): string {
     descriptions(input.cast).join(" "),
     sentence(input.scene.replace(SLOT, (_, slot: string) => role(slot))),
     cameraLine(input),
-    isStylised(input.camera) ? "" : REALISM,
+    // Skin and lens realism only where a person can be in the shot.
+    isStylised(input.camera) || !(input.editing || input.cast.some((m) => m.kind === "person")) ? "" : REALISM,
   ]
     .filter(Boolean)
     .join("\n");
