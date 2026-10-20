@@ -39,3 +39,29 @@ export const lookFile = z.object({
 export type CameraFile = z.infer<typeof cameraFile>;
 export type CameraOption = CameraFile["options"][number];
 export type Look = z.infer<typeof lookFile>;
+
+// Recipes (spec: Recipe format): how something was made, never a face.
+export const recipe = z.object({
+  capability: z.string().max(40),
+  model: z.string().max(80),
+  slots: z.array(z.object({ slot: z.string().regex(/^[a-z][a-z0-9_-]*$/), kind: z.enum(["person", "element"]) })).max(7),
+  prompt: z.string().min(1).max(2000),
+  camera: z.record(z.string(), z.string()).optional(),
+  params: z.record(z.string(), z.unknown()).optional(),
+  seed: z.number().int().optional(),
+});
+
+export const presetFile = z.object({
+  format: z.literal("portraius.preset"),
+  version: z.literal(1),
+  id,
+  type: z.enum(["recast", "image", "video"]),
+  title: z.string().min(1).max(60),
+  author: z.string().min(1).max(60),
+  license: z.string().max(20),
+  thumbnail: z.string().max(80).optional(),
+  recipe,
+});
+
+export type Recipe = z.infer<typeof recipe>;
+export type Preset = z.infer<typeof presetFile>;

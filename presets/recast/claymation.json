@@ -1,0 +1,19 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "claymation",
+  "type": "recast",
+  "title": "Claymation",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "video.generate",
+    "model": "minimax/minimax-h3",
+    "slots": [],
+    "prompt": "Recreate the reference video exactly, with the same motion, timing and camera, as claymation: handmade clay figures and miniature sets.",
+    "params": {
+      "mode": "style",
+      "stylised": true
+    }
+  }
+}

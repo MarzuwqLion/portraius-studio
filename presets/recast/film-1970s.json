@@ -1,0 +1,18 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "film-1970s",
+  "type": "recast",
+  "title": "1970s film",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "video.generate",
+    "model": "minimax/minimax-h3",
+    "slots": [],
+    "prompt": "Recreate the reference video exactly, with the same motion, timing and camera, as 1970s 35mm film footage: warm faded colour, soft contrast and visible grain.",
+    "params": {
+      "mode": "style"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "outfit-change",
+  "type": "recast",
+  "title": "Outfit change",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "video.edit",
+    "model": "kling/kling-v3-omni",
+    "slots": [
+      {
+        "slot": "outfit",
+        "kind": "element"
+      }
+    ],
+    "prompt": "Replace the outfit worn in <<<video_1>>> with the {outfit} in <<<image_1>>>. Keep the person, their motion and everything else unchanged.",
+    "params": {
+      "mode": "swap",
+      "target": "outfit"
+    }
+  }
+}

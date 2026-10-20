@@ -1,0 +1,24 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "concert-stage",
+  "type": "recast",
+  "title": "Concert stage",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "video.generate",
+    "model": "minimax/minimax-h3",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "{lead} performs exactly the movement and timing of the reference video on a large concert stage, crowd lights and haze behind.",
+    "params": {
+      "mode": "motion",
+      "keepAudio": true
+    }
+  }
+}

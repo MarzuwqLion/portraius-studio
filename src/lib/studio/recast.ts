@@ -1,0 +1,180 @@
+// Recast (spec: Recast): a clip the user owns keeps its motion and camera,
+// and either a vault character takes over as the performer (Motion Transfer),
+// one thing in the shot is replaced (Object Swap), or the look changes (style).
+//
+// Engines differ from the spec: Seedance 2.5 refuses photoreal people in any
+// input (M3 notes, and a person reference video in M4), so Motion Transfer and
+// style run on MiniMax H3, which kept motion, timing and camera in M4's test.
+// Object Swap stays on Kling V3 Omni's clip edit.
+import { onJobDone, startJob, type JobInput } from "@/lib/jobs/runner";
+import { blobToBase64, prepareImage } from "@/lib/media/image-prep";
+import { loadFfmpeg } from "@/lib/media/video-prep";
+import { preset as findPreset } from "@/lib/presets/load";
+import type { Preset } from "@/lib/presets/schema";
+import { compileVideoPrompt } from "@/lib/prompts/compile";
+import type { H3Input, KlingInput, VideoRatio } from "@/lib/registry/inputs";
+import { MODEL_IDS } from "@/lib/registry/models";
+import { uploadAsset } from "@/lib/router/client";
+import { db } from "@/lib/store/db";
+import type { Job } from "@/lib/types/jobs";
+import { buildCast, dataUri, type CastPick } from "./cast";
+
+export type RecastMode = "motion" | "swap" | "style";
+
+export interface ClipLimits {
+  minSec: number;
+  maxSec: number;
+  minHeight?: number;
+  maxHeight: number;
+  fps?: number;
+}
+
+// Kling's edit input: 3 to 10 s, 720 to 2160 px, 24 to 60 fps (spec: Input).
+export const LIMITS: Record<RecastMode, ClipLimits> = {
+  motion: { minSec: 4, maxSec: 15, maxHeight: 1080 },
+  style: { minSec: 4, maxSec: 15, maxHeight: 1080 },
+  swap: { minSec: 3, maxSec: 10, minHeight: 720, maxHeight: 2160, fps: 30 },
+};
+
+export function modeOf(p: Preset): RecastMode {
+  const mode = p.recipe.params?.mode;
+  return mode === "swap" || mode === "style" ? mode : "motion";
+}
+
+// H3 needs a concrete ratio with reference media; pick the nearest it supports.
+export function nearestRatio(width: number, height: number): VideoRatio {
+  const options: [VideoRatio, number][] = [["16:9", 16 / 9], ["4:3", 4 / 3], ["1:1", 1], ["3:4", 3 / 4], ["9:16", 9 / 16], ["21:9", 21 / 9]];
+  const r = width / height;
+  return options.reduce((best, o) => (Math.abs(Math.log(o[1] / r)) < Math.abs(Math.log(best[1] / r)) ? o : best))[0];
+}
+
+export interface RecastRequest {
+  presetId: string;
+  clipBlobId: string;        // the prepared clip
+  clipDurationSec: number;
+  clipWidth: number;
+  clipHeight: number;
+  cast: CastPick[];          // Motion Transfer: the performer
+  swapImageBlobId?: string;  // Object Swap: the replacement
+  direction?: string;        // extra words from the user
+  h3Resolution: H3Input["resolution"];
+  seed: number;
+}
+
+type RecastJobInput = JobInput & { request: RecastRequest };
+
+async function requireBlob(id: string | undefined, what: string): Promise<Blob> {
+  const row = id ? await db.blobs.get(id) : undefined;
+  if (!row) throw new Error(`The ${what} is gone. Add it again.`);
+  return row.blob;
+}
+
+export async function startRecast(request: RecastRequest): Promise<string> {
+  const p = findPreset(request.presetId);
+  if (!p) throw new Error("That preset isn't available.");
+  const mode = modeOf(p);
+  const limits = LIMITS[mode];
+  if (request.clipDurationSec < limits.minSec - 0.05 || request.clipDurationSec > limits.maxSec + 0.05) {
+    throw new RangeError(`This mode takes a ${limits.minSec} to ${limits.maxSec} s clip.`);
+  }
+  const clip = await requireBlob(request.clipBlobId, "clip");
+  const direction = request.direction?.trim() ? ` ${request.direction.trim()}` : "";
+  const stylised = p.recipe.params?.stylised === true;
+
+  let modelId: typeof MODEL_IDS.minimaxH3 | typeof MODEL_IDS.klingOmni;
+  let model: H3Input | KlingInput;
+  let characterIds: string[] = [];
+  let swapImage: string | undefined;
+  if (mode === "swap") {
+    const { blob } = await prepareImage(await requireBlob(request.swapImageBlobId, "replacement image"));
+    swapImage = await blobToBase64(blob);
+  }
+
+  // Upload last, so a refused input never leaves a file behind.
+  const hosted = await uploadAsset(new Blob([clip], { type: "video/mp4" }), { filePath: "recast.mp4", contentType: "video/mp4" });
+
+  if (mode === "swap") {
+    modelId = MODEL_IDS.klingOmni;
+    const target = String(p.recipe.slots[0]?.slot ?? "replacement");
+    model = {
+      prompt: p.recipe.prompt.replace(/\{([a-z][a-z0-9_-]*)\}/g, () => target) + direction,
+      referenceImages: [swapImage!],
+      video: { url: hosted.url, use: "base", keepSound: true },
+      quality: "std",
+    };
+  } else {
+    modelId = MODEL_IDS.minimaxH3;
+    const cast = await buildCast(request.cast);
+    characterIds = cast.characterIds;
+    if (mode === "motion" && !cast.members.length) throw new Error("Pick who performs.");
+    const prompt = compileVideoPrompt({ scene: p.recipe.prompt + direction, cast: cast.members, camera: {}, modelId, withReferences: true });
+    model = {
+      stage: "generate",
+      prompt,
+      ...(cast.images.length ? { referenceImages: cast.images.map(dataUri) } : {}),
+      referenceVideos: [hosted.url],
+      durationSec: Math.min(limits.maxSec, Math.max(limits.minSec, Math.round(request.clipDurationSec))),
+      ratio: nearestRatio(request.clipWidth, request.clipHeight),
+      resolution: request.h3Resolution,
+      seed: request.seed,
+    };
+  }
+
+  const job = await startJob({
+    kind: "recast",
+    modelId,
+    uploads: [hosted.id],
+    input: { model, characterIds, prompt: p.title, stylised, request } satisfies RecastJobInput,
+  });
+  return job.id;
+}
+
+// ---- Original audio (the music-video presets) ----
+
+export async function muxAudio(video: Blob, audioSource: Blob): Promise<Blob> {
+  const ffmpeg = await loadFfmpeg();
+  const id = crypto.randomUUID();
+  await ffmpeg.writeFile(`v-${id}.mp4`, new Uint8Array(await video.arrayBuffer()));
+  await ffmpeg.writeFile(`a-${id}.mp4`, new Uint8Array(await audioSource.arrayBuffer()));
+  try {
+    const code = await ffmpeg.exec(["-i", `v-${id}.mp4`, "-i", `a-${id}.mp4`, "-map", "0:v:0", "-map", "1:a:0?", "-c:v", "copy", "-c:a", "aac", "-shortest", "-movflags", "+faststart", `o-${id}.mp4`]);
+    if (code !== 0) throw new Error("The original audio couldn't be added.");
+    return new Blob([(await ffmpeg.readFile(`o-${id}.mp4`)) as Uint8Array<ArrayBuffer>], { type: "video/mp4" });
+  } finally {
+    for (const f of [`v-${id}.mp4`, `a-${id}.mp4`, `o-${id}.mp4`]) await ffmpeg.deleteFile(f).catch(() => undefined);
+  }
+}
+
+async function afterRecast(job: Job): Promise<void> {
+  if (job.kind !== "recast") return;
+  const input = job.input as RecastJobInput;
+  const p = findPreset(input.request?.presetId);
+  if (!p?.recipe.params?.keepAudio) return;
+  const generation = await db.generations.get(job.generationIds[0] ?? "");
+  const asset = generation?.assets.find((a) => a.kind === "video");
+  const [video, source] = await Promise.all([asset ? db.blobs.get(asset.blobId) : undefined, db.blobs.get(input.request.clipBlobId)]);
+  if (!asset || !video || !source) return;
+  const muxed = await muxAudio(video.blob, source.blob);
+  await db.blobs.put({ ...video, blob: muxed, bytes: muxed.size });
+  await db.generations.update(generation!.id, { assets: generation!.assets.map((a) => (a === asset ? { ...a, bytes: muxed.size } : a)) });
+}
+
+export function registerRecastStudio(): () => void {
+  return onJobDone(afterRecast);
+}
+
+// "Other people in the clip will still appear" (spec: Input): the most faces
+// seen in any of a few sampled frames.
+export async function facesInClip(blob: Blob): Promise<number> {
+  const [{ sampleFrames }, { detectFaces }] = await Promise.all([import("@/lib/media/video-frames"), import("@/lib/identity/embed")]);
+  let most = 0;
+  for (const frame of await sampleFrames(blob, 4)) most = Math.max(most, (await detectFaces(frame.canvas, 60)).length);
+  return most;
+}
+
+// A clip the user brings in, stored as is until it's trimmed.
+export async function storeClip(file: Blob): Promise<string> {
+  const id = `upload:${crypto.randomUUID()}`;
+  await db.blobs.put({ id, blob: file, mime: file.type || "video/mp4", bytes: file.size });
+  return id;
+}

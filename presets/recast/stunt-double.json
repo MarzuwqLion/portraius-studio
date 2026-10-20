@@ -1,0 +1,23 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "stunt-double",
+  "type": "recast",
+  "title": "Stunt double",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "video.generate",
+    "model": "minimax/minimax-h3",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "{lead} performs the action in the reference video with the same timing and camera, in practical stunt clothing, in the same setting.",
+    "params": {
+      "mode": "motion"
+    }
+  }
+}

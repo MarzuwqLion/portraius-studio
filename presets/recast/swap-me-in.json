@@ -1,0 +1,23 @@
+{
+  "format": "portraius.preset",
+  "version": 1,
+  "id": "swap-me-in",
+  "type": "recast",
+  "title": "Swap me in",
+  "author": "portraius-studio",
+  "license": "CC0-1.0",
+  "recipe": {
+    "capability": "video.generate",
+    "model": "minimax/minimax-h3",
+    "slots": [
+      {
+        "slot": "lead",
+        "kind": "person"
+      }
+    ],
+    "prompt": "{lead} performs exactly the movement, timing and camera of the reference video, in the same setting.",
+    "params": {
+      "mode": "motion"
+    }
+  }
+}
