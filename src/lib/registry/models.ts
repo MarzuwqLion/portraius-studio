@@ -38,7 +38,8 @@ export const REGISTRY: readonly RegistryEntry[] = [
   { id: MODEL_IDS.wanVideoEdit, label: "Wan 2.7 video edit", capabilities: ["video.edit"], delivery: "queue" },
   { id: MODEL_IDS.happyHorseEdit, label: "HappyHorse 1.0 video edit", capabilities: ["video.edit"], delivery: "queue" },
   { id: MODEL_IDS.bflVideoEdit, label: "BFL video edit", capabilities: ["video.edit"], delivery: "queue" },
-  { id: MODEL_IDS.directorAgent, label: "Claude Sonnet 5.5", capabilities: ["text.plan"], delivery: "sync" },
+  // Queued: Router's queue takes Claude (checked in M7), so it never needs the sync route.
+  { id: MODEL_IDS.directorAgent, label: "Claude Sonnet 5.5", capabilities: ["text.plan"], delivery: "queue" },
   { id: MODEL_IDS.identityJudge, label: "Gemini 3.8 Flash", capabilities: ["vision.judge"], delivery: "sync" },
 ];
 

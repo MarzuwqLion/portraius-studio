@@ -64,6 +64,7 @@ export interface Scene {
   shots: Shot[];
   exportGenerationIds: string[];
   oneTakeJobIds?: string[];       // Kling one-takes of the whole scene, newest first
+  agentRequest?: { requestId: string; startedAt: number };  // a "Draft with AI" plan still to collect
   createdAt: number;
   updatedAt: number;
 }
@@ -163,11 +164,12 @@ export function updateScene(id: string, change: (scene: Scene) => Scene): Promis
 // exports), so a late save from the editor can't undo a step.
 export function mergeEdits(stored: Scene, edited: Scene): Scene {
   const byId = new Map(stored.shots.map((s) => [s.id, s]));
-  const { oneTakeJobIds: _o, ...typedScene } = edited;
+  const { oneTakeJobIds: _o, agentRequest: _r, ...typedScene } = edited;
   return {
     ...typedScene,
     exportGenerationIds: stored.exportGenerationIds,
     ...(stored.oneTakeJobIds ? { oneTakeJobIds: stored.oneTakeJobIds } : {}),
+    ...(stored.agentRequest ? { agentRequest: stored.agentRequest } : {}),
     shots: edited.shots.map((shot) => {
       const s = byId.get(shot.id);
       if (!s) return shot;

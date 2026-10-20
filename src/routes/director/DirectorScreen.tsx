@@ -49,6 +49,7 @@ import {
   type SceneRatio,
   type Shot,
 } from "@/lib/studio/director";
+import { agentInput, collectDraft, draftShots } from "@/lib/studio/agent";
 import { compileImageRequest, randomSeed } from "@/lib/studio/image";
 import type { Job } from "@/lib/types/jobs";
 import { cn } from "@/lib/utils";
@@ -166,6 +167,14 @@ function SceneEditor({ sceneId }: { sceneId: string }) {
   const editor = useSceneEditor(sceneId);
   const navigate = useNavigate();
   const { scene, edit, run, error } = editor;
+  // A plan asked for before a reload is collected when the scene opens again.
+  const collecting = useRef(false);
+  const pendingPlan = scene?.agentRequest?.requestId;
+  useEffect(() => {
+    if (!pendingPlan || collecting.current) return;
+    collecting.current = true;
+    void run("agent", () => collectDraft(sceneId)).finally(() => (collecting.current = false));
+  }, [pendingPlan, run, sceneId]);
 
   if (scene === undefined) return null;
   if (scene === null) {
@@ -241,9 +250,12 @@ function SceneEditor({ sceneId }: { sceneId: string }) {
           {scene.shots.map((shot, i) => (
             <ShotCard key={shot.id} scene={scene} shot={shot} index={i} editor={editor} onChange={(patch) => setShot(shot.id, patch)} onMove={(to) => move(i, to)} onRemove={() => removeShot(shot.id)} />
           ))}
-          <Button variant="secondary" className="justify-self-start border-on-seamless text-on-seamless" onClick={addShot}>
-            Add shot
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="secondary" className="border-on-seamless text-on-seamless" onClick={addShot}>
+              Add shot
+            </Button>
+            <DraftWithAI scene={scene} editor={editor} />
+          </div>
           {scene.shots.length > 0 && <Timeline scene={scene} editor={editor} onMove={move} />}
           {scene.shots.length > 1 && <OneTake scene={scene} editor={editor} />}
         </div>
@@ -569,6 +581,24 @@ function Timeline({ scene, editor, onMove }: { scene: Scene; editor: Editor; onM
         </div>
       )}
     </section>
+  );
+}
+
+// "Draft with AI" (spec: Director, Workflow step 2): Claude drafts 3 to 6
+// shots from the scene card, added after any already there.
+function DraftWithAI({ scene, editor }: { scene: Scene; editor: Editor }) {
+  const { run, busy } = editor;
+  const ready = Boolean(scene.logline.trim());
+  const key = JSON.stringify([scene.logline, scene.location, scene.cast, scene.film, scene.ratio, scene.shots.map((s) => s.action)]);
+  const price = useEstimateLabel(MODEL_IDS.directorAgent, ready ? () => agentInput(scene.id) : undefined, key);
+  const drafting = busy === "agent" || Boolean(scene.agentRequest);
+  return (
+    <>
+      <Button variant="secondary" className="border-on-seamless text-on-seamless" disabled={!ready || busy !== undefined || drafting} onClick={() => void run("agent", () => draftShots(scene.id))}>
+        {drafting ? "Drafting shots" : `Draft shots with AI · ${price}`}
+      </Button>
+      <span className="text-control">{ready ? "Claude Sonnet 5.5 plans 3 to 6 shots from the scene card. Edit them after." : "Write a logline to draft shots with AI."}</span>
+    </>
   );
 }
 
