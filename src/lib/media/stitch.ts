@@ -118,7 +118,7 @@ export function outputSeconds(line: string): number | undefined {
 }
 
 // ffmpeg prints an input's streams when it has nothing else to do.
-async function probe(ffmpeg: FFmpeg, name: string): Promise<Probe> {
+export async function probeInput(ffmpeg: FFmpeg, name: string): Promise<Probe> {
   const lines: string[] = [];
   const listen = ({ message }: { message: string }) => lines.push(message);
   ffmpeg.on("log", listen);
@@ -152,7 +152,7 @@ export async function stitchClips(
     const probes: Probe[] = [];
     for (let i = 0; i < sources.length; i++) {
       await ffmpeg.writeFile(inputs[i]!, new Uint8Array(await sources[i]!.blob.arrayBuffer()));
-      probes.push(await probe(ffmpeg, inputs[i]!));
+      probes.push(await probeInput(ffmpeg, inputs[i]!));
     }
     ffmpeg.on("log", progress);
     let code: number;

@@ -5,6 +5,7 @@ import { Screen } from "@/components/shell/Screen";
 import { RealismAction, RealismTake } from "@/components/studio/Realism";
 import { RemixActions } from "@/components/studio/RemixActions";
 import { SaveAsElement } from "@/components/studio/SaveAsElement";
+import { SocialExport } from "@/components/studio/SocialExport";
 import { ScoreBadge } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { useJob } from "@/lib/jobs/hooks";
@@ -114,6 +115,7 @@ export function GenerationScreen() {
             {image && <SaveAsElement generationId={generation.id} size="default" />}
           </div>
           {image && !realism && <RealismAction generationId={generation.id} />}
+          {video && <SocialExport generationId={generation.id} />}
           <RemixActions generationId={generation.id} />
           {confirming ? (
             <div className="grid gap-2">

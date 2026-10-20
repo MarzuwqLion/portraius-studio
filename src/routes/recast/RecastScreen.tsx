@@ -4,6 +4,7 @@ import { WorkScreen } from "@/components/shell/Screen";
 import { CastPicker } from "@/components/studio/CastPicker";
 import { Field, Select, TextArea } from "@/components/studio/fields";
 import { jobStatusText } from "@/components/studio/JobTake";
+import { SocialExport } from "@/components/studio/SocialExport";
 import { SplitView } from "@/components/studio/SplitView";
 import { ScoreBadge, Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ function RecastResult({ job }: { job: Job }) {
           </Button>
         )}
       </div>
+      {generation && !isFirstOfTwo(job) && <SocialExport generationId={generation.id} onSeamless size="sm" />}
     </div>
   );
 }
