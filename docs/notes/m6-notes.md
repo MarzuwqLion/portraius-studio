@@ -53,3 +53,22 @@ AI-generated comment in the file, saved to the library as a scene. The 720p re-e
 
 ffmpeg.wasm's own progress share follows the first input, so the button read 100% a third of the way
 in; progress now comes from ffmpeg's `time=` status lines over the scene's length.
+
+## Remix links
+
+A recipe comes from a finished job's stored request: the prompt with its `{slots}`, the camera picks,
+the settings and the seed, never a character, photo or descriptor. Edits, first-frame videos and
+advanced prompt overrides aren't shared: they carry the original person's own picture or the
+compiled prompt with character descriptions. The link is `#/remix?r=` plus the canonical JSON,
+deflated (`CompressionStream("deflate-raw")`) and base64url-encoded: 420 characters for a diner image.
+
+**Acceptance (round trip, passes in a new tab):** the link decoded into the recipe card (prompt,
+85 mm, soft key, medium close-up, 4:5), the slot took Walt Harmon from the vault, and the run (at 1K
+fast, to keep test spend low) finished in 32 s with identity 89 and `remixOf: e89b366b7e690531` on
+the generation. Everything the remix needs is in the URL, so a fresh browser differs only in its
+vault: with no person in it, the screen offers "Design a character" instead of the slot picker.
+
+## Follow-ups
+
+- Director's anchor stills also appear in the Image studio's results (they're image jobs), and a
+  manual retry there is labelled "Automatic retry". Cosmetic.
