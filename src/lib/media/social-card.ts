@@ -5,12 +5,12 @@ import { SOCIAL_HEIGHT, SOCIAL_WIDTH, type Box } from "./social";
 
 export const END_CARD_LINES = { lead: "Made with", name: ["Portraius", "Studio"], tail: "Open source" } as const;
 
-// A token's current value, e.g. "#64676b" for --seamless.
+// A token's current value as the browser resolves it, e.g. --seamless.
 export function tokenColour(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-// "#64676b" or "rgb(100, 103, 107)" as ffmpeg's 0xRRGGBB.
+// A resolved colour (six-digit hex or rgb()) as ffmpeg's 0xRRGGBB.
 export function ffmpegColour(css: string): string {
   const hex = /^#([0-9a-f]{6})$/i.exec(css);
   if (hex) return `0x${hex[1]!.toLowerCase()}`;
