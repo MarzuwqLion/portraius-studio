@@ -74,6 +74,10 @@ export interface KlingInput {
   ratio?: "16:9" | "9:16" | "1:1"; // required without a first frame
   quality: "std" | "pro";      // 720p or 1080p
   sound?: boolean;
+  // One-take multi-shot (Director): 1 to 6 shots in one clip, each with its
+  // own prompt (512 characters at most) and whole seconds. They replace
+  // `prompt` and `durationSec`, and add up to 3 to 15 s.
+  shots?: { prompt: string; durationSec: number }[];
 }
 
 // A text- or image-guided edit of one clip (Object Swap candidates).

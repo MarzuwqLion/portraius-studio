@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CAMERA, LOOKS } from "@/lib/presets/load";
 import { CAMERA_GROUPS } from "@/lib/presets/schema";
 import { cameraPhrases } from "./camera";
-import { compileImagePrompt, compileVideoPrompt, slotsIn, type CastMember } from "./compile";
+import { compileImagePrompt, compileOneTakeShots, compileVideoPrompt, slotsIn, type CastMember } from "./compile";
 
 const NANO = "vertexai/gemini-nano-banana-2.1";
 const lead: CastMember = { slot: "lead", name: "Marcus", kind: "person", references: ["sheet", "photo"] };
@@ -73,6 +73,41 @@ describe("compileVideoPrompt", () => {
   it("gives reference images their own legend", () => {
     const prompt = compileVideoPrompt({ scene: "{lead} walks out of a diner", cast: [lead], camera: {}, modelId: "byteplus/dreamina-seedance-2-5-260628", withReferences: true });
     expect(prompt.split("\n")[0]).toBe("Reference image 1 is the reference sheet for LEAD (Marcus). Reference image 2 is a photo of LEAD.");
+  });
+});
+
+describe("compileOneTakeShots", () => {
+  const KLING = "kling/kling-v3-omni";
+  const second: CastMember = { slot: "second", name: "Ada", kind: "person", references: ["sheet", "photo"] };
+
+  it("names each shot's own references with Kling's tokens, numbered across the cast", () => {
+    const [one, two] = compileOneTakeShots({
+      shots: [
+        { scene: "{lead} slides the envelope across the table", camera: { size: "MS", movement: "slow-push-in" } },
+        { scene: "{second} opens it", camera: { size: "CU" } },
+      ],
+      cast: [lead, second],
+      location: "a late-night diner",
+      modelId: KLING,
+      limit: 512,
+    });
+    expect(one).toMatch(/^LEAD is the person in <<<image_1>>> and <<<image_2>>>, with the same face and hair\. LEAD slides the envelope across the table\. Location: A late-night diner\./);
+    expect(one).toContain("Slow dolly-in, steady.");
+    expect(two).toMatch(/^SECOND is the person in <<<image_3>>> and <<<image_4>>>/);
+    expect(two).not.toContain("LEAD");
+  });
+
+  it("drops camera phrases before going over the limit, and refuses an action that can't fit", () => {
+    const shots = [{ scene: "{lead} waits by the door", camera: { size: "MS", angle: "low", lens: "35mm", lighting: "neon", genre: "thriller", era: "1970s" } }];
+    const [short] = compileOneTakeShots({ shots, cast: [lead], modelId: KLING, limit: 140 });
+    expect(short!.length).toBeLessThanOrEqual(140);
+    expect(short).toContain("LEAD waits by the door.");
+    expect(() => compileOneTakeShots({ shots: [{ scene: "{lead} " + "walks ".repeat(100), camera: {} }], cast: [lead], modelId: KLING, limit: 512 })).toThrow(/Shot 1 is too long/);
+  });
+
+  it("gives an element its own line", () => {
+    const [shot] = compileOneTakeShots({ shots: [{ scene: "{lead} puts on the {outfit}", camera: {} }], cast: [lead, outfit], modelId: KLING, limit: 512 });
+    expect(shot).toContain("The OUTFIT is the one in <<<image_3>>>.");
   });
 });
 

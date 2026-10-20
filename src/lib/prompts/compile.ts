@@ -92,6 +92,45 @@ export function compileImagePrompt(input: PromptInput): string {
     .join("\n");
 }
 
+// Kling one-take (Director): there's no prompt for the whole clip, only one
+// per shot, 512 characters at most. So each shot names its own references
+// (Kling's <<<image_n>>> tokens, numbered across the whole cast) ahead of the
+// action; then the location and the camera phrases, each added only while
+// the prompt still fits.
+export interface OneTakeShot {
+  scene: string;            // the action, with {slots}
+  camera: CameraSelection;  // shot settings first, then the film's
+}
+
+export function compileOneTakeShots(input: { shots: OneTakeShot[]; cast: CastMember[]; location?: string; modelId: string; limit: number }): string[] {
+  const tokens = new Map<string, number[]>();
+  let n = 1;
+  for (const member of input.cast) {
+    const indexes = member.references.map(() => n++);
+    tokens.set(member.slot.toLowerCase(), indexes);
+  }
+  const list = (indexes: number[]) => indexes.map((i) => `<<<image_${i}>>>`).join(" and ");
+  const location = input.location?.trim() ? `Location: ${sentence(input.location)}` : "";
+
+  return input.shots.map((shot, i) => {
+    const named = new Set(slotsIn(shot.scene));
+    const legend = input.cast
+      .filter((m) => named.has(m.slot.toLowerCase()) && tokens.get(m.slot.toLowerCase())?.length)
+      .map((m) => {
+        const images = list(tokens.get(m.slot.toLowerCase())!);
+        return m.kind === "person" ? `${role(m.slot)} is the person in ${images}, with the same face and hair.` : `The ${role(m.slot)} is the one in ${images}.`;
+      });
+    const action = sentence(shot.scene.replace(SLOT, (_, slot: string) => role(slot)));
+    let prompt = [...legend, action].join(" ");
+    if (prompt.length > input.limit) throw new RangeError(`Shot ${i + 1} is too long for a one-take: keep each action under about ${input.limit - legend.join(" ").length - 1} characters.`);
+    const extras = [location, ...cameraPhrases(shot.camera, input.modelId).map(sentence)].filter(Boolean);
+    for (const extra of extras) {
+      if (prompt.length + 1 + extra.length <= input.limit) prompt = `${prompt} ${extra}`;
+    }
+    return prompt;
+  });
+}
+
 // Video: with reference images the cast gets the same legend and lock; with a
 // first frame (or no cast) identity rides in the frame, so slots become names.
 export function compileVideoPrompt(input: PromptInput & { withReferences: boolean }): string {

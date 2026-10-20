@@ -5,16 +5,17 @@
 //
 // The Contracts schema has no scenes table, so a scene is a JSON blob in the
 // blobs table (like the wizard draft), keyed "scene:<id>".
-import { onJobDone, retryJob, type JobInput } from "@/lib/jobs/runner";
+import { MAX_ONE_TAKE_SHOTS, MAX_SHOT_PROMPT } from "@/lib/adapters/kling-omni";
+import { onJobDone, retryJob, startJob, type JobInput } from "@/lib/jobs/runner";
 import { stitchClips, type StitchSource } from "@/lib/media/stitch";
 import { clipInfo } from "@/lib/media/video-prep";
-import { slotsIn } from "@/lib/prompts/compile";
-import type { CameraSelection } from "@/lib/prompts/camera";
-import type { GenerateImageInput, ImageAspectRatio, VideoRatio } from "@/lib/registry/inputs";
-import { SCENE_EXPORT_ID } from "@/lib/registry/models";
+import { isStylised, type CameraSelection } from "@/lib/prompts/camera";
+import { compileOneTakeShots, slotsIn } from "@/lib/prompts/compile";
+import type { GenerateImageInput, ImageAspectRatio, KlingInput, VideoRatio } from "@/lib/registry/inputs";
+import { MODEL_IDS, SCENE_EXPORT_ID } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
 import type { Job } from "@/lib/types/jobs";
-import type { CastPick } from "./cast";
+import { buildCast, dataUri, type CastBundle, type CastPick } from "./cast";
 import { startImages } from "./image";
 import { DEFAULT_MODEL, isDraft, lastFrameBlobId, renderFinal, startVideo } from "./video";
 
@@ -62,6 +63,7 @@ export interface Scene {
   nextShot: number;
   shots: Shot[];
   exportGenerationIds: string[];
+  oneTakeJobIds?: string[];       // Kling one-takes of the whole scene, newest first
   createdAt: number;
   updatedAt: number;
 }
@@ -161,9 +163,11 @@ export function updateScene(id: string, change: (scene: Scene) => Scene): Promis
 // exports), so a late save from the editor can't undo a step.
 export function mergeEdits(stored: Scene, edited: Scene): Scene {
   const byId = new Map(stored.shots.map((s) => [s.id, s]));
+  const { oneTakeJobIds: _o, ...typedScene } = edited;
   return {
-    ...edited,
+    ...typedScene,
     exportGenerationIds: stored.exportGenerationIds,
+    ...(stored.oneTakeJobIds ? { oneTakeJobIds: stored.oneTakeJobIds } : {}),
     shots: edited.shots.map((shot) => {
       const s = byId.get(shot.id);
       if (!s) return shot;
@@ -422,6 +426,106 @@ export function takeIsDraft(job: Job | undefined): boolean {
 // otherwise the take (an H3 render, or a draft when no final was made).
 export function exportJobId(shot: Shot): string | undefined {
   return shot.finalJobId ?? shot.takeJobId;
+}
+
+// ---- One take (P2) ----
+
+// Kling V3 Omni shoots the whole scene as one clip, each shot with its own
+// prompt (spec: One-take multi-shot): a fast first pass at 720p before
+// refining shot by shot. Up to 6 shots and 15 s; Kling takes up to 7
+// reference images.
+export const ONE_TAKE_MAX_SEC = 15;
+const ONE_TAKE_MAX_IMAGES = 7;
+const ONE_TAKE_RATIO: Record<SceneRatio, NonNullable<KlingInput["ratio"]>> = { "16:9": "16:9", "21:9": "16:9", "9:16": "9:16" };
+
+// The shots' planned lengths when they fit in 15 s; otherwise scaled down to
+// fill 15 s, each at least 1 s, with spare seconds going to the longest.
+export function oneTakeDurations(lengths: number[], max = ONE_TAKE_MAX_SEC): number[] {
+  const total = lengths.reduce((t, d) => t + d, 0);
+  if (total <= max) return lengths;
+  const scaled = lengths.map((d) => Math.max(1, Math.floor((d * max) / total)));
+  const longestFirst = lengths.map((d, i) => ({ d, i })).sort((a, b) => b.d - a.d || a.i - b.i);
+  for (let left = max - scaled.reduce((t, d) => t + d, 0), k = 0; left > 0; left--, k = (k + 1) % longestFirst.length) {
+    scaled[longestFirst[k]!.i]!++;
+  }
+  return scaled;
+}
+
+export function oneTakeProblem(scene: Scene): string | undefined {
+  if (scene.shots.length < 2) return "A one-take needs at least 2 shots.";
+  if (scene.shots.length > MAX_ONE_TAKE_SHOTS) return `A one-take holds up to ${MAX_ONE_TAKE_SHOTS} shots.`;
+  if (scene.shots.some((s) => !s.action.trim())) return "Describe every shot's action first.";
+  return undefined;
+}
+
+// Over Kling's 7 images, people keep their sheet and lose their photo, the
+// last cast member first.
+function fitReferences(cast: CastBundle, max: number): CastBundle {
+  const groups = cast.members.map((member, i) => {
+    const start = cast.members.slice(0, i).reduce((t, m) => t + m.references.length, 0);
+    return { member: { ...member, references: [...member.references] }, images: cast.images.slice(start, start + member.references.length) };
+  });
+  for (let g = groups.length - 1; g >= 0 && groups.reduce((t, x) => t + x.images.length, 0) > max; g--) {
+    while (groups[g]!.images.length > 1 && groups.reduce((t, x) => t + x.images.length, 0) > max) {
+      groups[g]!.images.pop();
+      groups[g]!.member.references.pop();
+    }
+  }
+  const images = groups.flatMap((x) => x.images);
+  if (images.length > max) throw new Error(`A one-take takes up to ${max} reference images, one per cast member at least. Name fewer cast members in the shots.`);
+  return { members: groups.map((x) => x.member), images, characterIds: cast.characterIds };
+}
+
+export async function oneTakeInput(scene: Scene): Promise<{ input: KlingInput; characterIds: string[] }> {
+  const problem = oneTakeProblem(scene);
+  if (problem) throw new Error(problem);
+  const named = new Set(scene.shots.flatMap((s) => slotsIn(s.action)));
+  const cast = fitReferences(await buildCast(scene.cast.filter((c) => named.has(c.slot))), ONE_TAKE_MAX_IMAGES);
+  const durations = oneTakeDurations(scene.shots.map((s) => s.durationSec));
+  const prompts = compileOneTakeShots({
+    shots: scene.shots.map((s) => ({ scene: s.action, camera: shotCamera(scene, s, true) })),
+    cast: cast.members,
+    location: scene.location,
+    modelId: MODEL_IDS.klingOmni,
+    limit: MAX_SHOT_PROMPT,
+  });
+  return {
+    input: {
+      prompt: scene.title,
+      quality: "std",
+      ratio: ONE_TAKE_RATIO[scene.ratio],
+      sound: scene.sound,
+      ...(cast.images.length ? { referenceImages: cast.images.map(dataUri) } : {}),
+      shots: prompts.map((prompt, i) => ({ prompt, durationSec: durations[i]! })),
+    },
+    characterIds: cast.characterIds,
+  };
+}
+
+export async function shootOneTake(sceneId: string): Promise<string> {
+  const scene = await loadScene(sceneId);
+  if (!scene) throw new Error("This scene is gone.");
+  const { input, characterIds } = await oneTakeInput(scene);
+  const job = await startJob({
+    kind: "shot",
+    modelId: MODEL_IDS.klingOmni,
+    input: {
+      model: input,
+      characterIds,
+      prompt: scene.logline.trim() ? `${scene.title}, one take: ${scene.logline.trim()}` : `${scene.title}, one take`,
+      stylised: isStylised(scene.film),
+      request: { oneTakeOf: scene.id },
+    },
+  });
+  await updateScene(sceneId, (s) => ({ ...s, oneTakeJobIds: [job.id, ...(s.oneTakeJobIds ?? [])] }));
+  return job.id;
+}
+
+// A failed one-take tried again in its place.
+export async function retryOneTake(sceneId: string, jobId: string): Promise<string> {
+  const job = await retryJob(jobId);
+  await updateScene(sceneId, (s) => ({ ...s, oneTakeJobIds: (s.oneTakeJobIds ?? []).map((id) => (id === jobId ? job.id : id)) }));
+  return job.id;
 }
 
 // ---- Export ----

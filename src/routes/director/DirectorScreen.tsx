@@ -28,12 +28,18 @@ import {
   loadScene,
   newScene,
   newShot,
+  ONE_TAKE_MAX_SEC,
+  oneTakeDurations,
+  oneTakeInput,
+  oneTakeProblem,
   pickAnchor,
   previousShot,
   retryAnchor,
+  retryOneTake,
   retryShotJob,
   saveEdits,
   saveScene,
+  shootOneTake,
   shotCamera,
   shotCast,
   shotScene,
@@ -239,6 +245,7 @@ function SceneEditor({ sceneId }: { sceneId: string }) {
             Add shot
           </Button>
           {scene.shots.length > 0 && <Timeline scene={scene} editor={editor} onMove={move} />}
+          {scene.shots.length > 1 && <OneTake scene={scene} editor={editor} />}
         </div>
       </section>
     </div>
@@ -558,6 +565,57 @@ function Timeline({ scene, editor, onMove }: { scene: Scene; editor: Editor; onM
         <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
           {scene.exportGenerationIds.map((id) => (
             <ExportTake key={id} generationId={id} title={scene.title} aspect={aspectOf(scene.ratio)} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// Kling shoots every shot as one clip (spec: One-take multi-shot).
+function OneTake({ scene, editor }: { scene: Scene; editor: Editor }) {
+  const { run, busy } = editor;
+  const problem = oneTakeProblem(scene);
+  const planned = scene.shots.reduce((t, s) => t + s.durationSec, 0);
+  const length = oneTakeDurations(scene.shots.map((s) => s.durationSec)).reduce((t, d) => t + d, 0);
+  const key = JSON.stringify([scene.shots.map((s) => [s.action, s.durationSec, s.size, s.angle, s.lens, s.movement, s.lighting]), scene.cast, scene.location, scene.film, scene.ratio, scene.sound]);
+  const price = useEstimateLabel(MODEL_IDS.klingOmni, problem ? undefined : async () => (await oneTakeInput(scene)).input, key);
+  const jobs = (useJobs(scene.oneTakeJobIds ?? []) ?? []).filter((j): j is Job => j !== undefined);
+  const aspect = scene.ratio === "9:16" ? "9 / 16" : "16 / 9";
+  return (
+    <section aria-label="One take" className="grid gap-4 border-t border-rule pt-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="font-display text-panel font-extrabold">One take</h2>
+        <span className="text-control">Kling V3 Omni · 720p · {length} s</span>
+      </div>
+      <p className="max-w-prose text-body">
+        Every shot in one clip, with Kling making the cuts. A quick first pass at the whole scene before you refine it shot by shot.
+        {planned > ONE_TAKE_MAX_SEC ? ` The shots add up to ${planned} s, so they're shortened to fit Kling's ${ONE_TAKE_MAX_SEC} s.` : ""}
+        {scene.ratio === "21:9" ? " Kling has no 21:9, so it shoots 16:9." : ""}
+      </p>
+      <div className="flex flex-wrap items-center gap-4">
+        <Button disabled={problem !== undefined || busy !== undefined} onClick={() => void run("one-take", () => shootOneTake(scene.id))}>
+          Shoot as one take · {price}
+        </Button>
+        {problem && <span className="text-control">{problem}</span>}
+      </div>
+      {jobs.length > 0 && (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
+          {jobs.map((job) => (
+            <OutputTake
+              key={job.id}
+              job={job}
+              alt={`${scene.title}, one take`}
+              aspect={aspect}
+              label="One take, 720p"
+              actions={
+                (job.status === "failed" || job.status === "expired") && job.error?.retry !== "never" ? (
+                  <Button size="sm" variant="secondary" className="justify-self-start" disabled={busy !== undefined} onClick={() => void run(`retry:${job.id}`, () => retryOneTake(scene.id, job.id))}>
+                    Retry
+                  </Button>
+                ) : undefined
+              }
+            />
           ))}
         </div>
       )}

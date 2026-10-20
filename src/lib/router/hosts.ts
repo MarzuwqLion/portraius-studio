@@ -8,8 +8,10 @@ export const ROUTER_DEFAULT_BASE_URL = "https://api.comfy.org";
 export const COMFY_CLOUD_API_URL = "https://cloud.comfy.org/api/v2";
 
 // Result asset hosts the browser downloads from directly: they send CORS
-// headers (docs/notes/m1-findings.md). Freepik serves from Magnific's CDN.
-export const ASSET_HOSTS: readonly string[] = ["ai-statics.magnific.com"];
+// headers (docs/notes/m1-findings.md). Freepik serves from Magnific's CDN;
+// Kling from its own, whose host name carries a number (v15-kling-fdl...),
+// with Access-Control-Allow-Origin: * (M7).
+export const ASSET_HOSTS: readonly string[] = ["ai-statics.magnific.com", "*.klingai.com"];
 
 // Result asset locations that send no CORS headers, so the browser fetches them
 // through the Worker's /fetch route (Unknowns row 3). Comfy rehosts Seedance

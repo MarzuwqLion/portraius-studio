@@ -6,6 +6,8 @@ import {
   mergeEdits,
   newScene,
   newShot,
+  oneTakeDurations,
+  oneTakeProblem,
   previousShot,
   shotCamera,
   shotCast,
@@ -106,6 +108,25 @@ describe("chaining", () => {
   });
 });
 
+describe("one take", () => {
+  it("keeps planned lengths that fit in 15 s and scales longer scenes to fill 15 s", () => {
+    expect(oneTakeDurations([5, 4, 6])).toEqual([5, 4, 6]);
+    expect(oneTakeDurations([8, 8])).toEqual([8, 7]);
+    const six = oneTakeDurations([4, 4, 4, 4, 8, 15]);
+    expect(six.reduce((t, d) => t + d, 0)).toBe(15);
+    expect(Math.min(...six)).toBeGreaterThanOrEqual(1);
+    expect(six[5]).toBeGreaterThan(six[0]!);
+  });
+
+  it("needs 2 to 6 described shots", () => {
+    const s = scene();
+    expect(oneTakeProblem(s)).toBeUndefined();
+    expect(oneTakeProblem({ ...s, shots: [s.shots[0]!] })).toMatch(/at least 2/);
+    expect(oneTakeProblem({ ...s, shots: Array(7).fill(s.shots[0]!) })).toMatch(/up to 6/);
+    expect(oneTakeProblem({ ...s, shots: [s.shots[0]!, { ...s.shots[1]!, action: " " }] })).toMatch(/Describe/);
+  });
+});
+
 describe("mergeEdits", () => {
   it("keeps where a continued shot started from and whether it's waiting", () => {
     const stored = scene();
@@ -120,6 +141,7 @@ describe("mergeEdits", () => {
     const stored = scene();
     stored.shots[0] = { ...stored.shots[0]!, anchorJobIds: ["a1", "a2"], anchorJobId: "a2", takeJobId: "t1", rolls: 2 };
     stored.exportGenerationIds = ["e1"];
+    stored.oneTakeJobIds = ["k1"];
     const edited = scene();
     edited.id = stored.id;
     edited.shots = edited.shots.map((s, i) => ({ ...s, id: stored.shots[i]!.id }));
@@ -130,6 +152,7 @@ describe("mergeEdits", () => {
     const merged = mergeEdits(stored, edited);
     expect(merged.title).toBe("The Letter");
     expect(merged.exportGenerationIds).toEqual(["e1"]);
+    expect(merged.oneTakeJobIds).toEqual(["k1"]);
     expect(merged.shots.map((s) => s.id)).toEqual(edited.shots.map((s) => s.id));
     const first = merged.shots.find((s) => s.id === stored.shots[0]!.id)!;
     expect(first).toMatchObject({ action: "Rain, harder now.", anchorJobIds: ["a1", "a2"], anchorJobId: "a2", takeJobId: "t1", rolls: 2 });

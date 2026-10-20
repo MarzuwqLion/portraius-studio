@@ -33,6 +33,42 @@ describe("klingOmni.buildBody", () => {
     expect(body).not.toHaveProperty("aspect_ratio");
   });
 
+  it("shoots a one-take: one prompt per shot, and the clip lasts their sum", () => {
+    const body = klingOmni.buildBody({
+      prompt: "The Letter",
+      quality: "std",
+      ratio: "16:9",
+      referenceImages: ["data:image/png;base64,U0hFRVQ="],
+      shots: [
+        { prompt: "LEAD is the person in <<<image_1>>>. LEAD sits down.", durationSec: 4 },
+        { prompt: "LEAD looks up.", durationSec: 3 },
+      ],
+    });
+    expect(body).toEqual({
+      multi_shot: true,
+      shot_type: "customize",
+      multi_prompt: [
+        { index: 1, prompt: "LEAD is the person in <<<image_1>>>. LEAD sits down.", duration: "4" },
+        { index: 2, prompt: "LEAD looks up.", duration: "3" },
+      ],
+      image_list: [{ image_url: "U0hFRVQ=" }],
+      mode: "std",
+      duration: "7",
+      aspect_ratio: "16:9",
+      sound: "off",
+    });
+    expect(body).not.toHaveProperty("prompt");
+  });
+
+  it("refuses a one-take Kling would refuse", () => {
+    const shot = { prompt: "A shot.", durationSec: 3 };
+    expect(() => klingOmni.buildBody({ ...base, shots: [] })).toThrow(/1 to 6 shots/);
+    expect(() => klingOmni.buildBody({ ...base, shots: Array(7).fill(shot) })).toThrow(/1 to 6 shots/);
+    expect(() => klingOmni.buildBody({ ...base, shots: [{ prompt: "x".repeat(513), durationSec: 4 }] })).toThrow(/512/);
+    expect(() => klingOmni.buildBody({ ...base, shots: [shot, { ...shot, durationSec: 0 }] })).toThrow(/at least 1/);
+    expect(() => klingOmni.buildBody({ ...base, shots: [shot, { ...shot, durationSec: 13 }] })).toThrow(/3 to 15/);
+  });
+
   it("refuses what Kling refuses", () => {
     expect(() => klingOmni.buildBody({ ...base, ratio: undefined })).toThrow(/aspect ratio/);
     expect(() => klingOmni.buildBody({ ...base, durationSec: 16 })).toThrow(/3 to 15/);
