@@ -36,6 +36,7 @@ export interface VideoRequest {
   seed: number;
   h3Resolution: H3Input["resolution"];
   camera: CameraSelection;
+  remixOf?: string;       // a remix: the source recipe's hash (lib/recipes/share.ts)
 }
 
 type VideoJobInput = JobInput & { request: VideoRequest };

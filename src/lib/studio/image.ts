@@ -25,6 +25,7 @@ export interface ImageRequest {
   count: number;
   camera: CameraSelection;
   promptOverride?: string;   // advanced mode: the compiled prompt, edited
+  remixOf?: string;          // a remix: the source recipe's hash (lib/recipes/share.ts)
 }
 
 export function randomSeed(): number {

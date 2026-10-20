@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Screen } from "@/components/shell/Screen";
+import { RemixActions } from "@/components/studio/RemixActions";
 import { ScoreBadge } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { deleteGeneration, fileName } from "@/lib/library/library";
@@ -94,6 +95,12 @@ export function GenerationScreen() {
                 </dd>
               </>
             )}
+            {generation.remixOf && (
+              <>
+                <dt className="text-ink-muted">Remix</dt>
+                <dd>From a shared recipe ({generation.remixOf.slice(0, 8)})</dd>
+              </>
+            )}
           </dl>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" onClick={() => void download()}>
@@ -105,6 +112,7 @@ export function GenerationScreen() {
               </Button>
             )}
           </div>
+          <RemixActions generationId={generation.id} />
           {confirming ? (
             <div className="grid gap-2">
               <p className="text-body">Delete this take from the library? Download it first if you want to keep it.</p>

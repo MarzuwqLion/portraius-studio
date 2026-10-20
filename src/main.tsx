@@ -8,6 +8,7 @@ import { resumeJobs, setScorer } from "@/lib/jobs/runner";
 import { persistStorage } from "@/lib/library/library";
 import { registerImageStudio } from "@/lib/studio/image";
 import { registerRecastStudio } from "@/lib/studio/recast";
+import { registerRemix } from "@/lib/studio/remix";
 import { registerVideoStudio, resumeChains } from "@/lib/studio/video";
 import { restoreKey, useKeyStore } from "@/lib/session/key";
 import { applyTheme } from "@/lib/session/theme";
@@ -32,6 +33,7 @@ async function bootstrap() {
   registerImageStudio();
   registerVideoStudio();
   registerRecastStudio();
+  registerRemix();
   // Unfinished jobs pick up where they stopped. Polling needs a key, so jobs
   // are resumed again whenever one is added.
   void resumeJobs().catch(() => undefined);
