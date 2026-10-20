@@ -11,21 +11,22 @@ reference, then four 1K scenes (market, desk, rooftop at night, dinner table) dr
 the reference image, the same way the Image studio draws a cast member. Distances are face-api
 descriptors, scene against portrait.
 
-The Comfy workspace ran out of credits partway through, so 15 of the 20 scenes landed: 15 same-person
-and 15 different-person pairs (each scene against the next person's portrait), plus all 60 cross-person
-pairs.
+The Comfy workspace ran out of credits partway through, so 15 of the 20 scenes landed at first. The
+other five were re-run the same evening once credits were back, so the run below is the full 20
+same-person and 20 different-person pairs (each scene against the next person's portrait), plus all 80
+cross-person pairs.
 
 ## Results
 
 | Pairs | Distances |
 | --- | --- |
-| Same person (15) | 0.273, 0.337, 0.357, 0.364, 0.388, 0.392, 0.396, 0.397, 0.401, 0.411, 0.415, 0.453, 0.504, 0.546, 0.730 |
-| Different person, next portrait (15) | 0.768 to 0.942 |
-| Different person, all 60 cross pairs | closest 0.584, 0.624, 0.682, 0.692, 0.756 |
+| Same person (20) | 0.273, 0.298, 0.337, 0.342, 0.357, 0.364, 0.386, 0.388, 0.392, 0.396, 0.397, 0.401, 0.411, 0.415, 0.453, 0.459, 0.461, 0.504, 0.546, 0.730 |
+| Different person, next portrait (20) | 0.768 to 0.975 |
+| Different person, all 80 cross pairs | closest 0.584, 0.624, 0.669, 0.672, 0.676, 0.682 |
 
-At a threshold of 0.565, the 75 pairs give one error (the 0.730 outlier). **Row 13 holds: face-api
-separates different generated people**, so the score stays on face-api. The full 20 plus 20 run needs
-five more scenes once credits are back.
+At any threshold from 0.55 to 0.65, the 40 pairs give one error (the 0.730 same-person outlier); at
+0.50 they give three. **Row 13 holds: face-api separates 20 same-person and 20 different-person pairs
+with one error**, so the score stays on face-api and the Identity score acceptance row passes.
 
 ## Constants
 
