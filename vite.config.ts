@@ -17,7 +17,8 @@ function contentSecurityPolicy(env: Record<string, string>): Plugin {
   });
   const policy = [
     "default-src 'self'",
-    "script-src 'self'",
+    // WebAssembly (ffmpeg.wasm) needs wasm-unsafe-eval; it allows no JS eval.
+    "script-src 'self' 'wasm-unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
     "img-src 'self' blob: data:",
@@ -73,6 +74,8 @@ export default defineConfig(({ mode }) => {
   return {
     base: env.VITE_BASE || "/portraius-studio/",
     plugins: [react(), tailwindcss(), contentSecurityPolicy(env), devCheckResults()],
+    // ffmpeg.wasm starts its own worker, which Vite's dependency pre-bundling breaks.
+    optimizeDeps: { exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/util"] },
     resolve: {
       alias: [
         { find: /^@\//, replacement: src("") },

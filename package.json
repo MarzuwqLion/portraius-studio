@@ -22,6 +22,8 @@
   },
   "dependencies": {
     "@comfyorg/sdk": "^0.5.0",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@tanstack/react-query": "^5.104.4",
     "@vladmandic/face-api": "^1.7.15",
     "class-variance-authority": "^0.7.1",
@@ -40,6 +42,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261019.1",
+    "@ffmpeg/core": "^0.12.10",
     "@fontsource/atkinson-hyperlegible-next": "^5.3.0",
     "@fontsource/big-shoulders-display": "^5.3.0",
     "@playwright/test": "^1.64.1",
