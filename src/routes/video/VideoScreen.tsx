@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { Shuffle } from "lucide-react";
 import { WorkScreen } from "@/components/shell/Screen";
 import { CameraPicker } from "@/components/studio/CameraPicker";
@@ -80,6 +80,11 @@ function ClipActions({ job, followUps, onContinue }: { job: Job; followUps: Job[
         {job.status === "done" && job.kind === "video" && generationId && (
           <Button size="sm" variant="secondary" className={ON_SEAMLESS} onClick={() => run(async () => onContinue(await lastFrameBlobId(generationId)))} disabled={busy}>
             Continue
+          </Button>
+        )}
+        {job.status === "done" && job.kind === "video" && generationId && (
+          <Button asChild size="sm" variant="secondary" className={ON_SEAMLESS}>
+            <Link to={`/library/${generationId}`}>Speak</Link>
           </Button>
         )}
         {job.status === "failed" && job.error?.refusalSubject === "output_audio" && (

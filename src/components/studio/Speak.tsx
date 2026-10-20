@@ -17,6 +17,7 @@ import {
   storeRecording,
   type SpokenLine,
 } from "@/lib/studio/voice";
+import type { Job } from "@/lib/types/jobs";
 import { cn } from "@/lib/utils";
 import { jobStatusText } from "./JobTake";
 import { Field, TextArea } from "./fields";
@@ -40,8 +41,21 @@ function SpeakStatus({ jobId, label }: { jobId: string; label: string }) {
 
 // "Speak" on a clip (spec: Finishing, Voice and Lip sync): write a line, pick
 // a stock voice or bring a recording, hear it, then lip sync this clip to it
-// or make a new speaking clip of the same cast.
-export function SpeakAction({ generationId, className }: { generationId: string; className?: string }) {
+// or make a new speaking clip of the same cast. Director keeps its shot, so
+// it offers lip sync only, inside its own fold-out (no heading).
+export function SpeakAction({
+  generationId,
+  className,
+  onStarted,
+  allowNewClip = true,
+  heading = true,
+}: {
+  generationId: string;
+  className?: string;
+  onStarted?: (job: Job) => void;
+  allowNewClip?: boolean;
+  heading?: boolean;
+}) {
   const ids = { line: useId(), voice: useId(), rights: useId() };
   const file = useRef<HTMLInputElement>(null);
   const [defaults, setDefaults] = useState<Awaited<ReturnType<typeof speakingDefaults>> | null>();
@@ -58,7 +72,7 @@ export function SpeakAction({ generationId, className }: { generationId: string;
     let live = true;
     void speakingDefaults(generationId).then((d) => {
       if (!live) return;
-      setDefaults(d ?? null);
+      setDefaults(allowNewClip ? (d ?? null) : null);
       if (d?.voiceId && voice(d.voiceId)) setVoiceId(d.voiceId);
     });
     return () => {
@@ -88,8 +102,8 @@ export function SpeakAction({ generationId, className }: { generationId: string;
   }
 
   return (
-    <section aria-label="Speak a line" className={cn("grid gap-3 border-t border-rule pt-4", className)}>
-      <h2 className="text-body font-semibold">Speak a line</h2>
+    <section aria-label="Speak a line" className={cn("grid gap-3", heading && "border-t border-rule pt-4", className)}>
+      {heading && <h2 className="text-body font-semibold">Speak a line</h2>}
       <Field label="Line" hint={`Up to ${MAX_LINE_SEC} s once spoken, about 40 words.`}>
         {(id) => <TextArea id={id} value={text} rows={3} maxLength={MAX_LINE_CHARS} placeholder="I wrote this forty years ago." onChange={setText} />}
       </Field>
@@ -137,6 +151,7 @@ export function SpeakAction({ generationId, className }: { generationId: string;
                   void step("speaking", async () => {
                     const job = await startSpeakingClip({ ...defaults.request, line });
                     setStarted((s) => [{ id: job.id, label: "New speaking clip" }, ...s]);
+                    onStarted?.(job);
                   })
                 }
               >
@@ -150,7 +165,8 @@ export function SpeakAction({ generationId, className }: { generationId: string;
               onClick={() =>
                 void step("sync", async () => {
                   const job = await startLipSync(generationId, line);
-                  setStarted((s) => [{ id: job.id, label: "Lip sync" }, ...s]);
+                  if (onStarted) onStarted(job);
+                  else setStarted((s) => [{ id: job.id, label: "Lip sync" }, ...s]);
                 })
               }
             >

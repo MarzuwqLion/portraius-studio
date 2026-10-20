@@ -46,6 +46,7 @@ export interface Shot {
   anchorJobId?: string;           // the picked one
   takeJobId?: string;             // the motion take: a Seedance draft, or an H3 render
   finalJobId?: string;            // Seedance only: the 1080p final from the draft's ID
+  lipSyncJobId?: string;          // the take (or final) lip-synced to a spoken line (Sync-3)
   fromTakeJobId?: string;         // continue: the previous shot's take this one started from
   waiting?: boolean;              // continue: animate once the previous shot's take is done
 }
@@ -173,7 +174,7 @@ export function mergeEdits(stored: Scene, edited: Scene): Scene {
     shots: edited.shots.map((shot) => {
       const s = byId.get(shot.id);
       if (!s) return shot;
-      const { anchorJobId: _a, takeJobId: _t, finalJobId: _f, fromTakeJobId: _p, waiting: _w, ...typed } = shot;
+      const { anchorJobId: _a, takeJobId: _t, finalJobId: _f, lipSyncJobId: _l, fromTakeJobId: _p, waiting: _w, ...typed } = shot;
       return {
         ...typed,
         rolls: s.rolls,
@@ -181,6 +182,7 @@ export function mergeEdits(stored: Scene, edited: Scene): Scene {
         ...(s.anchorJobId ? { anchorJobId: s.anchorJobId } : {}),
         ...(s.takeJobId ? { takeJobId: s.takeJobId } : {}),
         ...(s.finalJobId ? { finalJobId: s.finalJobId } : {}),
+        ...(s.lipSyncJobId ? { lipSyncJobId: s.lipSyncJobId } : {}),
         ...(s.fromTakeJobId ? { fromTakeJobId: s.fromTakeJobId } : {}),
         ...(s.waiting ? { waiting: true } : {}),
       };
@@ -257,11 +259,11 @@ export function chainStale(scene: Scene, shot: Shot): boolean {
 }
 
 // The job whose last frame a continued shot starts from: the previous shot's
-// final once it's done (same motion, more pixels), otherwise its take.
+// lip sync or final once it's done (same motion; Sync-3 can cut the clip to
+// the line), otherwise its take.
 async function chainSourceJob(previous: Shot): Promise<Job | undefined> {
-  const [take, final] = await db.jobs.bulkGet([previous.takeJobId ?? "", previous.finalJobId ?? ""]);
-  if (final?.status === "done") return final;
-  return take?.status === "done" ? take : undefined;
+  const [take, final, lipSync] = await db.jobs.bulkGet([previous.takeJobId ?? "", previous.finalJobId ?? "", previous.lipSyncJobId ?? ""]);
+  return [lipSync, final, take].find((job) => job?.status === "done");
 }
 
 async function chainFrameBlobId(previous: Shot): Promise<string | undefined> {
@@ -353,7 +355,7 @@ export async function animateShot(sceneId: string, shotId: string, reroll = fals
     camera: shotCamera(scene, rolled, true),
   });
   await updateShot(sceneId, shotId, (s) => {
-    const { finalJobId: _old, fromTakeJobId: _from, waiting: _w, ...rest } = s;
+    const { finalJobId: _old, lipSyncJobId: _line, fromTakeJobId: _from, waiting: _w, ...rest } = s;
     return { ...rest, rolls: rolled.rolls, takeJobId: jobId, ...(previous?.takeJobId ? { fromTakeJobId: previous.takeJobId } : {}) };
   });
   return jobId;
@@ -408,13 +410,13 @@ export function registerDirector(): () => void {
 }
 
 // A failed take (or final) tried again with the same input.
-export async function retryShotJob(sceneId: string, shotId: string, which: "take" | "final"): Promise<string> {
+export async function retryShotJob(sceneId: string, shotId: string, which: "take" | "final" | "line"): Promise<string> {
   const scene = await loadScene(sceneId);
   const shot = scene?.shots.find((s) => s.id === shotId);
-  const jobId = which === "take" ? shot?.takeJobId : shot?.finalJobId;
+  const jobId = which === "take" ? shot?.takeJobId : which === "final" ? shot?.finalJobId : shot?.lipSyncJobId;
   if (!jobId) throw new Error("There's nothing to retry.");
   const job = await retryJob(jobId);
-  await updateShot(sceneId, shotId, (s) => (which === "take" ? { ...s, takeJobId: job.id } : { ...s, finalJobId: job.id }));
+  await updateShot(sceneId, shotId, (s) => (which === "take" ? { ...s, takeJobId: job.id } : which === "final" ? { ...s, finalJobId: job.id } : { ...s, lipSyncJobId: job.id }));
   return job.id;
 }
 
@@ -423,8 +425,24 @@ export async function finalizeShot(sceneId: string, shotId: string): Promise<str
   const shot = scene?.shots.find((s) => s.id === shotId);
   if (!shot?.takeJobId) throw new Error("Animate the shot first.");
   const jobId = await renderFinal(shot.takeJobId);
-  await updateShot(sceneId, shotId, (s) => ({ ...s, finalJobId: jobId }));
+  // A line synced onto the draft would lose the final's pixels: sync it again.
+  await updateShot(sceneId, shotId, (s) => {
+    const { lipSyncJobId: _line, ...rest } = s;
+    return { ...rest, finalJobId: jobId };
+  });
   return jobId;
+}
+
+// The clip a line is synced onto: the final once it's done, else the take.
+export function lineSourceJobId(shot: Shot, final: Job | undefined): string | undefined {
+  return final?.status === "done" ? shot.finalJobId : shot.takeJobId;
+}
+
+export async function setShotLine(sceneId: string, shotId: string, lipSyncJobId: string | undefined): Promise<void> {
+  await updateShot(sceneId, shotId, (s) => {
+    const { lipSyncJobId: _old, ...rest } = s;
+    return lipSyncJobId ? { ...rest, lipSyncJobId } : rest;
+  });
 }
 
 // Whether a take is a Seedance draft (it has a final to render) or already
@@ -433,10 +451,11 @@ export function takeIsDraft(job: Job | undefined): boolean {
   return Boolean(job && isDraft(job));
 }
 
-// The job whose video goes into the export: the final if there is one,
-// otherwise the take (an H3 render, or a draft when no final was made).
+// The job whose video goes into the export: the lip-synced clip if the shot
+// has a line, then the final, otherwise the take (an H3 render, or a draft
+// when no final was made).
 export function exportJobId(shot: Shot): string | undefined {
-  return shot.finalJobId ?? shot.takeJobId;
+  return shot.lipSyncJobId ?? shot.finalJobId ?? shot.takeJobId;
 }
 
 // ---- One take (P2) ----

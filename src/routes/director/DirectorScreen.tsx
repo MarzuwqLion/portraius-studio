@@ -7,6 +7,7 @@ import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
 import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
+import { SpeakAction } from "@/components/studio/Speak";
 import { Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,6 +23,7 @@ import {
   deleteScene,
   drawAnchors,
   exportJobId,
+  lineSourceJobId,
   exportScene,
   finalizeShot,
   listScenes,
@@ -37,6 +39,7 @@ import {
   retryAnchor,
   retryOneTake,
   retryShotJob,
+  setShotLine,
   saveEdits,
   saveScene,
   shootOneTake,
@@ -62,6 +65,8 @@ const RATIOS: { value: SceneRatio; label: string }[] = [
 const DURATIONS = [4, 5, 6, 8, 10, 12, 15].map((s) => ({ value: String(s), label: `${s} s` }));
 const ANCHOR_COUNTS = ["2", "3", "4"].map((n) => ({ value: n, label: `${n} stills` }));
 const aspectOf = (ratio: SceneRatio) => ratio.replace(":", " / ");
+// Secondary buttons in the set sit on Studio grey, so they take its text colour.
+const ON_SEAMLESS = "border-on-seamless text-on-seamless";
 
 export function DirectorScreen() {
   const { sceneId } = useParams();
@@ -287,6 +292,9 @@ function ShotCard({
   const { run, busy } = editor;
   const take = useJob(shot.takeJobId);
   const final = useJob(shot.finalJobId);
+  const lineSource = useJob(lineSourceJobId(shot, final));
+  const lipSync = useJob(shot.lipSyncJobId);
+  const lineGenerationId = lineSource?.status === "done" ? lineSource.generationIds[0] : undefined;
   const anchors = useAnchorJobs(shot.anchorJobIds);
   const castSlots = shotCast(scene, shot).map((c) => c.slot);
   const named = scene.cast.length ? scene.cast.map((c) => `{${c.slot}}`).join(", ") : "Add cast in the scene card";
@@ -411,7 +419,7 @@ function ShotCard({
                   label={job.parentJobId ? "Retry" : undefined}
                   actions={
                     failed(job) ? (
-                      <Button size="sm" variant="secondary" className="justify-self-start" onClick={() => void run(`retry:${job.id}`, () => retryAnchor(job.id))}>
+                      <Button size="sm" variant="secondary" className={`justify-self-start ${ON_SEAMLESS}`} onClick={() => void run(`retry:${job.id}`, () => retryAnchor(job.id))}>
                         Retry
                       </Button>
                     ) : undefined
@@ -429,7 +437,7 @@ function ShotCard({
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="mr-auto text-control font-semibold">Motion</h3>
             {shot.waiting && chained ? (
-              <Button size="sm" variant="secondary" disabled={busy !== undefined} onClick={() => void run(`wait:${shot.id}`, () => stopWaiting(scene.id, shot.id))}>
+              <Button size="sm" variant="secondary" className={ON_SEAMLESS} disabled={busy !== undefined} onClick={() => void run(`wait:${shot.id}`, () => stopWaiting(scene.id, shot.id))}>
                 Stop waiting
               </Button>
             ) : !shot.takeJobId ? (
@@ -438,7 +446,7 @@ function ShotCard({
               </Button>
             ) : (
               <>
-                <Button size="sm" variant={stale ? "primary" : "secondary"} disabled={busy !== undefined || !canAnimate} onClick={() => void run(`animate:${shot.id}`, () => animateShot(scene.id, shot.id, true))}>
+                <Button size="sm" variant={stale ? "primary" : "secondary"} className={stale ? undefined : ON_SEAMLESS} disabled={busy !== undefined || !canAnimate} onClick={() => void run(`animate:${shot.id}`, () => animateShot(scene.id, shot.id, true))}>
                   Re-roll · {motionPrice}
                 </Button>
                 {canFinal && (
@@ -461,7 +469,7 @@ function ShotCard({
                 label={takeIsDraft(take) ? "Draft, 480p" : take.modelId === MODEL_IDS.minimaxH3 ? "MiniMax H3, 768P" : (registryEntry(take.modelId)?.label ?? "Take")}
                 actions={
                   failed(take) ? (
-                    <Button size="sm" variant="secondary" className="justify-self-start" onClick={() => void run(`retry:${shot.id}`, () => retryShotJob(scene.id, shot.id, "take"))}>
+                    <Button size="sm" variant="secondary" className={`justify-self-start ${ON_SEAMLESS}`} onClick={() => void run(`retry:${shot.id}`, () => retryShotJob(scene.id, shot.id, "take"))}>
                       Retry
                     </Button>
                   ) : undefined
@@ -476,14 +484,46 @@ function ShotCard({
                 label="Final, 1080p"
                 actions={
                   failed(final) ? (
-                    <Button size="sm" variant="secondary" className="justify-self-start" onClick={() => void run(`retry:${shot.id}`, () => retryShotJob(scene.id, shot.id, "final"))}>
+                    <Button size="sm" variant="secondary" className={`justify-self-start ${ON_SEAMLESS}`} onClick={() => void run(`retry:${shot.id}`, () => retryShotJob(scene.id, shot.id, "final"))}>
                       Retry
                     </Button>
                   ) : undefined
                 }
               />
             )}
+            {lipSync && (
+              <OutputTake
+                job={lipSync}
+                alt={`Shot ${index + 1} with its line`}
+                aspect={aspect}
+                label="With the line"
+                actions={
+                  <span className="flex flex-wrap gap-2">
+                    {failed(lipSync) && (
+                      <Button size="sm" variant="secondary" className={ON_SEAMLESS} onClick={() => void run(`retry:${shot.id}`, () => retryShotJob(scene.id, shot.id, "line"))}>
+                        Retry
+                      </Button>
+                    )}
+                    <Button size="sm" variant="secondary" className={ON_SEAMLESS} disabled={busy !== undefined} onClick={() => void run(`line:${shot.id}`, () => setShotLine(scene.id, shot.id, undefined))}>
+                      Drop the line
+                    </Button>
+                  </span>
+                }
+              />
+            )}
           </div>
+          {lineGenerationId && castSlots.length > 0 && (
+            <details className="rounded-control bg-proof p-3 text-ink">
+              <summary className="cursor-pointer text-control font-semibold">{shot.lipSyncJobId ? "Change the line" : "Speak a line"}</summary>
+              <SpeakAction
+                generationId={lineGenerationId}
+                allowNewClip={false}
+                heading={false}
+                className="pt-3"
+                onStarted={(job) => void run(`line:${shot.id}`, () => setShotLine(scene.id, shot.id, job.id))}
+              />
+            </details>
+          )}
         </section>
       </div>
     </article>
@@ -640,7 +680,7 @@ function OneTake({ scene, editor }: { scene: Scene; editor: Editor }) {
               label="One take, 720p"
               actions={
                 (job.status === "failed" || job.status === "expired") && job.error?.retry !== "never" ? (
-                  <Button size="sm" variant="secondary" className="justify-self-start" disabled={busy !== undefined} onClick={() => void run(`retry:${job.id}`, () => retryOneTake(scene.id, job.id))}>
+                  <Button size="sm" variant="secondary" className={`justify-self-start ${ON_SEAMLESS}`} disabled={busy !== undefined} onClick={() => void run(`retry:${job.id}`, () => retryOneTake(scene.id, job.id))}>
                     Retry
                   </Button>
                 ) : undefined
@@ -669,7 +709,9 @@ function StripFrame({ shot, index, chained, aspect }: { shot: Shot; index: numbe
         ? "No anchor"
         : "Not animated"
     : job.status === "done"
-      ? shot.finalJobId
+      ? shot.lipSyncJobId
+        ? "With the line"
+        : shot.finalJobId
         ? "Final"
         : takeIsDraft(job)
           ? "Draft"

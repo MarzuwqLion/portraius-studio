@@ -3,6 +3,7 @@ import {
   chainStale,
   continues,
   exportJobId,
+  lineSourceJobId,
   mergeEdits,
   newScene,
   newShot,
@@ -16,6 +17,7 @@ import {
   type Scene,
   type Shot,
 } from "./director";
+import type { Job } from "@/lib/types/jobs";
 
 function scene(): Scene {
   const s = newScene(1000);
@@ -74,10 +76,18 @@ describe("shots", () => {
     expect(next.anchorJobIds).toEqual([]);
   });
 
-  it("export the final when there is one, otherwise the take", () => {
+  it("export the lip-synced clip, then the final, otherwise the take", () => {
     const shot = { ...scene().shots[0]!, takeJobId: "t" } satisfies Shot;
     expect(exportJobId(shot)).toBe("t");
     expect(exportJobId({ ...shot, finalJobId: "f" })).toBe("f");
+    expect(exportJobId({ ...shot, finalJobId: "f", lipSyncJobId: "l" })).toBe("l");
+  });
+
+  it("sync a line onto the final once it's done, otherwise the take", () => {
+    const shot = { ...scene().shots[0]!, takeJobId: "t", finalJobId: "f" } satisfies Shot;
+    expect(lineSourceJobId(shot, { status: "done" } as Job)).toBe("f");
+    expect(lineSourceJobId(shot, { status: "running" } as Job)).toBe("t");
+    expect(lineSourceJobId(shot, undefined)).toBe("t");
   });
 });
 
