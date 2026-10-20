@@ -9,9 +9,11 @@ export const COMFY_CLOUD_API_URL = "https://cloud.comfy.org/api/v2";
 
 // Result asset hosts the browser downloads from directly: they send CORS
 // headers (docs/notes/m1-findings.md). Freepik serves from Magnific's CDN;
-// Kling from its own, whose host name carries a number (v15-kling-fdl...),
-// with Access-Control-Allow-Origin: * (M7).
-export const ASSET_HOSTS: readonly string[] = ["ai-statics.magnific.com", "*.klingai.com"];
+// Kling from its own, whose host name carries a number (v15-kling-fdl...);
+// HappyHorse from an Alibaba OSS bucket on the accelerate endpoint
+// (dashscope-463f.oss-accelerate...). Both with Access-Control-Allow-Origin: *
+// (M7). These only matter on the built site: the CSP lists them.
+export const ASSET_HOSTS: readonly string[] = ["ai-statics.magnific.com", "*.klingai.com", "*.oss-accelerate.aliyuncs.com"];
 
 // Result asset locations that send no CORS headers, so the browser fetches them
 // through the Worker's /fetch route (Unknowns row 3). Comfy rehosts Seedance
