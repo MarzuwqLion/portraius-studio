@@ -78,7 +78,7 @@ function devSamples(): Plugin {
     configureServer(server) {
       server.middlewares.use("/__dev/samples/", (req, res) => {
         const name = decodeURIComponent((req.url ?? "").replace(/^\//, ""));
-        if (req.method !== "POST" || !/^[a-z0-9][a-z0-9-]*\.(jpg|png|mp4|json|portraius)$/.test(name)) {
+        if (req.method !== "POST" || !/^[a-z0-9][a-z0-9-]*\.(jpg|png|gif|mp4|json|portraius)$/.test(name)) {
           res.statusCode = 400;
           res.end();
           return;

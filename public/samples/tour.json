@@ -85,7 +85,7 @@
       "items": [
         {
           "media": { "kind": "split", "original": "concert-original.mp4", "recast": "concert-recast.mp4", "width": 1344, "height": 768 },
-          "caption": "Concert stage preset. Drag the line to compare.",
+          "caption": "Motion Transfer: the dancer's moves, timing and camera, performed by Walt. Drag the line to compare.",
           "model": "MiniMax H3",
           "score": 89.5,
           "worst": 82
