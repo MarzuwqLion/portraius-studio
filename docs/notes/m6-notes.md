@@ -36,3 +36,20 @@ metadata row).
 67 s, so about 140 s in all, past the 2-minute bar. Fallback applied: shots that already share codec,
 size, frame rate and audio are joined by stream copy (`-f concat -c copy`, no re-encode); everything
 else is re-encoded at 720p (1280×720, 720×1280 for 9:16, 1680×720 for 21:9).
+
+## Acceptance: a 3-shot scene exports as one MP4 (passes)
+
+"The Letter", made through the Director screen on October 19:
+
+| Shot | Action | Engine | Identity |
+| --- | --- | --- | --- |
+| 1, wide | Rain on the diner window, an empty booth, coffee going cold | Seedance draft, then the 1080p final | No cast |
+| 2, medium | {lead} turns a sealed, yellowed envelope over in his hands | MiniMax H3 768P (face in the anchor) | 76 (worst 72) |
+| 3, close-up, slow push-in | {lead} looks up toward the door and almost smiles | MiniMax H3 768P | 95 (worst 93) |
+
+Anchor stills scored 92 to 100. Export with crossfades: one 14.9 s MP4, 1280×720, 1.95 MB, with the
+AI-generated comment in the file, saved to the library as a scene. The 720p re-encode took between
+60 and 87 s, under the 2-minute bar.
+
+ffmpeg.wasm's own progress share follows the first input, so the button read 100% a third of the way
+in; progress now comes from ffmpeg's `time=` status lines over the scene's length.

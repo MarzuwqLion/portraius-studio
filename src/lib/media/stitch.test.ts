@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { AI_COMMENT, canStreamCopy, copyArgs, parseProbe, stitchArgs } from "./stitch";
+import { AI_COMMENT, canStreamCopy, copyArgs, outputSeconds, parseProbe, stitchArgs } from "./stitch";
+
+describe("outputSeconds", () => {
+  it("reads the output time from ffmpeg's status line", () => {
+    expect(outputSeconds("frame=  120 fps= 14 q=28.0 size=     512kB time=00:00:05.00 bitrate= 838.9kbits/s speed=0.6x")).toBe(5);
+    expect(outputSeconds("size=1kB time=01:02:03.50 bitrate=1")).toBe(3723.5);
+    expect(outputSeconds("Stream #0:0: Video: h264")).toBeUndefined();
+  });
+});
 
 const SEEDANCE = [
   "  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1920x1080 [SAR 1:1 DAR 16:9], 3906 kb/s, 24 fps, 24 tbr, 12288 tbn (default)",

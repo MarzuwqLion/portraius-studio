@@ -110,6 +110,12 @@ export function stitchArgs(inputs: string[], clips: StitchClip[], o: StitchOptio
   ];
 }
 
+// "frame=  120 fps= 14 ... time=00:00:05.00 ..." on ffmpeg's status lines.
+export function outputSeconds(line: string): number | undefined {
+  const m = /time=(\d+):(\d{2}):(\d{2}(?:\.\d+)?)/.exec(line);
+  return m ? Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3]) : undefined;
+}
+
 // ffmpeg prints an input's streams when it has nothing else to do.
 async function probe(ffmpeg: FFmpeg, name: string): Promise<Probe> {
   const lines: string[] = [];
@@ -134,14 +140,20 @@ export async function stitchClips(
   const inputs = sources.map((_, i) => `s${i}-${id}.mp4`);
   const output = `scene-${id}.mp4`;
   const list = `list-${id}.txt`;
-  const progress = ({ progress }: { progress: number }) => onProgress?.(Math.min(1, Math.max(0, progress)));
+  // ffmpeg's own progress share follows the first input, so a multi-shot join
+  // reads 100% a third of the way in. Its "time=" log lines track the output.
+  const total = sources.reduce((t, s) => t + s.durationSec, 0);
+  const progress = ({ message }: { message: string }) => {
+    const seconds = outputSeconds(message);
+    if (seconds !== undefined && total > 0) onProgress?.(Math.min(1, seconds / total));
+  };
   try {
     const probes: Probe[] = [];
     for (let i = 0; i < sources.length; i++) {
       await ffmpeg.writeFile(inputs[i]!, new Uint8Array(await sources[i]!.blob.arrayBuffer()));
       probes.push(await probe(ffmpeg, inputs[i]!));
     }
-    ffmpeg.on("progress", progress);
+    ffmpeg.on("log", progress);
     let code: number;
     if (!options.crossfade && canStreamCopy(probes)) {
       await ffmpeg.writeFile(list, inputs.map((name) => `file '${name}'`).join("\n"));
@@ -154,7 +166,7 @@ export async function stitchClips(
     const data = await ffmpeg.readFile(output);
     return new Blob([data as Uint8Array<ArrayBuffer>], { type: "video/mp4" });
   } finally {
-    ffmpeg.off("progress", progress);
+    ffmpeg.off("log", progress);
     for (const f of [...inputs, output, list]) await ffmpeg.deleteFile(f).catch(() => undefined);
   }
 }
