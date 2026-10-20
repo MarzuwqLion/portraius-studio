@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppRoutes } from "@/routes/AppRoutes";
 import { scoreJobOutputs } from "@/lib/identity/score-output";
 import { resumeJobs, setScorer } from "@/lib/jobs/runner";
+import { persistStorage } from "@/lib/library/library";
 import { registerImageStudio } from "@/lib/studio/image";
 import { registerVideoStudio, resumeChains } from "@/lib/studio/video";
 import { restoreKey, useKeyStore } from "@/lib/session/key";
@@ -33,6 +34,8 @@ async function bootstrap() {
   // are resumed again whenever one is added.
   void resumeJobs().catch(() => undefined);
   void resumeChains().catch(() => undefined);
+  // Ask the browser not to evict the library (spec: Data model).
+  void persistStorage();
   useKeyStore.subscribe((state, previous) => {
     if (state.location !== "none" && previous.location === "none") void resumeJobs().catch(() => undefined);
   });
