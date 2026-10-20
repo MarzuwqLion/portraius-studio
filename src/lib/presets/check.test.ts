@@ -68,3 +68,19 @@ describe("checkPresets", () => {
     expect(checkPresets([preset({ version: 2 })], none)[0]).toMatch(/^presets\/image\/headshot.json: version/);
   });
 });
+
+describe("checkPresets on presets/voices.json", () => {
+  const voices = (list: unknown[]): PresetSource => ({ path: "presets/voices.json", data: { format: "portraius.voices", version: 1, provider: "elevenlabs", voices: list } });
+  const george = { id: "JBFqnCBsd6RMkjVDRZzb", label: "George", description: "Mid pitch, warm storyteller, British", preview: "george.mp3" };
+
+  it("passes a voice with its preview", () => {
+    expect(checkPresets([voices([george])], (path) => (path === "public/voices/george.mp3" ? 70_000 : undefined))).toEqual([]);
+  });
+
+  it("catches a missing or large preview, a repeated voice and a bad ID", () => {
+    expect(checkPresets([voices([george])], none)[0]).toMatch(/preview public\/voices\/george.mp3 is missing/);
+    expect(checkPresets([voices([george])], () => 200_000)[0]).toMatch(/keep it under 120 KB/);
+    expect(checkPresets([voices([george, george])], () => 1)).toEqual([expect.stringContaining("listed twice")]);
+    expect(checkPresets([voices([{ ...george, id: "short" }])], () => 1)[0]).toMatch(/voices\.0\.id/);
+  });
+});

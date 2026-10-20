@@ -41,6 +41,13 @@ export function adapterFor(modelId: string): AnyAdapter {
   return adapter;
 }
 
+// The native body for a request: built by the model's adapter, or, for the
+// text models (no adapter), the app input as it is.
+export function requestBody(modelId: string, input: unknown): unknown {
+  const adapter = ADAPTERS.get(modelId);
+  return adapter ? adapter.buildBody(input) : input;
+}
+
 export function allAdapters(): AnyAdapter[] {
   return [...ADAPTERS.values()];
 }

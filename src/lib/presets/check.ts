@@ -4,9 +4,11 @@
 // thumbnails stay small, and no brand or celebrity names.
 import { isAllowedModel } from "@/lib/registry/models";
 import { slotsIn } from "@/lib/prompts/slots";
-import { CAMERA_GROUPS, cameraFile, lookFile, presetFile, type CameraFile } from "./schema";
+import { CAMERA_GROUPS, cameraFile, lookFile, presetFile, voicesFile, type CameraFile } from "./schema";
 
 export const THUMBNAIL_MAX_BYTES = 200 * 1024;
+export const VOICE_PREVIEW_MAX_BYTES = 120 * 1024;
+export const VOICES_PATH = "presets/voices.json";
 
 // Kept short on purpose: it catches the obvious, review catches the rest.
 export const BLOCKED_NAMES = [
@@ -55,7 +57,24 @@ export function checkPresets(sources: PresetSource[], thumbnailBytes: (path: str
     for (const name of blockedIn(`${parsed.data.label} ${parsed.data.phrase}`)) problems.push(`${path}: mentions "${name}"`);
   }
 
-  for (const { path, data } of sources.filter((s) => !s.path.includes("/camera/") && !s.path.includes("/looks/"))) {
+  for (const { path, data } of sources.filter((s) => s.path === VOICES_PATH)) {
+    const parsed = voicesFile.safeParse(data);
+    if (!parsed.success) {
+      problems.push(`${path}: ${parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join("; ")}`);
+      continue;
+    }
+    const seen = new Set<string>();
+    for (const v of parsed.data.voices) {
+      if (seen.has(v.id)) problems.push(`${path}: voice ${v.id} is listed twice`);
+      seen.add(v.id);
+      for (const name of blockedIn(`${v.label} ${v.description}`)) problems.push(`${path}: mentions "${name}"`);
+      const bytes = thumbnailBytes(`public/voices/${v.preview}`);
+      if (bytes === undefined) problems.push(`${path}: preview public/voices/${v.preview} is missing (npm run voices:check -- --previews)`);
+      else if (bytes > VOICE_PREVIEW_MAX_BYTES) problems.push(`${path}: preview ${v.preview} is ${Math.round(bytes / 1024)} KB; keep it under 120 KB`);
+    }
+  }
+
+  for (const { path, data } of sources.filter((s) => !s.path.includes("/camera/") && !s.path.includes("/looks/") && s.path !== VOICES_PATH)) {
     const parsed = presetFile.safeParse(data);
     if (!parsed.success) {
       problems.push(`${path}: ${parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join("; ")}`);

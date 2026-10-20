@@ -6,7 +6,7 @@ import { MODEL_IDS } from "@/lib/registry/models";
 import type { InlineImage } from "@/lib/registry/inputs";
 import { isUsable, loadBundle, saveCharacter } from "@/lib/store/characters";
 import { db } from "@/lib/store/db";
-import type { CharacterBundle, CharacterRecord } from "@/lib/types/records";
+import type { CharacterBundle, CharacterFile, CharacterRecord } from "@/lib/types/records";
 import { jobImage } from "./create";
 import { THUMB, exportCharacter, importCharacter, type ImportSummary } from "./format";
 import { elementViewInput } from "./element-sheet";
@@ -50,6 +50,14 @@ export async function startRedraw(record: CharacterRecord, view: SheetView): Pro
 function elementType(record: CharacterRecord) {
   const type = record.file.elementType;
   return type === "outfit" || type === "location" ? type : "prop";
+}
+
+// A character's default stock voice (spec: Voice), which travels in its file.
+export async function setVoice(record: CharacterRecord, voice: CharacterFile["voice"]): Promise<void> {
+  const { voice: _old, ...rest } = record.file;
+  const updatedAt = new Date().toISOString();
+  const file: CharacterFile = { ...rest, ...(voice ? { voice } : {}), updatedAt };
+  await db.characters.update(record.id, { file, updatedAt });
 }
 
 // Puts a finished redraw into the character in place of the old view.

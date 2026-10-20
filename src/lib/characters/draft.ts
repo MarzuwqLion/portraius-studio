@@ -40,6 +40,7 @@ export interface WizardDraft {
   name: string;
   description: string;
   tags: string[];
+  voiceId?: string;              // an optional stock voice (P2)
   updatedAt: number;
 }
 

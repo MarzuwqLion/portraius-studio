@@ -5,6 +5,7 @@ import { FACE_MODEL, checkPhoto, detectFaces } from "@/lib/identity/embed";
 import { CONSENT_MAX_DISTANCE, bestDistance, meanDescriptor, scoreFromDistance } from "@/lib/identity/score";
 import { startJob } from "@/lib/jobs/runner";
 import { blobToBase64, drawToCanvas, makeThumb, prepareImage, toInlineImage } from "@/lib/media/image-prep";
+import { voice } from "@/lib/presets/load";
 import { MODEL_IDS } from "@/lib/registry/models";
 import type { InlineImage } from "@/lib/registry/inputs";
 import { saveCharacter } from "@/lib/store/characters";
@@ -143,6 +144,12 @@ export function pickedViews(draft: WizardDraft): Record<SheetView, string> | und
   return picks;
 }
 
+// The stock voice picked in the Describe step, as the file stores it.
+function voiceOf(draft: WizardDraft): CharacterFile["voice"] {
+  const picked = draft.path === "element" ? undefined : voice(draft.voiceId);
+  return picked ? { provider: "elevenlabs", voiceId: picked.id, label: picked.label } : undefined;
+}
+
 export async function saveFromDraft(draft: WizardDraft): Promise<CharacterRecord> {
   const views = pickedViews(draft);
   if (!views) throw new Error("Pick a take for every view first.");
@@ -183,6 +190,7 @@ export async function saveFromDraft(draft: WizardDraft): Promise<CharacterRecord
     },
     ...(descriptors.length ? { identity: { descriptors, mean: meanDescriptor(descriptors), model: FACE_MODEL, threshold: CONSENT_MAX_DISTANCE } } : {}),
     ...(draft.consent ? { consent: draft.consent } : {}),
+    ...(voiceOf(draft) ? { voice: voiceOf(draft) } : {}),
     tags: draft.tags,
   };
   const record = await saveCharacter({ file, files }, { locked: isLocked(file) });

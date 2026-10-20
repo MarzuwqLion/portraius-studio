@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import { useNavigate } from "react-router";
 import { Badge } from "@/components/studio/Badge";
 import { JobTake } from "@/components/studio/JobTake";
+import { VoicePicker } from "@/components/studio/VoicePicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,9 +15,10 @@ import type { UpdateDraft } from "./useDraft";
 const parseTags = (text: string) =>
   [...new Set(text.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean))].slice(0, 20).map((t) => t.slice(0, 40));
 
-// Step 4: name, the description that goes into prompts, and tags.
+// Step 4: name, the description that goes into prompts, tags, and for a
+// person an optional stock voice.
 export function DescribeStep({ draft, update, onNext }: { draft: WizardDraft; update: UpdateDraft; onNext: () => void }) {
-  const ids = { name: useId(), description: useId(), tags: useId() };
+  const ids = { name: useId(), description: useId(), tags: useId(), voice: useId() };
   const [tags, setTags] = useState(draft.tags.join(", "));
   return (
     <form
@@ -51,6 +53,18 @@ export function DescribeStep({ draft, update, onNext }: { draft: WizardDraft; up
         <Label htmlFor={ids.tags}>Tags</Label>
         <Input id={ids.tags} value={tags} onChange={(e) => setTags(e.target.value)} placeholder={draft.path === "element" ? "wardrobe, noir, 1970s" : "lead, noir, pilot"} />
       </div>
+      {draft.path !== "element" && (
+        <div className="grid gap-2">
+          <Label htmlFor={ids.voice}>Voice (optional)</Label>
+          <p className="text-control text-ink-muted">A stock voice for this character&apos;s lines. You can change it later.</p>
+          <VoicePicker
+            id={ids.voice}
+            value={draft.voiceId}
+            placeholder="No voice yet"
+            onChange={(voiceId) => update(voiceId ? { voiceId } : { voiceId: undefined })}
+          />
+        </div>
+      )}
       <Button type="submit" disabled={!draft.name.trim()} className="justify-self-start">
         Continue
       </Button>

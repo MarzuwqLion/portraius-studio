@@ -14,6 +14,13 @@ export interface AssetRef {
 
 export type ModelId = `${string}/${string}`;
 
+// What a synchronous model that answers with bytes (ElevenLabs) hands its
+// adapter: the response body and its Content-Type.
+export interface BinaryResult {
+  bytes: Uint8Array;
+  contentType: string;
+}
+
 export interface ModelAdapter<I, Raw> {
   id: ModelId;                          // canonical Router model ID
   capabilities: Capability[];

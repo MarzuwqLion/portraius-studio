@@ -1,6 +1,6 @@
 // Cost before every run (spec: Rules for every call, 4): the price when
 // /estimate gives one, the range when it's estimated, else "price unknown".
-import { adapterFor } from "@/lib/registry/adapters";
+import { requestBody } from "@/lib/registry/adapters";
 import { estimate } from "@/lib/router/client";
 import type { JobEstimate } from "@/lib/types/jobs";
 
@@ -15,7 +15,7 @@ export function estimateLabel(e: JobEstimate | undefined): string {
 // Never throws: a failed estimate is just an unknown price.
 export async function estimateRun(modelId: string, input: unknown): Promise<JobEstimate> {
   try {
-    const res = await estimate(modelId, adapterFor(modelId).buildBody(input));
+    const res = await estimate(modelId, requestBody(modelId, input));
     return res.estimate;
   } catch {
     return { source: "unknown" };

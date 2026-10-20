@@ -24,8 +24,14 @@ describe("registry", () => {
     }
   });
 
-  it("stubs adapters whose milestone hasn't come", () => {
-    expect(() => adapterFor(MODEL_IDS.sync3).buildBody({})).toThrow(/M7/);
+  it("has a built adapter for every model that returns files, and none for the text models", () => {
+    const textModels: string[] = [MODEL_IDS.directorAgent, MODEL_IDS.identityJudge];
+    for (const entry of REGISTRY) {
+      if (textModels.includes(entry.id)) expect(() => adapterFor(entry.id)).toThrow(/No adapter/);
+      else expect(adapterFor(entry.id).id, entry.id).toBe(entry.id);
+    }
+    // Speech is the one synchronous model: it answers with the audio itself.
+    expect(REGISTRY.filter((e) => e.delivery === "sync" && !textModels.includes(e.id)).map((e) => e.id)).toEqual([MODEL_IDS.elevenLabs]);
   });
 
   it("reads a recorded Freepik result", () => {

@@ -20,6 +20,7 @@
     "proxy:dev": "wrangler dev -c proxy/wrangler.jsonc",
     "proxy:deploy": "wrangler deploy -c proxy/wrangler.jsonc",
     "presets:check": "tsx scripts/presets-check.ts",
+    "voices:check": "tsx scripts/voices-check.ts",
     "workflows": "vitest run src/lib/workflows --mode workflows",
     "workflows:check": "tsx scripts/workflows-check.ts"
   },

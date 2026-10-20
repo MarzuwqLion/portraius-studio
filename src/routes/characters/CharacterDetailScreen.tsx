@@ -2,14 +2,16 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { Screen } from "@/components/shell/Screen";
 import { JobTake } from "@/components/studio/JobTake";
+import { VoicePicker } from "@/components/studio/VoicePicker";
 import { ScoreBadge, Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { jobImage, scoreImage } from "@/lib/characters/create";
 import { CONSENT_CLIP } from "@/lib/characters/format";
-import { applyRedraw, exportFile, startRedraw } from "@/lib/characters/manage";
+import { applyRedraw, exportFile, setVoice, startRedraw } from "@/lib/characters/manage";
 import { SHEET_PATHS, SHEET_VIEWS, viewAspect, viewLabel, type SheetView } from "@/lib/characters/sheet";
 import { useJobs } from "@/lib/jobs/hooks";
+import { voice } from "@/lib/presets/load";
 import { deleteCharacter, isUsable, loadBundle } from "@/lib/store/characters";
 import { useBlobUrl, useCharacter } from "@/lib/store/hooks";
 import type { CharacterRecord } from "@/lib/types/records";
@@ -184,6 +186,33 @@ function ExportPanel({ record }: { record: CharacterRecord }) {
   );
 }
 
+// A default stock voice (spec: Voice), saved in the character file so it
+// travels with it. Speak panels start from it.
+function VoicePanel({ record }: { record: CharacterRecord }) {
+  const [error, setError] = useState<string>();
+  return (
+    <section className="grid max-w-xl gap-3">
+      <h2 className="text-panel font-semibold">Voice</h2>
+      <p className="max-w-[70ch] text-body text-ink-muted">A stock voice for {record.name}&apos;s lines. Stock voices only: there&apos;s no voice cloning.</p>
+      <VoicePicker
+        value={record.file.voice?.voiceId}
+        placeholder="No voice yet"
+        label={`Voice for ${record.name}`}
+        onChange={(id) => {
+          const picked = voice(id);
+          setError(undefined);
+          void setVoice(record, picked ? { provider: "elevenlabs", voiceId: picked.id, label: picked.label } : undefined).catch((err: Error) => setError(err.message));
+        }}
+      />
+      {error && (
+        <p className="text-control text-drift" role="alert">
+          {error}
+        </p>
+      )}
+    </section>
+  );
+}
+
 function DeletePanel({ record }: { record: CharacterRecord }) {
   const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
@@ -259,6 +288,7 @@ export function CharacterDetailScreen() {
             {record.file.consent.matchScore}). The record is an attestation, not proof.
           </p>
         )}
+        {record.kind === "person" && <VoicePanel record={record} />}
         <ExportPanel record={record} />
         <DeletePanel record={record} />
       </div>

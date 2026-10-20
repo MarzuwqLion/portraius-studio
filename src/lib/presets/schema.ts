@@ -63,5 +63,26 @@ export const presetFile = z.object({
   recipe,
 });
 
+// Stock voices (spec: Voice, P2): ElevenLabs voice IDs confirmed through
+// Router by npm run voices:check, each with a short preview in public/voices/.
+export const voicesFile = z.object({
+  format: z.literal("portraius.voices"),
+  version: z.literal(1),
+  provider: z.literal("elevenlabs"),
+  voices: z
+    .array(
+      z.object({
+        id: z.string().regex(/^[A-Za-z0-9]{20}$/),
+        label: z.string().min(1).max(30),
+        description: z.string().min(1).max(80),
+        preview: z.string().regex(/^[a-z0-9-]+\.mp3$/),
+      }),
+    )
+    .min(1)
+    .max(40),
+});
+
+export type Voice = z.infer<typeof voicesFile>["voices"][number];
+
 export type Recipe = z.infer<typeof recipe>;
 export type Preset = z.infer<typeof presetFile>;

@@ -1,12 +1,13 @@
 // Presets are bundled at build time from presets/ and validated on load, so a
 // bad file fails the build and the tests rather than the app.
-import { CAMERA_GROUPS, cameraFile, lookFile, presetFile, type CameraGroup, type CameraOption, type Look, type Preset } from "./schema";
+import { CAMERA_GROUPS, cameraFile, lookFile, presetFile, voicesFile, type CameraGroup, type CameraOption, type Look, type Preset, type Voice } from "./schema";
 
 const cameraModules = import.meta.glob("/presets/camera/*.json", { eager: true, import: "default" });
 const lookModules = import.meta.glob("/presets/looks/*.json", { eager: true, import: "default" });
 const recastModules = import.meta.glob("/presets/recast/*.json", { eager: true, import: "default" });
 const imageModules = import.meta.glob("/presets/image/*.json", { eager: true, import: "default" });
 const videoModules = import.meta.glob("/presets/video/*.json", { eager: true, import: "default" });
+const voiceModules = import.meta.glob("/presets/voices.json", { eager: true, import: "default" });
 
 function parseAll<T>(modules: Record<string, unknown>, parse: (data: unknown) => T): T[] {
   return Object.entries(modules).map(([path, data]) => {
@@ -43,4 +44,11 @@ export const VIDEO_PRESETS: Preset[] = parseAll(videoModules, (d) => presetFile.
 // Preset IDs are unique across folders (presets:check enforces it).
 export function preset(id: string | undefined): Preset | undefined {
   return id ? [...RECAST_PRESETS, ...IMAGE_PRESETS, ...VIDEO_PRESETS].find((p) => p.id === id) : undefined;
+}
+
+// Stock voices, in the file's order. Previews are served from public/voices/.
+export const VOICES: Voice[] = parseAll(voiceModules, (d) => voicesFile.parse(d)).flatMap((f) => f.voices);
+
+export function voice(id: string | undefined): Voice | undefined {
+  return id ? VOICES.find((v) => v.id === id) : undefined;
 }

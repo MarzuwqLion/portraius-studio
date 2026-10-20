@@ -55,6 +55,7 @@ export interface H3Input {
   lastFrame?: string;
   referenceImages?: string[];
   referenceVideos?: string[];
+  referenceAudios?: string[];  // a spoken line (data URI or public URL): generate speaking
   durationSec: number;
   ratio?: VideoRatio;          // required for text to video; ignored with a first frame
   resolution: "768P" | "2K";
@@ -86,6 +87,20 @@ export interface VideoEditInput {
   videoUrl: string;            // public URL (lib/media/host.ts)
   referenceImageUrl?: string;  // public URL of the replacement; BFL takes none
   keepAudio?: boolean;
+}
+
+// Spoken lines (ElevenLabs v4 text-to-dialogue): one or more lines, each in a
+// stock voice. Several lines with different voices make one exchange.
+export interface SpeechInput {
+  lines: { text: string; voiceId: string }[];
+  seed?: number;
+}
+
+// Lip sync (Sync-3): a finished clip and the line it should speak, both as
+// public URLs (lib/media/host.ts).
+export interface LipSyncInput {
+  videoUrl: string;
+  audioUrl: string;
 }
 
 // The realism pass on one still (Freepik skin enhancer). Strength runs 0 to
