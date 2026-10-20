@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import oneTake from "../../../test/fixtures/kling-v3-omni.one-take.result.json";
 import type { KlingInput } from "@/lib/registry/inputs";
-import { klingOmni } from "./kling-omni";
+import { klingOmni, type KlingOmniResult } from "./kling-omni";
 
 const base: KlingInput = { prompt: "The woman in <<<image_1>>> performs the movement of <<<video_1>>>.", quality: "std", durationSec: 5, ratio: "16:9" };
 
@@ -77,6 +78,10 @@ describe("klingOmni.buildBody", () => {
 });
 
 describe("klingOmni.extractAssets", () => {
+  it("reads a recorded one-take: one clip for every shot", () => {
+    expect(klingOmni.extractAssets(oneTake as KlingOmniResult)).toEqual([{ kind: "video", url: oneTake.data.task_result.videos[0]!.url }]);
+  });
+
   it("reads every video in task_result", () => {
     expect(klingOmni.extractAssets({ data: { task_status: "succeed", task_result: { videos: [{ url: "https://v15-kling-fdl.klingai.com/a.mp4" }] } } })).toEqual([
       { kind: "video", url: "https://v15-kling-fdl.klingai.com/a.mp4" },

@@ -1,0 +1,27 @@
+{
+  "code": 0,
+  "data": {
+    "created_at": 1792482535307,
+    "final_balance_deduction": {
+      "list_price": "0",
+      "quota": "0"
+    },
+    "final_unit_deduction": "2.4",
+    "task_id": "941427131337934741",
+    "task_info": {},
+    "task_result": {
+      "videos": [
+        {
+          "duration": "4.041",
+          "id": "941421215813209038",
+          "url": "https://v15-kling-fdl.klingai.com/bs2/upload-ylab-stunt-sgp/muse/771169714138644578/VIDEO/20261020/d47d76c360f7ac4be0e60189cdff94ed-c2d4f1c0-3e4a-42fb-9cf2-12a9785dd70d.mp4?signed-query-stripped"
+        }
+      ]
+    },
+    "task_status": "succeed",
+    "task_status_msg": "",
+    "updated_at": 1792482649846
+  },
+  "message": "SUCCEED",
+  "request_id": "20d006bc-6c01-4608-b78b-8d99c20064b0"
+}
