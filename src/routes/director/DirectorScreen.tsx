@@ -243,7 +243,10 @@ function SceneEditor({ sceneId }: { sceneId: string }) {
         <ArrowLeft className="size-4" aria-hidden /> All scenes
       </Link>
       <Field label="Title">{(id) => <Input id={id} value={scene.title} maxLength={80} onChange={(e) => set({ title: e.target.value })} />}</Field>
-      <Field label="Logline">{(id) => <TextArea id={id} value={scene.logline} rows={2} maxLength={300} placeholder="A retired harbour pilot finds a letter he never sent." onChange={(logline) => set({ logline })} />}</Field>
+      <div className="grid gap-2">
+        <Field label="Logline">{(id) => <TextArea id={id} value={scene.logline} rows={2} maxLength={300} placeholder="A retired harbour pilot finds a letter he never sent." onChange={(logline) => set({ logline })} />}</Field>
+        <DraftWithAI scene={scene} editor={editor} />
+      </div>
       <Field label="Cast" hint="Then type @ in a shot's action to put them in it.">{(id) => <CastPicker id={id} value={scene.cast} onChange={(cast) => set({ cast })} />}</Field>
       <Field label="Location" hint="Added to every shot, word for word.">
         {(id) => <TextArea id={id} value={scene.location} rows={2} maxLength={300} placeholder="A late-night diner with red vinyl booths" onChange={(location) => set({ location })} />}
@@ -291,7 +294,6 @@ function SceneEditor({ sceneId }: { sceneId: string }) {
             <Button variant="secondary" className="border-on-seamless text-on-seamless" onClick={addShot}>
               Add shot
             </Button>
-            <DraftWithAI scene={scene} editor={editor} />
           </div>
           {scene.shots.length > 0 && <Timeline scene={scene} editor={editor} onMove={move} />}
           {scene.shots.length > 1 && <OneTake scene={scene} editor={editor} />}
@@ -666,21 +668,29 @@ function Timeline({ scene, editor, onMove }: { scene: Scene; editor: Editor; onM
   );
 }
 
-// "Draft with AI" (spec: Director, Workflow step 2): Claude drafts 3 to 6
-// shots from the scene card, added after any already there.
+// "Draft shots with AI" (spec: Director, Workflow step 2), beside the
+// logline it works from: Claude drafts 3 to 6 shots from the scene card,
+// added after any already there, and the note says so.
 function DraftWithAI({ scene, editor }: { scene: Scene; editor: Editor }) {
   const { run, busy } = editor;
   const ready = Boolean(scene.logline.trim());
   const key = JSON.stringify([scene.logline, scene.location, scene.cast, scene.film, scene.ratio, scene.shots.map((s) => s.action)]);
   const price = useEstimateLabel(MODEL_IDS.directorAgent, ready ? () => agentInput(scene.id) : undefined, key);
   const drafting = busy === "agent" || Boolean(scene.agentRequest);
+  const n = scene.shots.length;
   return (
-    <>
-      <Button variant="secondary" className="border-on-seamless text-on-seamless" disabled={!ready || busy !== undefined || drafting} onClick={() => void run("agent", () => draftShots(scene.id))}>
+    <div className="grid gap-1">
+      <Button variant="secondary" size="sm" className="justify-self-start" disabled={!ready || busy !== undefined || drafting} onClick={() => void run("agent", () => draftShots(scene.id))}>
         {drafting ? "Drafting shots" : withPrice("Draft shots with AI", price)}
       </Button>
-      <span className="text-control">{ready ? "Claude Sonnet 5.5 plans 3 to 6 shots from the scene card. Edit them after." : "Write a logline to draft shots with AI."}</span>
-    </>
+      <p className="text-control text-ink-muted">
+        {!ready
+          ? "Write a logline, then Claude Sonnet 5.5 can plan the shots."
+          : n
+            ? `Adds 3 to 6 shots after the ${n} here; nothing is replaced.`
+            : "Plans 3 to 6 shots from the scene card. Edit them after."}
+      </p>
+    </div>
   );
 }
 
