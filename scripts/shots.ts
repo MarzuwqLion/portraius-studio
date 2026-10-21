@@ -173,6 +173,11 @@ try {
         await setTheme(page, theme);
         for (const route of routes) {
           await visit(page, route.hash);
+          // A picked take, so the grease mark and its label show.
+          if (phase === "work" && route.name === "image") {
+            await page.locator('button[aria-label^="Pick:"]').last().click();
+            await page.waitForTimeout(100);
+          }
           await page.screenshot({ path: join(dir, `${route.name}.png`) });
           const label = FOLD_CHECKS[route.name];
           if (label) report.push(`| ${phase} | ${viewport.name} | ${theme} | ${route.name} | ${await foldCheck(page, label)} |`);

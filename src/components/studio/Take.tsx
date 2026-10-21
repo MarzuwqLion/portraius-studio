@@ -28,35 +28,41 @@ export function Take({
   children?: ReactNode; // status text while the image isn't ready
   className?: string;
 }) {
+  // The marks circle the print only; the pick's words sit under it.
   const print = (
-    <span className="relative block w-full overflow-hidden rounded-media border border-rule bg-seamless" style={{ aspectRatio: aspect }}>
-      {src ? (
-        <img src={src} alt={alt} className="develop absolute inset-0 size-full object-contain" />
-      ) : (
-        <span className="absolute inset-0 flex items-center justify-center p-3 text-center text-control text-on-seamless">{children}</span>
-      )}
-    </span>
-  );
-  const marks = (
-    <>
+    <span className="relative block">
+      <span className="relative block w-full overflow-hidden rounded-media border border-rule bg-seamless" style={{ aspectRatio: aspect }}>
+        {src ? (
+          <img src={src} alt={alt} className="develop absolute inset-0 size-full object-contain" />
+        ) : (
+          <span className="absolute inset-0 flex items-center justify-center p-3 text-center text-control text-on-seamless">{children}</span>
+        )}
+      </span>
       {picked && <GreaseCircle seed={seed} />}
       {rejected && <GreaseStrike />}
-    </>
+    </span>
   );
+  // Every pick says so in words: the mark is only 2.4:1 on light Studio grey
+  // (spec: Signature: grease-pencil marks).
+  const selected = picked && <SelectedLabel />;
   if (!onPick) {
     return (
       <figure className={cn("relative", className)}>
         {print}
-        {marks}
+        {selected}
       </figure>
     );
   }
   return (
     <button type="button" onClick={onPick} aria-pressed={picked} aria-label={pickLabel ?? alt} className={cn("relative block w-full rounded-media text-left", className)}>
       {print}
-      {marks}
+      {selected}
     </button>
   );
+}
+
+export function SelectedLabel() {
+  return <span className="mt-3 inline-flex rounded-control bg-proof px-2 py-0.5 text-control font-semibold text-ink">✓ Selected</span>;
 }
 
 const BAND_TEXT: Record<Band, { label: string; className: string }> = {
