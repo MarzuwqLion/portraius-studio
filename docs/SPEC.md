@@ -37,7 +37,7 @@ The guiding principle: a multi-model image and video suite is table stakes, sinc
 
 ## Decisions and defaults
 
-Marzuwq settled every open decision on October 19. Claude Code builds to these; nothing in this section is open.
+Marzuwq settled every open decision on October 19, and the UI pass on October 21. Claude Code builds to these; nothing in this section is open.
 
 ### Decisions (October 19)
 
@@ -51,6 +51,29 @@ Marzuwq settled every open decision on October 19. Claude Code builds to these; 
 | Demo video | Marzuwq records it after testing. Not part of Claude Code's milestones. |
 | Sample character | Marzuwq provides it after everything else is built. Until then, build and test with designed characters. |
 | M7 open questions (October 20) | Marzuwq: "go with your best recommendation". A spoken line is a direct call outside the job state machine; the line rides on its clip as an audio asset (no audio generation type); the second lip sync path is MiniMax H3 reference mode, which is also Unknowns row 17's fallback; the Worker may be updated and redeployed for Sync Labs downloads; the node pack is built and tested in a local ComfyUI, and publishing waits for Marzuwq's Comfy Registry publisher. |
+
+### Decisions (October 21)
+
+Marzuwq decided these after three UI and UX reviews of the October 20 build (scores 6.3, 6.5 and 7.8; the target is 8.5). The reviews agreed on seven problems: at 1440×900 the Generate button sat below the fold; "price unknown" sat on every paid button; the jobs tray filled up with finished jobs; `{lead}` was template syntax a visitor had to learn; presets were a text list; a visitor with no key landed on a checklist with half the screen empty; and the look was grey on grey with no identity. Contracts don't change. The sections below already reflect these; the table says why.
+
+| # | Decision | Answer | Why |
+| --- | --- | --- | --- |
+| 1 | Generate footer | On Image, Video and Recast, the primary button, its price, and the reason it's disabled ("Pick a character", "Write a prompt", "Upload a clip") sit in a footer pinned to the bottom of the call sheet. The controls scroll above it. Cmd/Ctrl+Enter runs it. | The main action should never need scrolling to find. |
+| 2 | Prices | When Router's `/estimate` returns nothing, a static table in `lib/jobs/estimate.ts` gives the price, keyed by model and the inputs that change it (resolution, duration, count), shown as "≈ $0.12". Every row comes from Comfy's published pricing, with its source in docs/notes/u1-notes.md. A model with no published price shows no price, and the screen shows one line: "Prices aren't available for this key; Comfy bills your account as usual." Never "free", "local" or credits. | A known cost removes hesitation; a wrong one destroys trust. |
+| 3 | Activity | The tray shows working and failed jobs as before. Finished jobs collapse into one "14 done" control that expands into today's film strip. With nothing running, the tray is a single line. | The strip is for unfinished work; finished jobs turned it into noise people learn to ignore, failures included. |
+| 4 | Colour | Cognac and plum go on panels, rail and accents. Media stays on neutral grey (no hue), darker in the dark theme. Dark is the default theme; Light and Match system stay in Settings. | Skin tones are the product and a tinted surround shifts how skin reads, so the identity goes in the chrome, not behind the work (see Why grey). |
+| 5 | Selection | The grease mark turns cognac and always comes with a text label, "✓ Selected", under the picked take or anchor. | The mark is 2.4:1 on light Studio grey, so hue alone can't carry it. |
+| 6 | Cast before prompt, and @mentions | Cast sits above Prompt on Image, Video and Recast. Typing @ in a prompt or a Director action offers the vault, and a mention shows as a chip with the character's face. Stored prompts, recipes and the prompt compiler keep `{lead}` slots; chips are only how the editor shows them. | People pick who, then write what; nobody should have to learn brace syntax. |
+| 7 | Score wording | "Likeness 94". Bands read Strong, Review and Drifted (thresholds unchanged: 80 and 60). Whole numbers everywhere, videos included; "Lowest frame 92", not "worst frame". An ⓘ beside the score says it compares the face with the character's references and says nothing about hands, action or overall quality. A drifted video gets a Re-roll button. | "Check" reads as passed, and decimals claim a precision a 1 fps face score doesn't have. |
+| 8 | Labels | Still first becomes "Image, then animate"; From image, "Animate an image"; References, "Use references" (with one line on what they control); Continue, "Continue from last frame"; Speak, "Add a line"; Import file, "Import .portraius"; Motion Transfer and Object Swap, "Motion transfer" and "Object swap"; 768P, "768p" (the request value stays `768P`). New background moves out of Object swap into its own Setting group. | Names say what happens, in sentence case. |
+| 9 | Model routing | Under the Video model picker: "People in the shot render on MiniMax H3." | The picker said Seedance while the takes said H3, which read as the app ignoring the choice. |
+| 10 | Preset tiles | Image, Video and Recast presets show as tiles with a thumbnail from the preset's `thumbnail` field. Video and Recast tiles play a short muted loop on hover and on focus. Thumbnails use Walt Harmon. | A picture says what a preset does faster than its title. |
+| 11 | First run leads with samples | The right side of the first-run screen plays the Recast side-by-side from `public/samples/`. Two buttons of equal weight: "Take the tour (no key)" and "Add your key". The Tour gets a sticky chapter list, and each chapter ends with "Try this with Walt", which adds Walt if needed and opens that studio with Walt cast and the matching preset picked. | A judge with no key should see the product working before reading anything. |
+| 12 | Recast stage | With no clip, the whole set is a drop zone with the before/after loop playing behind "Drop a clip, or try the sample". | The empty set is the best place to show what Recast does. |
+| 13 | Director | Only the selected shot shows its full form; the others collapse to one row (anchor thumbnail, first line of the action, and a summary such as "Wide · 35 mm · Static · 5 s"). Camera settings collapse to that summary and expand on click. The timeline is pinned to the bottom of the Director set. Scene cards show the first anchor as a cover, plus "3 of 3 ready". "Draft shots with AI" sits next to the logline and says whether it adds to or replaces the shots there. An export ends on a large player with Download, Export 9:16 and Open in library, labelled "Export 2 · 14 s · crossfades" instead of a timestamp. | A 3-shot scene should fit on one screen. |
+| 14 | Polish | `:focus-visible` instead of `:focus` on the rail and buttons; no truncated select values at 1280 px ("Digital cinema" fits); `object-fit: cover` on prop and element cards; Characters becomes "Cast and elements", with People and Elements tabs (the route stays `#/characters`). | Small faults the reviews counted against the whole. |
+
+Out of scope for the UI pass: a second palette or accent toggle; Library search, favourites and version groups; a full Director layout rebuild (preview, inspector and storyboard) unless U1 to U3 are done by the evening of October 26; and any Dexie version change (if a decision seems to need one, stop and ask Marzuwq).
 
 ### Defaults
 
@@ -571,8 +594,8 @@ One screen covers text-to-image and image editing with Nano Banana 2.1. Adding c
 
 ### Controls
 
-- Prompt, with `{slot}` names for cast members (for example `{lead} reading in a Tampa coffee shop`).
-- Cast picker: 0 to 3 people and 0 to 4 elements.
+- Cast picker, above the prompt: 0 to 3 people and 0 to 4 elements.
+- Prompt. Typing @ offers the vault, and a mention shows as a chip with the character's face. Underneath, the prompt keeps `{slot}` names for cast members (for example `{lead} reading in a Tampa coffee shop`), which is what recipes store and the compiler reads; a visitor never has to type a brace.
 - Source image (switches to edit mode): upload, or pick from the library.
 - Aspect ratio, including the new ultra-wide and ultra-tall 1:4, 4:1, 1:8 and 8:1. Size: 1K, 2K or 4K.
 - Count: 1 to 4 (parallel submits).
@@ -625,10 +648,12 @@ Video uses Seedance 2.5 by default. Every clip starts as a cheap 480p draft and 
 
 ### Modes
 
+The mode names below are what the screen shows (Decisions, October 21).
+
 - **Text to video:** prompt only.
-- **Still first (default when a cast is selected):** Nano Banana 2.1 makes the opening frame with the characters in it, then Seedance animates from that `first_frame`. Identity is strongest this way because the hardest part (the face) is settled in the still. An optional `last_frame` gives a start-to-end shot.
-- **From references:** character and element sheets go in as `reference_image` items and Seedance composes the opening itself. Use it when no fixed opening frame is wanted.
-- **From an existing image:** any library image or upload as the first frame, with or without a cast.
+- **Image, then animate (default when a cast is selected):** Nano Banana 2.1 makes the opening frame with the characters in it, then the video model animates from that `first_frame`. Identity is strongest this way because the hardest part (the face) is settled in the still. An optional `last_frame` gives a start-to-end shot.
+- **Use references:** character and element sheets go in as `reference_image` items and the model composes the opening itself. The screen says what they control: who is in the shot and what they wear, not the framing. Use it when no fixed opening frame is wanted.
+- **Animate an image:** any library image or upload as the first frame, with or without a cast.
 
 Don't mix `first_frame` with `reference_image` items until M3 confirms Seedance 2.5 accepts the combination (MiniMax H3 explicitly refuses it). In first-frame modes Seedance 2.5 only accepts `ratio: "adaptive"`, so the frame's own shape decides the video's shape.
 
@@ -636,7 +661,7 @@ Don't mix `first_frame` with `reference_image` items until M3 confirms Seedance 
 
 Duration 4 to 30 s, aspect ratio (reference and text modes only), audio on or off (`generate_audio`), camera preset, seed, and model. The model dropdown lists registry video models; controls a model doesn't support are hidden (for example, H3 tops out at 15 s and has no draft mode).
 
-MiniMax H3 is the second model in the dropdown, labelled "H3 (2K)". It runs 4 to 15 s at `768P` or `2K`, has no draft mode (so its button says "Generate" with the full price), and can't combine keyframe inputs with reference inputs in one request. Seedance 2.5 stays the default for every mode.
+MiniMax H3 is the second model in the dropdown, labelled "H3 (2K)". It runs 4 to 15 s at `768P` or `2K` (shown as "768p" and "2K"), has no draft mode (so its button says "Generate" with the full price), and can't combine keyframe inputs with reference inputs in one request. Seedance 2.5 is the default for clips without people; a clip with a cast or a face in its first frame renders on H3 whatever the dropdown says, and the line under the picker says so: "People in the shot render on MiniMax H3."
 
 ### Draft, then final
 
@@ -669,20 +694,21 @@ MiniMax H3 is the second model in the dropdown, labelled "H3 (2K)". It runs 4 to
 
 - **Audio refusals.** Seedance checks the generated audio separately, and those refusals can be intermittent. When `refusal_subject` is `output_audio`, offer "Retry silent", which must recreate the draft with `generate_audio: false` (a final inherits the draft's audio setting).
 - **Last frame.** If a final render doesn't return `last_frame_url`, extract the last frame in the browser with ffmpeg.wasm.
-- **Continue.** Every result has a Continue button that starts a new clip with this clip's last frame as `first_frame`. Director builds on the same mechanism.
+- **Continue from last frame.** Every result has this button; it starts a new clip with this clip's last frame as `first_frame`. Director builds on the same mechanism.
+- **Add a line.** Every clip links to its library page, where a spoken line is added (Finishing, Voice and Lip sync).
 - **Reference mode body.** Text plus `reference_image` items: per person the sheet composite and best photo, per element its sheet, and a concrete `ratio`.
 
 With no cast, every mode works the same way minus the reference images.
 
 ## Recast (the Genjutsu rebuild)
 
-Recast takes a clip the user owns, keeps its motion and camera work, and either recasts the performer with a saved character (Motion Transfer) or replaces one thing in the shot (Object Swap). The only source of a face is the vault, so Recast can't be pointed at a random photo of someone.
+Recast takes a clip the user owns, keeps its motion and camera work, and either recasts the performer with a saved character (Motion transfer) or replaces one thing in the shot (Object swap). The only source of a face is the vault, so Recast can't be pointed at a random photo of someone.
 
 Comfy lists its own Genjutsu rebuild, "Openjutsu", as coming soon on the competition page. When it lands, read its workflow and reuse what helps. Recast's edge is the vault (saved, consented characters), the presets and the identity score, not the swap itself.
 
 ### Input
 
-- Source clip: upload, record in the browser, or pick from the library.
+- Source clip: upload, record in the browser, or pick from the library. With no clip yet, the whole set is a drop zone, with the sample's before/after loop playing behind "Drop a clip, or try the sample".
 - Trim UI (ffmpeg.wasm) that enforces the chosen engine's limits. Kling's edit input must be 3 to 10 s, 720 to 2160 px, 24 to 60 fps and under 200 MB.
 - A required checkbox: "I filmed this or have the rights to use it." If faces other than the performer are detected, add a note: "Other people in the clip will still appear. Make sure they're OK with it."
 
@@ -700,10 +726,11 @@ In M4, A/B Object Swap against `wan/wan2.7-videoedit`, `wan/happyhorse-1.0-video
 
 ### Presets
 
-Genjutsu works mostly from presets, and Recast should too. Each preset is a recipe JSON in `presets/recast/`: mode, engine, prompt template with slots, and a thumbnail clip. Launch with 12 and invite pull requests for more. Starter set:
+Genjutsu works mostly from presets, and Recast should too. Each preset is a recipe JSON in `presets/recast/`: mode, engine, prompt template with slots, and a thumbnail clip, shown as a tile that loops on hover and focus. Launch with 12 and invite pull requests for more. Starter set, in the groups the screen shows (sentence case, per Decisions, October 21):
 
-- Motion Transfer: Swap me in, Dance double, Same move new city, Stunt double.
-- Object Swap: Outfit change, Product swap, Sneaker swap, New background.
+- Motion transfer: Swap me in, Dance double, Same move new city, Stunt double.
+- Object swap: Outfit change, Product swap, Sneaker swap.
+- Setting: New background (an Object swap underneath, grouped on its own because it changes the place, not a thing).
 - Style swap: 1970s film, Claymation.
 - Music video (the official page names "a music-video transformation" as an inspiration): Neon performance, Concert stage. Both keep the clip's original audio.
 
@@ -764,12 +791,12 @@ export type Shot = {
 
 ### Workflow
 
-1. **Scene card.** Logline, cast, a location element, and the film settings.
-2. **Shot list.** Rows the user adds and edits. P2 adds "Draft with AI": `anthropic/claude-sonnet-5-5` returns 3 to 6 shots as JSON matching the `Shot` schema, which the user then edits.
+1. **Scene card.** Logline, cast, a location element, and the film settings. In the scene list, each card shows its first anchor as a cover and its readiness ("3 of 3 ready").
+2. **Shot list.** Rows the user adds and edits. Only the selected shot shows its full form; the others collapse to one row with the anchor thumbnail, the first line of the action and a summary such as "Wide · 35 mm · Static · 5 s". Camera settings collapse to the same summary and expand on click. P2 adds "Draft shots with AI", beside the logline: `anthropic/claude-sonnet-5-5` returns 3 to 6 shots as JSON matching the `Shot` schema, which the user then edits. The button says whether it adds to or replaces the shots already there.
 3. **Anchors.** For each shot, Nano Banana 2.1 draws 2 to 4 stills with the cast references and camera phrases. The user picks one as the anchor; identity scores show on each.
 4. **Animate.** Each shot becomes a Seedance draft with its anchor as `first_frame` (MiniMax H3 when a person is in that frame). Chaining (P2, built in M7): when `continuity` is `continue`, the previous shot's last frame is used instead; a continued shot waits for that take, goes stale when it's re-rolled or moved, and joins the export with a straight cut.
-5. **Review.** Drafts sit in a timeline strip. Drag to reorder, re-roll any shot, render finals for approved ones.
-6. **Export.** ffmpeg.wasm re-encodes every final to 1080p, 24 fps, AAC, then concatenates them with optional 6-frame crossfades. The MP4 goes into the library and downloads.
+5. **Review.** Drafts sit in a timeline strip pinned to the bottom of the Director set. Drag to reorder, re-roll any shot, render finals for approved ones.
+6. **Export.** ffmpeg.wasm re-encodes every final to 1080p, 24 fps, AAC, then concatenates them with optional 6-frame crossfades. The MP4 goes into the library and downloads. The export ends on a large player labelled like "Export 2 · 14 s · crossfades" (not a timestamp), with Download, Export 9:16 and Open in library.
 
 ### Continuity rules
 
@@ -793,15 +820,17 @@ Every output that contains a cast member gets a 0 to 100 identity score, compute
 - **Reference:** at save time, one descriptor per source photo, plus their mean, stored in the character.
 - **Image:** detect every face at least 80 px tall, compute descriptors, and for each cast member take the smallest distance to any of their reference descriptors. With several cast members, assign faces to people greedily by smallest distance (at most 3 people, so greedy is fine).
 - **Distance to score:** linear map, distance 0.35 or less is 100 and 0.75 or more is 0. These two constants live in `lib/identity/score.ts` and get calibrated in M5 on 20 same-person and 20 different-person pairs.
-- **Video:** sample one frame per second (up to 10 frames), score each, and report the median plus the worst frame, with thumbnails of frames under the threshold.
+- **Video:** sample one frame per second (up to 10 frames), score each, and report the median plus the lowest frame, with thumbnails of frames under the threshold.
 
 ### Bands and actions
 
+The score shows as "Likeness 94", always a whole number (a video's median is rounded too). An ⓘ beside it explains: the score compares the face with the character's references, and says nothing about hands, action or overall quality. A video adds "Lowest frame 92".
+
 | Score | Label | Image behaviour | Video behaviour |
 | --- | --- | --- | --- |
-| 80 to 100 | Strong match | Nothing | Nothing |
-| 60 to 79 | Check | Badge only | Badge only |
-| Under 60 | Drift | One automatic retry with a new seed and the front view added to references; both results shown, best one first | "Retry draft" button (no automatic retry, to protect credits) |
+| 80 to 100 | Strong | Nothing | Nothing |
+| 60 to 79 | Review | Badge only | Badge only |
+| Under 60 | Drifted | One automatic retry with a new seed and the front view added to references; both results shown, best one first | "Re-roll" button: the same request with a new seed (no automatic retry, to protect credits) |
 
 Automatic retry can be switched off in Settings.
 
@@ -853,7 +882,7 @@ Every preset is a JSON file in the repo that anyone can add through a pull reque
 
 | Folder | Holds | Launch count |
 | --- | --- | --- |
-| `presets/recast/` | Motion Transfer, Object Swap and style swap templates | 12 |
+| `presets/recast/` | Motion transfer, Object swap, Setting and style swap templates | 12 |
 | `presets/image/` | One-click image templates (studio headshot, 1996 yearbook photo, film still, editorial cover with invented masthead) | 10 |
 | `presets/video/` | Clip templates (walk-in, product reveal, slow-motion turn, talking to camera) | 6 |
 | `presets/camera/` | Film and camera controls used by Director, Image and Video | All options in the Director table |
@@ -876,14 +905,14 @@ Every preset is a JSON file in the repo that anyone can add through a pull reque
 }
 ```
 
-Presets are validated with zod (`lib/presets/schema.ts`) and loaded at build time into a gallery on each studio screen.
+Presets are validated with zod (`lib/presets/schema.ts`) and loaded at build time into a gallery of tiles on each studio screen. The `thumbnail` names a file next to the preset: a WebP or JPEG still for an image preset; for a video or Recast preset, a short muted MP4 loop (about 3 s, 360 px on the long side) that plays on hover and focus, with its first frame as the still. Both stay under the 200 KB cap. A preset without a thumbnail shows its title on a Studio grey tile.
 
 ### Contribution flow
 
 - `CONTRIBUTING.md` explains: copy `presets/_template.json`, make a thumbnail, run `npm run presets:check`, open a pull request.
 - `presets:check` validates the schema, caps thumbnails at 200 KB, and scans titles and prompts against a short list of brand and celebrity names.
 - A GitHub Action runs the same check on every pull request.
-- Thumbnails use designed characters (swapped for Marzuwq's sample character once he provides it), never other real people.
+- Thumbnails use Walt Harmon, the designed character from the Tour (swapped for Marzuwq's sample character once he provides it), never other real people.
 
 ### Remix links
 
@@ -937,20 +966,20 @@ Six work screens in a left rail, a shared jobs tray, and a first-run path that g
 
 | Screen | Main parts | States to design |
 | --- | --- | --- |
-| First run | Three steps: add a key (or start the Tour), make or design a character, run a preset | No key, key invalid, key OK |
-| Characters | Card grid with origin, consent and lock badges; 5-step create wizard; detail page with sheet, views, redraw buttons, export | Empty vault, locked import, consent failed |
-| Image | Controls on the left, results grid in the centre, preset strip on top, collapsible prompt panel | Empty, generating, retrying for drift, refused |
+| First run | Left: what the app does and the three steps (add a key, make or design a character, run a preset). Right: the Recast side-by-side from `public/samples/`, playing. Two buttons of equal weight: "Take the tour (no key)" and "Add your key" | No key, key invalid, key OK |
+| Cast and elements (`#/characters`) | People and Elements tabs; card grid with origin, consent and lock badges (element cards crop to fill); 5-step create wizard; "Import .portraius"; detail page with sheet, views, redraw buttons, export | Empty vault, locked import, consent failed |
+| Image | Call sheet on the left (preset tiles, cast, prompt with @mentions, then the rest), Generate footer pinned below it; results grid in the set; collapsible prompt panel | Empty, generating, retrying for drift, refused |
 | Video | Same layout plus draft/final controls; player with frame thumbnails and per-frame identity | Draft ready, rendering final, audio refused |
-| Recast | Upload and trim panel, mode tabs, preset gallery, side-by-side player | Clip too long, rights not confirmed |
-| Director | Scene card, shot list table, anchor row per shot, timeline strip, export button | Shot missing anchor, stitching, export done |
+| Recast | Preset tiles, upload and trim panel, Generate footer; with no clip the set is a drop zone over the sample loop; side-by-side player | No clip, clip too long, rights not confirmed |
+| Director | Scene cards with cover and readiness; scene card with logline and "Draft shots with AI"; shot list with one open shot and the rest collapsed; timeline pinned to the bottom of the set; export ending on a large player | Shot missing anchor, stitching, export done |
 | Library | Masonry grid; filters for type, character, model, date and score; recipe view; remix link; bulk zip export | Storage nearly full |
 | Remix | Recipe card, slot pickers, run button | Empty vault (offer "Design a character") |
 | Settings | Key handling, default models, auto-retry, keep drafts, storage use, export library, delete all data |  |
-| Tour | Plays pre-made outputs from `samples/` with a "pre-made sample" label on each; no key needed |  |
+| Tour | Plays pre-made outputs from `samples/` with a "pre-made sample" label on each; no key needed. A sticky chapter list; each chapter ends with "Try this with Walt", which adds Walt to the vault if he isn't there and opens that studio with Walt cast and the matching preset picked |  |
 
 ### Job lifecycle (every card, every screen)
 
-Estimate shown, then **Queued** (with queue position), **Generating** (indeterminate, since Router sends no progress), **Downloading**, **Scoring**, then **Done** or **Failed** (plain-language message, request ID, Retry). The jobs tray lists every in-flight job, survives navigation and page reloads, and links each job to its result.
+Estimate shown, then **Queued** (with queue position), **Generating** (indeterminate, since Router sends no progress), **Downloading**, **Scoring**, then **Done** or **Failed** (plain-language message, request ID, Retry). The jobs tray shows every working and failed job, survives navigation and page reloads, and links each job to its result. Finished jobs collapse into one control ("14 done") that expands into today's film strip; with nothing working or failed, the tray is a single line.
 
 ### Key handling
 
@@ -960,35 +989,40 @@ Estimate shown, then **Queued** (with queue position), **Generating** (indetermi
 
 ### Details that matter
 
-- Keyboard: `G` generate, `D` toggle draft/final, `R` retry, `E` export.
+- Keyboard: Cmd/Ctrl+Enter runs the Generate footer from anywhere on the screen, including inside the prompt; `G` generate (outside text fields), `D` toggle draft/final, `R` retry, `E` export.
 - Alt text on every output comes from its prompt. Respect reduced-motion settings in players and transitions.
 - Responsive down to 390 px wide for every screen except Director, which shows a "best on desktop" notice on small screens.
-- Cost: show the estimate on the Generate button ("Generate · $0.24") and a running "spent this session" figure from `X-Comfy-Credits-Used` where Router returns it.
+- Cost: the Generate footer shows the price beside the button ("Generate · $0.24"). When `/estimate` gives nothing, the static table in `lib/jobs/estimate.ts` gives "≈ $0.12"; a model with neither shows no price, with one line under the footer: "Prices aren't available for this key; Comfy bills your account as usual." Prices are always in dollars, never credits, and nothing is ever labelled "free" or "local". Where Router returns `X-Comfy-Credits-Used`, a running "spent this session" figure in Settings shows it in dollars at Comfy's published credit rate, or not at all.
 
 ## Visual direction
 
-The app is a portrait studio. Work sits on a neutral grey seamless, panels are proof paper, and picks are marked the way photographers mark contact sheets: with a grease-pencil circle. That circle is the one bold element; everything around it stays quiet.
+The app is a portrait studio. Work sits on a neutral grey seamless, panels are proof paper with a plum ink, and picks are marked the way photographers mark contact sheets: with a grease-pencil circle. Cognac is the studio's one colour: the primary action, the focus ring, the active rail item and the grease mark. Everything around the work stays quiet.
 
 ### Why grey
 
-Skin tones are the product. A neutral mid-grey surround (the same backdrop the turnaround sheets use) is how photographers judge colour without a cast, so every image and video sits on Studio grey, never on white or black.
+Skin tones are the product. A neutral grey surround (the same backdrop the turnaround sheets use) is how photographers judge colour without a cast, so every image and video sits on Studio grey, never on white, black or a tinted panel. It's darker in the dark theme so a bright frame doesn't glare. The studio's identity (cognac and plum, Decisions October 21) lives in the chrome around the work, never behind it: a tinted surround shifts how skin reads.
 
 ### Colour tokens
 
-Defined once in `src/styles/tokens.css`; no raw hex values anywhere else. The theme follows the system setting, with a toggle in Settings.
+Defined once in `src/styles/tokens.css`; no raw hex values anywhere else. Dark is the default theme; Settings offers Light, Dark and Match system.
 
 | Token | Light | Dark | Use |
 | --- | --- | --- | --- |
-| `--seamless` | `#64676B` | `#4E5155` | Behind every image and video; large labels only |
-| `--proof` | `#EEF0F1` | `#26292C` | Panels, rail, dialogs |
-| `--ink` | `#26292C` | `#E6E8EA` | Text, icons, primary button fill |
-| `--rule` | `#C9CDD1` | `#3A3E42` | 1 px dividers and print outlines |
-| `--grease` | `#D2352B` | `#F0574B` | Selection marks only, never text |
-| `--match` | `#4F6B34` | `#9BBF7A` | Identity 80 to 100 |
-| `--check` | `#8A5E0C` | `#E0B455` | Identity 60 to 79 |
-| `--drift` | `#A3313A` | `#F08A90` | Identity under 60, and errors |
+| `--seamless` | `#64676B` | `#2E2F31` | Behind every image and video. Neutral, never tinted |
+| `--proof` | `#F7F3EE` | `#221A24` | Panels, rail, dialogs |
+| `--ink` | `#2E2131` | `#F2ECE6` | Text and icons |
+| `--rule` | `#887785` | `#806C7E` | Dividers, print outlines, input borders |
+| `--accent` | `#A65C35` | `#A65C35` | Primary button fill, focus ring, active rail item |
+| `--on-accent` | `#FFFFFF` | `#FFFFFF` | Text on `--accent` |
+| `--accent-text` | `#A65C35` | `#D08A5C` | Links and accent text on `--proof` |
+| `--grease` | `#E3955F` | `#E3955F` | Selection marks only, never text |
+| `--match` | `#4F6B34` | `#9BBF7A` | Likeness 80 to 100 |
+| `--check` | `#7A5A00` | `#E8C25A` | Likeness 60 to 79 (toward yellow, so it doesn't read as the accent) |
+| `--drift` | `#A3313A` | `#F08A90` | Likeness under 60, and errors |
 
-Contrast targets (verify in M8 with the Lighthouse run): ink on proof about 12:1; proof text on seamless at least 4.5:1; the three status colours on proof at least 4.5:1 in both themes.
+Measured (WCAG relative luminance, checked again on October 21): ink on proof 13.8:1 light, 14.4:1 dark. Text on seamless 5.2:1 light (proof), 11.4:1 dark (ink). On-accent on accent 5.0:1. Accent text on proof 4.5:1 light, 6.0:1 dark. Rule on proof 3.8:1 light, 3.5:1 dark. Match, check and drift on proof at least 5.4:1 in both themes. Grease on seamless 2.4:1 light (the "✓ Selected" label carries it), 5.6:1 dark.
+
+Two pairs need care. The accent is 1.1:1 on light Studio grey, so a focus ring inside the set uses `--on-seamless` instead, and a primary button in the set keeps its label contrast (5.0:1) but not its edge. `tokens.test.ts` holds every pair above as a minimum: 4.5:1 for text (including on-accent on accent and accent text on proof), 3:1 for rule on proof.
 
 ### Type
 
@@ -1003,19 +1037,22 @@ Contrast targets (verify in M8 with the Lighthouse run): ink on proof about 12:1
 
 ```
 +------+--------------------------+-------------------------------------+
-| rail | call sheet (controls)    | set (Studio grey)                   |
-|      | prompt                   |  +--------+  +--------+  +--------+ |
-| Cast | cast picker              |  | take 1 |  | take 2 |  | take 3 | |
-| Img  | camera and look          |  +--------+  +--------+  +--------+ |
-| Vid  | ratio, size, count       |      picked take: grease circle     |
-| Rec  |                          |                                     |
-| Dir  | [ Generate ($0.24) ]     |                                     |
-| Lib  |                          |                                     |
+| rail | call sheet (scrolls)     | set (Studio grey)                   |
+|      | preset tiles             |  +--------+  +--------+  +--------+ |
+| Cast | cast                     |  | take 1 |  | take 2 |  | take 3 | |
+| Img  | prompt (@ mentions)      |  +--------+  +--------+  +--------+ |
+| Vid  | camera and look          |      ( picked take: grease circle ) |
+| Rec  | ratio, size, count       |             ✓ Selected              |
+| Dir  |--------------------------|                                     |
+| Lib  | Write a prompt           |                                     |
+|      | [ Generate ]   ≈ $0.24   |  <- footer, pinned; Cmd/Ctrl+Enter  |
 +------+--------------------------+-------------------------------------+
-| film strip: the jobs tray, one thumbnail per queued or finished job   |
+| activity: working and failed jobs, then [ 14 done ] (expands to today) |
 +-----------------------------------------------------------------------+
 ```
 
+- The Generate footer never scrolls: the button, its price and the reason it's disabled are always in view at 1280×800 and up.
+- With nothing working or failed, the activity row is a single line.
 - Text is left-aligned; media is centred in the set.
 - Outputs are "takes" shown at their true aspect ratio, as prints: 2 px radius, 1 px `--rule` outline. No card shadows, no gradients.
 - Two radii, chosen by role: 2 px for media, 6 px for controls and buttons.
@@ -1024,7 +1061,8 @@ Contrast targets (verify in M8 with the Lighthouse run): ink on proof about 12:1
 
 ### Signature: grease-pencil marks
 
-- Picking a take, an anchor, a candidate face or a sheet view draws a hand-drawn circle around it: an SVG path with a slight wobble, 3 px stroke, `--grease`.
+- Picking a take, an anchor, a candidate face or a sheet view draws a hand-drawn circle around it: an SVG path with a slight wobble, 3 px stroke, `--grease` (cognac).
+- Every pick also says so in words: "✓ Selected" under the picked take or anchor, in `--ink` on a proof chip. On light Studio grey the mark is only 2.4:1, so the hue never carries the pick alone.
 - A rejected take gets a single diagonal grease stroke.
 - Nothing else in the app uses `--grease`.
 
@@ -1040,11 +1078,15 @@ Both clips share one frame. A vertical wipe line the user drags shows Original o
 
 ### Copy rules
 
-- Name things by what people do: "Make a character", "Render final", "Export file". A button and its confirmation use the same verb ("Render final", then "Final rendered").
+- Name things by what people do: "Make a character", "Render final", "Export file", "Image, then animate", "Continue from last frame", "Add a line". A button and its confirmation use the same verb ("Render final", then "Final rendered").
+- A disabled primary button says what it's waiting for, beside it: "Pick a character", "Write a prompt", "Upload a clip".
 - Errors say what happened and what to do, with no apologies (messages in Contracts).
 - Empty states invite one action. The empty vault says "Make your first character" and shows the two ways to do it.
 - Plain words over film jargon, except where the film word is clearer: draft, final, shot, scene, take.
-- No arrows tacked onto buttons, no emoji.
+- The identity score is "Likeness", with the bands Strong, Review and Drifted, in whole numbers.
+- Prices are dollars ("$0.24", or "≈ $0.24" from the static table). Never credits, never "free" or "local".
+- Sentence case for every label, mode and preset group ("Motion transfer", "768p").
+- No arrows tacked onto buttons, no emoji. The ✓ in "✓ Selected" and the ⓘ beside a score are text symbols, not emoji, and the only two used.
 
 ### Don'ts
 
@@ -1173,11 +1215,24 @@ Eight milestones from October 19 to October 29, each with a prompt to paste into
 | M5 Identity, Library | Oct 24 to Oct 25 |
 | M6 P1 features | Oct 25 to Oct 27 |
 | M7 P2 stretch | Oct 27 to Oct 28 |
+| U0 UI pass: spec and screenshots | Oct 21 |
+| U1 UI pass: every screen | Oct 21 to Oct 23 |
+| U2 UI pass: the judges' path | Oct 24 to Oct 26 |
+| U3 UI pass: Director | Oct 26 to Oct 27 |
+| U4 UI pass: check | Oct 28 |
 | M8 Submission | Oct 27 to Oct 29 (code freeze noon Oct 29) |
 | Submit (target) | Oct 29 |
 | Deadline | Oct 30, 9:00am PT |
 
 M4 and M5 overlap on purpose: identity calibration can run while the Recast engines are being compared. M7 only happens if M1 to M6 finish by the evening of October 27.
+
+The UI pass (U0 to U4, Decisions October 21) runs ahead of M8, with its own rules:
+
+- Work on the `ui-pass` branch. Merge to main only at the end of a milestone, after `npm run typecheck && npm test`, `npm run shots`, and a look at the shots. Main deploys to Pages and judges can visit at any time, so a half-finished re-skin never goes live.
+- One commit per numbered decision.
+- Leave prompts, adapters, the job state machine, consent records, stored assets and Contracts alone unless a verified bug needs a change.
+- Any step that spends money on Router calls lists the calls and an estimated cost first.
+- `npm run shots` screenshots every route at 1440×900 and 1280×800, in light and dark, once in a fresh browser and once after adding Walt from the Tour, into `shots/` (gitignored).
 
 ### Setup (before M1)
 
@@ -1309,6 +1364,71 @@ Read docs/SPEC.md: Director (chaining, one-take multi-shot, agent), Finishing (v
 ComfyUI workflows and custom node pack, Unknowns and fallbacks (rows 16 and 17).
 Pick in this order and stop when time runs out: Director chaining and Kling one-take
 multi-shot, voice with lip sync (A/B the two paths), the Director agent, then the node pack.
+```
+
+**U0: UI pass, spec and screenshots (Oct 21)**
+
+```
+Read CLAUDE.md and docs/ui-pass.md, then these docs/SPEC.md sections: Decisions and defaults,
+UI and UX, Visual direction, Identity match score (Bands and actions), Presets and recipes
+(Preset file), Build order for Claude Code.
+Fold docs/ui-pass.md into docs/SPEC.md in the spec's voice: add "Decisions (October 21)";
+replace the Colour tokens table and update "Why grey"; update the Layout sketch (Generate
+footer, activity control), Signature: grease-pencil marks, Copy rules, and the score band
+names; add U0 to U4 to Build order ahead of M8. Do not touch Contracts.
+Then add npm run shots: a Playwright script that screenshots every route at 1440x900 and
+1280x800, in light and dark, once in a fresh browser and once after adding Walt from the
+Tour, into shots/ (gitignored).
+STOP AND ASK: show me the spec diff and list anything in ui-pass.md that conflicts with the
+spec or Contracts. No UI code until I approve.
+```
+
+**U1: UI pass, every screen (Oct 21 to 23)**
+
+```
+Read docs/SPEC.md: Decisions (October 21), Visual direction, UI and UX, and src/lib/jobs/estimate.ts.
+On branch ui-pass, build decisions 1 (Generate footer), 2 (prices), 3 (activity), 4 (tokens),
+5 (selection label) and 14 (polish), one commit each.
+For the price table, take values only from Comfy's published pricing and cite each row in
+docs/notes/u1-notes.md. STOP AND ASK for any model without a published price.
+Done when typecheck and tests pass, the new contrast pairs are in tokens.test.ts, and
+npm run shots shows the Generate button and its price without scrolling on Image, Video
+and Recast at 1440x900 and 1280x800 in both themes. Then STOP AND ASK me to review the shots.
+```
+
+**U2: UI pass, the judges' path (Oct 24 to 26)**
+
+```
+Read docs/SPEC.md: Decisions (October 21) items 6 to 12, Presets and recipes, Identity match
+score, and UI and UX (Screens: First run and Tour).
+Build, one commit each: cast before prompt with @mention chips (the stored prompt keeps
+{lead} slots; the compiler and recipes don't change), score wording, the label changes,
+the routing note, the first-run screen, Tour chapters with "Try this with Walt", the Recast
+drop zone, and preset tiles rendered from each preset's thumbnail field.
+Thumbnails cost Router calls: STOP AND ASK with the list of presets, the model per
+thumbnail and the estimated total before generating any. Use existing public/samples/
+clips for Recast loops where they fit.
+Done when a fresh browser can go first run, Tour, "Try this with Walt", and reach an Image
+screen with Walt cast and a preset picked, without typing a brace, and shots show it.
+```
+
+**U3: UI pass, Director (Oct 26 to 27)**
+
+```
+Read docs/SPEC.md: Director, and Decisions (October 21) item 13.
+Build, one commit each: collapsed inactive shots with a camera summary, the pinned timeline,
+scene cards with cover and readiness, Draft shots with AI beside the logline with its
+add-or-replace note, and the new export ending.
+Done when a 3-shot scene can be edited, reordered and exported without scrolling past more
+than one open shot form, and shots show it at 1440x900.
+```
+
+**U4: UI pass, check (Oct 28), then M8 as planned**
+
+```
+Run npm run shots and a keyboard-only pass of first run, Tour, Image with Walt, Director
+export; check 200% zoom at 1280x800. Fix only blockers and list the rest in
+docs/notes/u4-notes.md. Then continue with M8 (U2 covers M8's Tour work).
 ```
 
 **M8: Submission (Oct 27 to 29)**
