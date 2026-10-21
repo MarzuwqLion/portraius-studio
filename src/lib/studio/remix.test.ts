@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { IMAGE_PRESETS } from "@/lib/presets/load";
 import { validateRecipe } from "@/lib/recipes/share";
 import { MODEL_IDS } from "@/lib/registry/models";
 import type { Job } from "@/lib/types/jobs";
 import type { ImageRequest } from "./image";
-import { recipeFromJob } from "./remix";
+import { matchingPreset, recipeFromJob } from "./remix";
 import type { VideoRequest } from "./video";
 
 const kinds = new Map<string, "person" | "element">([
@@ -61,5 +62,24 @@ describe("recipeFromJob", () => {
   it("leaves Recast and sheets out", () => {
     expect(recipeFromJob(job("recast", MODEL_IDS.minimaxH3, { model: {}, characterIds: [], request: {} }), kinds)).toBeUndefined();
     expect(recipeFromJob(job("sheet", MODEL_IDS.nanoBanana, { model: {}, characterIds: [], request: imageRequest }), kinds)).toBeUndefined();
+  });
+});
+
+describe("matchingPreset", () => {
+  const yearbook = IMAGE_PRESETS.find((p) => p.id === "yearbook-1996")!;
+  const recipe = { model: yearbook.recipe.model, prompt: yearbook.recipe.prompt, params: { ...yearbook.recipe.params } };
+
+  it("finds the shipped preset with the same model, prompt and params", () => {
+    expect(matchingPreset(recipe, IMAGE_PRESETS)?.id).toBe("yearbook-1996");
+  });
+
+  it("allows params the preset doesn't set, like size and count", () => {
+    expect(matchingPreset({ ...recipe, params: { ...recipe.params, size: "2K", count: 2 } }, IMAGE_PRESETS)?.id).toBe("yearbook-1996");
+  });
+
+  it("finds nothing when the prompt, model or a preset param differs", () => {
+    expect(matchingPreset({ ...recipe, prompt: `${recipe.prompt} At night.` }, IMAGE_PRESETS)).toBeUndefined();
+    expect(matchingPreset({ ...recipe, model: MODEL_IDS.seedance }, IMAGE_PRESETS)).toBeUndefined();
+    expect(matchingPreset({ ...recipe, params: { ...recipe.params, aspectRatio: "21:9" } }, IMAGE_PRESETS)).toBeUndefined();
   });
 });

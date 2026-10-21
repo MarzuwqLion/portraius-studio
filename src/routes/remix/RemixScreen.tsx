@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Note, Screen } from "@/components/shell/Screen";
+import { PresetExample, THUMBNAIL_CAST } from "@/components/studio/EmptyExample";
 import { Field, Select } from "@/components/studio/fields";
 import { PromptText } from "@/components/studio/PromptEditor";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useEstimateLabel } from "@/lib/jobs/hooks";
 import { withPrice } from "@/lib/jobs/estimate";
-import { cameraOption, look } from "@/lib/presets/load";
+import { IMAGE_PRESETS, VIDEO_PRESETS, cameraOption, look, thumbnailUrl } from "@/lib/presets/load";
 import { CAMERA_GROUPS, type CameraGroup } from "@/lib/presets/schema";
 import { decodeRecipe, type RecipeFile } from "@/lib/recipes/share";
 import { MODEL_IDS, registryEntry } from "@/lib/registry/models";
 import { isUsable } from "@/lib/store/characters";
 import { useCharacters } from "@/lib/store/hooks";
-import { startRemix } from "@/lib/studio/remix";
+import { matchingPreset, startRemix } from "@/lib/studio/remix";
 import { modelFor, type VideoMode } from "@/lib/studio/video";
 
 // A shared recipe (spec: Remix links): its card, a picker per slot filled
@@ -50,6 +51,8 @@ function RecipeCard({ recipe }: { recipe: RecipeFile }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const image = recipe.capability === "image.generate";
+  // A recipe from a shipped preset shows that preset's own example.
+  const example = matchingPreset(recipe, image ? IMAGE_PRESETS : VIDEO_PRESETS);
 
   // Fill each slot with the first unused character of its kind.
   useEffect(() => {
@@ -110,6 +113,12 @@ function RecipeCard({ recipe }: { recipe: RecipeFile }) {
 
   return (
     <div className="grid max-w-3xl gap-6">
+      {example && thumbnailUrl(example) && (
+        <figure className="grid justify-items-start gap-2 rounded-media bg-seamless p-4 text-on-seamless">
+          <PresetExample preset={example} className="develop max-h-80 w-auto max-w-full rounded-media border border-rule object-contain" />
+          <figcaption className="text-control">Example with {THUMBNAIL_CAST}, a designed character. Your cast fills the slots.</figcaption>
+        </figure>
+      )}
       <article className="grid gap-3 rounded-media border border-rule p-5">
         <p className="text-control font-semibold text-ink-muted">
           {image ? "Image" : "Video"} recipe · {registryEntry(recipe.model)?.label ?? recipe.model}

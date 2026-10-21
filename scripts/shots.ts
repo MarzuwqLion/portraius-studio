@@ -199,6 +199,11 @@ const CHECKS: Check[] = [
     },
   },
   {
+    name: "a remix link from a preset shows its example",
+    applies: (route) => route === "remix",
+    run: async (page) => ((await page.getByText("Example with Walt Harmon, a designed character. Your cast fills the slots.").count()) ? undefined : "no example above the recipe"),
+  },
+  {
     name: "the default Video draft is ≈ $0.74 (5 s)",
     applies: (route, phase) => route === "video" && phase === "fresh",
     run: async (page) => {
