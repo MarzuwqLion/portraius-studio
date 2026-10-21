@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { ChevronRight } from "lucide-react";
 import { jobStatusText } from "@/components/studio/JobTake";
 import { useRecentJobs } from "@/lib/jobs/hooks";
 import { cancelJob, retryJob } from "@/lib/jobs/runner";
@@ -63,17 +64,53 @@ function Frame({ job }: { job: Job }) {
   );
 }
 
-// The film strip: one frame per queued or finished job, newest first. It
-// survives navigation and reloads (jobs live in IndexedDB and resume on load).
+const FAILED: Job["status"][] = ["failed", "expired"];
+
+function startOfToday(): number {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+// Activity (spec: Decisions, October 21, item 3): working and failed jobs
+// each get a frame, newest first; today's finished jobs fold into one "14
+// done" control that opens today's film strip. With nothing working or failed
+// it's a single line. It survives navigation and reloads (jobs live in
+// IndexedDB and resume on load).
 export function JobsTray() {
-  const jobs = useRecentJobs(30);
+  const jobs = useRecentJobs(80);
+  const [open, setOpen] = useState(false);
+  const today = startOfToday();
+  const active = jobs.filter((j) => WORKING.includes(j.status) || (FAILED.includes(j.status) && j.createdAt >= today));
+  const done = jobs.filter((j) => j.status === "done" && j.createdAt >= today);
+  const strip = active.length > 0 || (open && done.length > 0);
+
   return (
-    <section aria-label="Jobs" className="flex h-[4.5rem] shrink-0 items-center overflow-x-auto border-t border-rule px-4">
-      {jobs.length === 0 ? (
-        <p className="text-control text-ink-muted">No jobs yet. Everything you generate lines up here.</p>
+    <section aria-label="Activity" className={cn("flex shrink-0 items-center gap-3 overflow-x-auto border-t border-rule px-4", strip ? "h-[4.5rem]" : "h-10")}>
+      {active.length > 0 ? (
+        <ol aria-label="Working and failed" className="flex shrink-0 gap-2">
+          {active.map((job) => (
+            <Frame key={job.id} job={job} />
+          ))}
+        </ol>
       ) : (
-        <ol className="flex gap-2">
-          {jobs.map((job) => (
+        <p className="shrink-0 text-control text-ink-muted">{done.length ? "Nothing running." : "Nothing running. What you generate lines up here."}</p>
+      )}
+      {done.length > 0 && (
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls="activity-done"
+          onClick={() => setOpen(!open)}
+          className="flex h-8 shrink-0 items-center gap-1 rounded-control border border-rule px-3 text-control font-semibold hover:bg-tint-hover"
+        >
+          {done.length} done
+          <ChevronRight aria-hidden className={cn("size-4", open && "rotate-180")} />
+        </button>
+      )}
+      {open && done.length > 0 && (
+        <ol id="activity-done" aria-label="Done today" className="flex shrink-0 gap-2">
+          {done.map((job) => (
             <Frame key={job.id} job={job} />
           ))}
         </ol>
