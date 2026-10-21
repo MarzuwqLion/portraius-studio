@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/store/db";
 import { useObjectUrl } from "@/lib/store/hooks";
-import { estimateLabel, estimateRun } from "./estimate";
+import { addEstimates, estimateLabel, estimateRun, type PriceHints } from "./estimate";
 import type { Job } from "@/lib/types/jobs";
 
 export function useJob(id: string | undefined): Job | undefined {
@@ -27,23 +27,50 @@ export function useJobImageUrl(jobId: string | undefined): string | undefined {
   return useObjectUrl(blob);
 }
 
-// The cost label for a run, fetched once per input. Building the input can be
-// slow (photos to base64), so it's a function called inside the effect.
-export function useEstimateLabel(modelId: string, buildInput: (() => Promise<unknown>) | undefined, key: string): string {
-  const [label, setLabel] = useState("price unknown");
+// One model call in a run; a run can be several (a still, then its clip).
+export interface PriceRequest {
+  modelId: string;
+  input: unknown;
+  hints?: PriceHints;
+}
+
+// "known" carries a label; "unavailable" means no published price, which the
+// Generate footer says in one line (spec: Decisions, October 21, item 2).
+export interface Price {
+  label?: string;
+  state: "idle" | "loading" | "known" | "unavailable";
+}
+
+// The price of a run, fetched once per key. Building the input can be slow
+// (photos to base64), so it's a function called inside the effect. times
+// multiplies it (several takes at once).
+export function usePrice(build: (() => Promise<PriceRequest[]>) | undefined, key: string, times = 1): Price {
+  const [price, setPrice] = useState<Price>({ state: "idle" });
   useEffect(() => {
-    if (!buildInput) return;
+    if (!build) {
+      setPrice({ state: "idle" });
+      return;
+    }
     let live = true;
-    void buildInput()
-      .then((input) => estimateRun(modelId, input))
-      .then((e) => live && setLabel(estimateLabel(e)))
-      .catch(() => undefined);
+    setPrice((p) => (p.state === "known" ? p : { state: "loading" }));
+    void build()
+      .then((requests) => Promise.all(requests.map((r) => estimateRun(r.modelId, r.input, r.hints))))
+      .then((parts) => {
+        const label = estimateLabel(addEstimates(parts, times));
+        if (live) setPrice(label ? { label, state: "known" } : { state: "unavailable" });
+      })
+      .catch(() => live && setPrice({ state: "unavailable" }));
     return () => {
       live = false;
     };
     // The key stands in for the input, which can be megabytes of base64.
-  }, [modelId, key]);
-  return label;
+  }, [key, times, Boolean(build)]);
+  return price;
+}
+
+// The price label for one model call, or undefined when there's none.
+export function useEstimateLabel(modelId: string, buildInput: (() => Promise<unknown>) | undefined, key: string, hints?: PriceHints): string | undefined {
+  return usePrice(buildInput ? async () => [{ modelId, input: await buildInput(), ...(hints ? { hints } : {}) }] : undefined, `${modelId}:${key}`).label;
 }
 
 // Several jobs at once, in the order asked. undefined while loading.

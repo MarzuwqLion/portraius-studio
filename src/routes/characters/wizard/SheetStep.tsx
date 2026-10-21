@@ -7,6 +7,7 @@ import type { WizardDraft } from "@/lib/characters/draft";
 import { FLAGGED_VIEWS, SHEET_VIEWS, viewAspect, viewLabel, type SheetView } from "@/lib/characters/sheet";
 import { MATCH_SCORE } from "@/lib/identity/score";
 import { useEstimateLabel, useJob, useJobs } from "@/lib/jobs/hooks";
+import { withPrice } from "@/lib/jobs/estimate";
 import { MODEL_IDS } from "@/lib/registry/models";
 import type { Job } from "@/lib/types/jobs";
 import type { UpdateDraft } from "./useDraft";
@@ -102,7 +103,7 @@ export function SheetStep({ draft, update, onNext }: { draft: WizardDraft; updat
           </div>
           {!compositeId ? (
             <Button onClick={() => void drawSheet()} disabled={busy}>
-              Draw the sheet · {price}
+              {withPrice("Draw the sheet", price)}
             </Button>
           ) : (
             <Button variant="secondary" onClick={() => void drawSheet()} disabled={busy || (composite?.status !== "done" && !failed(composite))}>

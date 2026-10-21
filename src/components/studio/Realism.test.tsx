@@ -11,7 +11,7 @@ vi.mock("@/lib/studio/realism", () => ({
   startRealism: (generationId: string, strength: number) => startRealism(generationId, strength),
   realismSource: () => undefined,
 }));
-vi.mock("@/lib/jobs/hooks", () => ({ useEstimateLabel: () => "price unknown", useJob: () => undefined }));
+vi.mock("@/lib/jobs/hooks", () => ({ useEstimateLabel: () => "≈ $0.37", useJob: () => undefined }));
 
 afterEach(() => {
   cleanup();

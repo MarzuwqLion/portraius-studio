@@ -59,7 +59,7 @@ export function DesignStep({ draft, update, onNext }: { draft: WizardDraft; upda
       )}
       <div className="flex flex-wrap items-center gap-3">
         <Button onClick={() => void draw()} disabled={!valid || starting}>
-          Draw {CANDIDATE_COUNT} faces · {price} each
+          {price ? `Draw ${CANDIDATE_COUNT} faces · ${price} each` : `Draw ${CANDIDATE_COUNT} faces`}
         </Button>
         {draft.candidateJobIds.length > 0 && (
           <Button variant="secondary" onClick={onNext}>

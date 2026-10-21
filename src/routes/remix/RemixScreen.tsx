@@ -4,6 +4,7 @@ import { Note, Screen } from "@/components/shell/Screen";
 import { Field, Select } from "@/components/studio/fields";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useEstimateLabel } from "@/lib/jobs/hooks";
+import { withPrice } from "@/lib/jobs/estimate";
 import { cameraOption, look } from "@/lib/presets/load";
 import { CAMERA_GROUPS, type CameraGroup } from "@/lib/presets/schema";
 import { decodeRecipe, type RecipeFile } from "@/lib/recipes/share";
@@ -152,7 +153,7 @@ function RecipeCard({ recipe }: { recipe: RecipeFile }) {
         </p>
       )}
       <Button className="justify-self-start" disabled={!ready || busy} onClick={() => void run()}>
-        Run this recipe · {price}
+        {withPrice("Run this recipe", price)}
       </Button>
     </div>
   );

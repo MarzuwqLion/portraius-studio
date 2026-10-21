@@ -10,7 +10,7 @@ import { SplitView } from "@/components/studio/SplitView";
 import { ScoreBadge, Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useEstimateLabel, useRecentJobs } from "@/lib/jobs/hooks";
+import { usePrice, useRecentJobs } from "@/lib/jobs/hooks";
 import { retryJob, type JobInput } from "@/lib/jobs/runner";
 import { clipInfo, trimClip, type ClipInfo } from "@/lib/media/video-prep";
 import { RECAST_PRESETS } from "@/lib/presets/load";
@@ -161,15 +161,17 @@ export function RecastScreen() {
     rights,
   });
   const ready = !needs;
-  const price = useEstimateLabel(
-    mode === "swap" ? MODEL_IDS.happyHorseEdit : MODEL_IDS.minimaxH3,
-    ready
-      ? async () =>
+  // The price follows the clip's length, so it shows once there is a clip.
+  const clipSec = Math.round(prepared?.info.durationSec ?? Math.min(length, limits.maxSec));
+  const price = usePrice(
+    rawBlobId && clipSec > 0
+      ? async () => [
           mode === "swap"
-            ? { prompt: preset.recipe.prompt, videoUrl: "https://example.invalid/clip.mp4" }
-            : { stage: "generate", prompt: preset.recipe.prompt, referenceVideos: ["https://example.invalid/clip.mp4"], durationSec: Math.round(prepared!.info.durationSec), ratio: "16:9", resolution: h3Resolution }
+            ? { modelId: MODEL_IDS.happyHorseEdit, input: { prompt: preset.recipe.prompt, videoUrl: "https://example.invalid/clip.mp4" }, hints: { durationSec: clipSec } }
+            : { modelId: MODEL_IDS.minimaxH3, input: { stage: "generate", prompt: preset.recipe.prompt, referenceVideos: ["https://example.invalid/clip.mp4"], durationSec: Math.max(4, clipSec), ratio: "16:9", resolution: h3Resolution } },
+        ]
       : undefined,
-    `${presetId}:${h3Resolution}:${ready}`,
+    `${mode}:${clipSec}:${h3Resolution}`,
   );
 
   async function recast() {

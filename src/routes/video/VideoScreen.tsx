@@ -11,7 +11,7 @@ import { PresetPicker } from "@/components/studio/PresetPicker";
 import { Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useEstimateLabel, useRecentJobs } from "@/lib/jobs/hooks";
+import { usePrice, useRecentJobs } from "@/lib/jobs/hooks";
 import { retryJob, type JobInput } from "@/lib/jobs/runner";
 import { VIDEO_PRESETS } from "@/lib/presets/load";
 import type { Preset } from "@/lib/presets/schema";
@@ -182,11 +182,16 @@ export function VideoScreen() {
   const needsCast = mode === "still" || mode === "references";
   const waitingFor = needsCast && !cast.length ? "Pick a character" : mode === "image" && !sourceBlobId ? "Add a first frame" : !scene.trim() ? "Write a prompt" : undefined;
   const ready = !waitingFor;
-  const estimateInput = async () =>
-    effective === MODEL_IDS.minimaxH3
-      ? { stage: "generate", prompt: scene, durationSec, ratio, resolution: h3Resolution }
-      : { stage: "draft", prompt: scene, durationSec, ratio, generateAudio: audio };
-  const price = useEstimateLabel(effective, ready ? estimateInput : undefined, `${effective}:${durationSec}:${h3Resolution}:${audio}:${ready}`);
+  // Image, then animate is two calls: the 2K opening still, then the clip.
+  const price = usePrice(
+    async () => [
+      ...(mode === "still" ? [{ modelId: MODEL_IDS.nanoBanana, input: { prompt: scene, references: [], aspectRatio: "16:9", size: "2K", quality: "best" } }] : []),
+      effective === MODEL_IDS.minimaxH3
+        ? { modelId: effective, input: { stage: "generate", prompt: scene, durationSec, ratio, resolution: h3Resolution } }
+        : { modelId: effective, input: { stage: "draft", prompt: scene, durationSec, ratio, generateAudio: audio } },
+    ],
+    `${mode}:${effective}:${durationSec}:${h3Resolution}:${audio}`,
+  );
 
   async function generate() {
     if (!ready || busy) return;

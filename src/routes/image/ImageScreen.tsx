@@ -12,7 +12,7 @@ import { RealismAction, RealismTake } from "@/components/studio/Realism";
 import { SaveAsElement } from "@/components/studio/SaveAsElement";
 import { Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
-import { useEstimateLabel, useRecentJobs } from "@/lib/jobs/hooks";
+import { usePrice, useRecentJobs } from "@/lib/jobs/hooks";
 import type { JobInput } from "@/lib/jobs/runner";
 import { IMAGE_PRESETS } from "@/lib/presets/load";
 import type { Preset } from "@/lib/presets/schema";
@@ -101,7 +101,8 @@ export function ImageScreen() {
 
   const request: ImageRequest = { scene, cast, ...(sourceBlobId ? { sourceBlobId } : {}), aspectRatio, size, quality, count, camera, ...(advanced && override.trim() ? { promptOverride: override } : {}) };
   const ready = Boolean(scene.trim() || (advanced && override.trim()));
-  const price = useEstimateLabel(MODEL_IDS.nanoBanana, ready ? async () => ({ prompt: preview, references: [], aspectRatio, size, quality }) : undefined, `${size}:${quality}:${aspectRatio}:${ready}`);
+  // The price doesn't depend on the words, so it shows before there are any.
+  const price = usePrice(async () => [{ modelId: MODEL_IDS.nanoBanana, input: { prompt: preview, references: [], aspectRatio, size, quality } }], `${size}:${quality}:${aspectRatio}:${Boolean(sourceBlobId)}`, count);
   const unknownSlots = slotsIn(scene).filter((s) => !cast.some((c) => c.slot === s));
   const waitingFor = !ready ? "Write a prompt" : unknownSlots.length ? "Pick a character" : undefined;
 

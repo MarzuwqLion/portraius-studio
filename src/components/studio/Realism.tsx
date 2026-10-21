@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { useEstimateLabel, useJob } from "@/lib/jobs/hooks";
+import { withPrice } from "@/lib/jobs/estimate";
 import { retryJob } from "@/lib/jobs/runner";
 import { toInlineImage } from "@/lib/media/image-prep";
 import { MODEL_IDS } from "@/lib/registry/models";
@@ -54,7 +55,7 @@ export function RealismAction({ generationId, onStarted, className }: { generati
         <span className="w-6 tabular-nums">{strength}</span>
       </label>
       <Button size="sm" variant="secondary" onClick={() => void run()} disabled={busy}>
-        Make it real · {price}
+        {withPrice("Make it real", price)}
       </Button>
       {error && (
         <p className="text-control text-drift" role="alert">

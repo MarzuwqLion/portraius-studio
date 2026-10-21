@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEstimateLabel, useJob } from "@/lib/jobs/hooks";
+import { withPrice } from "@/lib/jobs/estimate";
 import { VOICES, voice } from "@/lib/presets/load";
 import { MODEL_IDS } from "@/lib/registry/models";
 import { useBlobUrl } from "@/lib/store/hooks";
@@ -112,7 +113,7 @@ export function SpeakAction({
       </Field>
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="secondary" disabled={!text.trim() || !voiceId || busy !== undefined} onClick={() => void step("voice", async () => setLine(await speakLine(text, voiceId!)))}>
-          {busy === "voice" ? "Speaking" : `Make the line · ${voicePrice}`}
+          {busy === "voice" ? "Speaking" : withPrice("Make the line", voicePrice)}
         </Button>
         <Button size="sm" variant="ghost" disabled={!rights || busy !== undefined} onClick={() => file.current?.click()}>
           Use a recording
@@ -155,7 +156,7 @@ export function SpeakAction({
                   })
                 }
               >
-                New speaking clip · {speakingPrice}
+                {withPrice("New speaking clip", speakingPrice)}
               </Button>
             )}
             <Button
@@ -170,7 +171,7 @@ export function SpeakAction({
                 })
               }
             >
-              Lip sync this clip · {syncPrice}
+              {withPrice("Lip sync this clip", syncPrice)}
             </Button>
           </div>
           <p className="text-control text-ink-muted">

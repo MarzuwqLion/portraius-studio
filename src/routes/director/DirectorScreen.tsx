@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useEstimateLabel, useJob, useJobImageUrl, useJobs } from "@/lib/jobs/hooks";
+import { withPrice } from "@/lib/jobs/estimate";
 import { MODEL_IDS, registryEntry } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
 import { useBlobUrl, useGeneration, useObjectUrl } from "@/lib/store/hooks";
@@ -404,7 +405,7 @@ function ShotCard({
               <Select value={count} label="How many stills to draw" options={ANCHOR_COUNTS} onChange={(v) => setCount(v ?? "2")} />
             </span>
             <Button size="sm" disabled={!ready || busy !== undefined} onClick={() => void run(`stills:${shot.id}`, () => drawAnchors(scene.id, shot.id, Number(count)))}>
-              {shot.anchorJobIds.length ? "Draw more" : "Draw stills"} · {stillsPrice}
+              {withPrice(shot.anchorJobIds.length ? "Draw more" : "Draw stills", stillsPrice)}
             </Button>
           </div>
           {anchors.length > 0 ? (
@@ -443,12 +444,12 @@ function ShotCard({
               </Button>
             ) : !shot.takeJobId ? (
               <Button size="sm" disabled={!canAnimate || !ready || busy !== undefined} onClick={() => void run(`animate:${shot.id}`, () => animateShot(scene.id, shot.id))}>
-                Animate · {motionPrice}
+                {withPrice("Animate", motionPrice)}
               </Button>
             ) : (
               <>
                 <Button size="sm" variant={stale ? "primary" : "secondary"} className={stale ? undefined : ON_SEAMLESS} disabled={busy !== undefined || !canAnimate} onClick={() => void run(`animate:${shot.id}`, () => animateShot(scene.id, shot.id, true))}>
-                  Re-roll · {motionPrice}
+                  {withPrice("Re-roll", motionPrice)}
                 </Button>
                 {canFinal && (
                   <Button size="sm" disabled={busy !== undefined} onClick={() => void run(`final:${shot.id}`, () => finalizeShot(scene.id, shot.id))}>
@@ -636,7 +637,7 @@ function DraftWithAI({ scene, editor }: { scene: Scene; editor: Editor }) {
   return (
     <>
       <Button variant="secondary" className="border-on-seamless text-on-seamless" disabled={!ready || busy !== undefined || drafting} onClick={() => void run("agent", () => draftShots(scene.id))}>
-        {drafting ? "Drafting shots" : `Draft shots with AI · ${price}`}
+        {drafting ? "Drafting shots" : withPrice("Draft shots with AI", price)}
       </Button>
       <span className="text-control">{ready ? "Claude Sonnet 5.5 plans 3 to 6 shots from the scene card. Edit them after." : "Write a logline to draft shots with AI."}</span>
     </>
@@ -666,7 +667,7 @@ function OneTake({ scene, editor }: { scene: Scene; editor: Editor }) {
       </p>
       <div className="flex flex-wrap items-center gap-4">
         <Button disabled={problem !== undefined || busy !== undefined} onClick={() => void run("one-take", () => shootOneTake(scene.id))}>
-          Shoot as one take · {price}
+          {withPrice("Shoot as one take", price)}
         </Button>
         {problem && <span className="text-control">{problem}</span>}
       </div>

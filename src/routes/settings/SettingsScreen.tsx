@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Screen } from "@/components/shell/Screen";
 import { config } from "@/lib/config";
+import { CREDITS_PER_DOLLAR } from "@/lib/jobs/estimate";
 import { onSessionCredits } from "@/lib/router/client";
 import { errorText } from "@/lib/router/errors";
 import { forgetKey, saveKey, useKeyStore, verifyKey } from "@/lib/session/key";
@@ -169,7 +170,7 @@ function StorageSection() {
       <p className="text-body">
         {usage ? `Using ${formatBytes(usage.used)} of about ${formatBytes(usage.quota)} this browser allows.` : "Storage use isn't available in this browser."}
       </p>
-      {credits !== null && <p className="text-body">Spent this session: {credits.toFixed(2)} credits.</p>}
+      {credits !== null && <p className="text-body">Spent this session: ${(credits / CREDITS_PER_DOLLAR).toFixed(2)}.</p>}
     </Section>
   );
 }

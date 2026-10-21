@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import type { Price } from "@/lib/jobs/hooks";
 
 // The Generate footer (spec: Decisions, October 21, item 1): the primary
 // action, its price and what it's waiting for, pinned under the call sheet so
@@ -14,7 +15,7 @@ export function GenerateFooter({
   note,
 }: {
   label: string;
-  price?: string;          // "$0.24" or "≈ $0.24"; none when the price isn't known
+  price: Price;
   waitingFor?: string;     // why the button is disabled, e.g. "Write a prompt"
   busy?: boolean;
   onRun: () => void;
@@ -47,8 +48,9 @@ export function GenerateFooter({
         <Button type="button" className="flex-1" disabled={disabled} aria-describedby={waitingFor ? reasonId : undefined} aria-keyshortcuts="Control+Enter Meta+Enter" onClick={onRun}>
           {label}
         </Button>
-        {price && <span className="shrink-0 text-body font-semibold tabular-nums">{price}</span>}
+        {price.label && <span className="shrink-0 text-body font-semibold tabular-nums">{price.label}</span>}
       </div>
+      {price.state === "unavailable" && !waitingFor && <p className="text-control text-ink-muted">Prices aren't available for this key; Comfy bills your account as usual.</p>}
       {note && <p className="text-control text-ink-muted">{note}</p>}
     </div>
   );
