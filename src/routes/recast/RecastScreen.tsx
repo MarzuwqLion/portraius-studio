@@ -10,6 +10,7 @@ import { SplitView } from "@/components/studio/SplitView";
 import { ScoreBadge, Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CHECK_SCORE } from "@/lib/identity/score";
 import { usePrice, useRecentJobs } from "@/lib/jobs/hooks";
 import { retryJob, type JobInput } from "@/lib/jobs/runner";
 import { clipInfo, trimClip, type ClipInfo } from "@/lib/media/video-prep";
@@ -62,8 +63,13 @@ function RecastResult({ job }: { job: Job }) {
           <span className="text-control text-on-seamless">Score not available for stylised looks</span>
         ) : generation?.identityScore !== undefined ? (
           <>
-            <ScoreBadge score={generation.identityScore} />
-            {generation.worstScore !== undefined && <span className="text-control text-on-seamless">worst frame {generation.worstScore}</span>}
+            <ScoreBadge score={generation.identityScore} {...(generation.worstScore !== undefined ? { lowest: generation.worstScore } : {})} />
+            {/* A drifted recast runs again with a new seed (spec: Bands and actions). */}
+            {request && Math.round(generation.identityScore) < CHECK_SCORE && (
+              <Button size="sm" onClick={() => void startRecast({ ...request, seed: randomSeed() })}>
+                Re-roll
+              </Button>
+            )}
           </>
         ) : null}
         {(job.status === "failed" || job.status === "expired") && job.error?.retry !== "never" && (

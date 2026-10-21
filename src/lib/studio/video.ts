@@ -14,6 +14,7 @@ import { getSettings } from "@/lib/store/settings";
 import type { Job } from "@/lib/types/jobs";
 import type { GenerationAsset } from "@/lib/types/records";
 import { buildCast, dataUri, type CastPick } from "./cast";
+import { randomSeed } from "./image";
 
 export type VideoMode = "text" | "still" | "references" | "image";
 export type VideoModel = typeof MODEL_IDS.seedance | typeof MODEL_IDS.minimaxH3;
@@ -140,6 +141,17 @@ export async function startVideo(asked: VideoRequest): Promise<string> {
     return startVideoJob(request, await frameUri(row.blob));
   }
   return startVideoJob(request);
+}
+
+// Re-roll (spec: Identity match score, Bands and actions): a drifted clip
+// again, same request and same first frame, with a new seed. A clip that
+// started from a still keeps that still; only the motion is redrawn.
+export async function rerollClip(jobId: string): Promise<string> {
+  const job = await db.jobs.get(jobId);
+  const input = job?.input as VideoJobInput | undefined;
+  if (!job || !input?.request) throw new Error("This clip can't be re-rolled.");
+  const firstFrame = (input.model as { firstFrame?: string }).firstFrame;
+  return startVideoJob({ ...input.request, seed: randomSeed() }, firstFrame);
 }
 
 // ---- Draft, then final ----

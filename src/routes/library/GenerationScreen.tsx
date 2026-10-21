@@ -69,8 +69,7 @@ export function GenerationScreen() {
             <p className="text-control text-ink-muted">Score not available for stylised looks</p>
           ) : generation.identityScore !== undefined ? (
             <div className="flex flex-wrap items-baseline gap-3">
-              <ScoreBadge score={generation.identityScore} />
-              {generation.worstScore !== undefined && <span className="text-control text-ink-muted">worst frame {generation.worstScore}</span>}
+              <ScoreBadge score={generation.identityScore} {...(generation.worstScore !== undefined ? { lowest: generation.worstScore } : {})} />
             </div>
           ) : null}
           {generation.prompt && <p className="max-w-[70ch] text-body">{generation.prompt}</p>}

@@ -11,6 +11,7 @@ import { PresetPicker } from "@/components/studio/PresetPicker";
 import { Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CHECK_SCORE } from "@/lib/identity/score";
 import { usePrice, useRecentJobs } from "@/lib/jobs/hooks";
 import { retryJob, type JobInput } from "@/lib/jobs/runner";
 import { VIDEO_PRESETS } from "@/lib/presets/load";
@@ -18,7 +19,7 @@ import type { Preset } from "@/lib/presets/schema";
 import type { CameraSelection } from "@/lib/prompts/camera";
 import type { H3Input, VideoRatio } from "@/lib/registry/inputs";
 import { MODEL_IDS } from "@/lib/registry/models";
-import { useBlobUrl } from "@/lib/store/hooks";
+import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
 import type { CastPick } from "@/lib/studio/cast";
 import { randomSeed } from "@/lib/studio/image";
 import { generationImageBlobId, storeUpload } from "@/lib/studio/uploads";
@@ -31,6 +32,7 @@ import {
   isFinal,
   lastFrameBlobId,
   renderFinal,
+  rerollClip,
   retrySilent,
   startVideo,
   type VideoMode,
@@ -70,9 +72,16 @@ function ClipActions({ job, followUps, onContinue }: { job: Job; followUps: Job[
   };
   const hasFinal = followUps.some((c) => isFinal(c) && c.status !== "failed" && c.status !== "cancelled");
   const generationId = job.generationIds[0];
+  const generation = useGeneration(job.status === "done" ? generationId : undefined);
+  const drifted = generation?.identityScore !== undefined && Math.round(generation.identityScore) < CHECK_SCORE;
   return (
     <div className="grid gap-1">
       <div className="flex flex-wrap gap-2">
+        {job.kind === "video" && drifted && (
+          <Button size="sm" onClick={() => run(() => rerollClip(job.id))} disabled={busy}>
+            Re-roll
+          </Button>
+        )}
         {job.status === "done" && isDraft(job) && !hasFinal && (
           <Button size="sm" onClick={() => run(() => renderFinal(job.id))} disabled={busy}>
             Render final

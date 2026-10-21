@@ -7,7 +7,7 @@
 export const DISTANCE_PERFECT = 0.4;
 export const DISTANCE_ZERO = 0.9;
 
-// Bands: 80 to 100 strong match, 60 to 79 check, under 60 drift.
+// Bands: 80 to 100 Strong, 60 to 79 Review, under 60 Drifted.
 export const MATCH_SCORE = 80;
 export const CHECK_SCORE = 60;
 

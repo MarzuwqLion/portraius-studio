@@ -19,9 +19,9 @@ const TYPES: { value: Generation["type"]; label: string }[] = [
   { value: "scene", label: "Scenes" },
 ];
 const BANDS: { value: Band | "unscored"; label: string }[] = [
-  { value: "match", label: "Strong match" },
-  { value: "check", label: "Check" },
-  { value: "drift", label: "Drift" },
+  { value: "match", label: "Strong (80 and up)" },
+  { value: "check", label: "Review (60 to 79)" },
+  { value: "drift", label: "Drifted (under 60)" },
   { value: "unscored", label: "Not scored" },
 ];
 
@@ -47,7 +47,7 @@ function Print({ generation, selecting, selected, onToggle }: { generation: Gene
         {generation.scoreNote === "stylised" ? (
           <span className="text-control text-on-seamless">Stylised</span>
         ) : generation.identityScore !== undefined ? (
-          <ScoreBadge score={generation.identityScore} />
+          <ScoreBadge score={generation.identityScore} info={false} />
         ) : (
           <span />
         )}

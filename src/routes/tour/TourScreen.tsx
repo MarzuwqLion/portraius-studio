@@ -47,8 +47,7 @@ function Sample({ item }: { item: TourItem }) {
       <Media item={item} />
       <div className="flex flex-wrap items-center gap-2">
         <SampleLabel />
-        {item.score !== undefined && <ScoreBadge score={item.score} />}
-        {item.worst !== undefined && <span className="text-control text-on-seamless">worst frame {item.worst}</span>}
+        {item.score !== undefined && <ScoreBadge score={item.score} {...(item.worst !== undefined ? { lowest: item.worst } : {})} />}
         {item.before !== undefined && item.after !== undefined && (
           <>
             <span className="text-control text-on-seamless">Before</span>

@@ -37,8 +37,7 @@ export function OutputTake({
   else if (cast && generation?.identityScore !== undefined) {
     score = (
       <span className="flex flex-wrap items-baseline gap-x-3">
-        <ScoreBadge score={generation.identityScore} />
-        {generation.worstScore !== undefined && <span className="text-control text-on-seamless">worst frame {generation.worstScore}</span>}
+        <ScoreBadge score={generation.identityScore} {...(generation.worstScore !== undefined ? { lowest: generation.worstScore } : {})} />
       </span>
     );
   }

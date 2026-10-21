@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Popover } from "radix-ui";
 import { band, type Band } from "@/lib/identity/score";
 import { cn } from "@/lib/utils";
 import { GreaseCircle, GreaseStrike } from "./GreaseMark";
@@ -67,24 +68,50 @@ export function SelectedLabel() {
   return <span className="mt-3 inline-flex rounded-control bg-proof px-2 py-0.5 text-control font-semibold text-ink">✓ Selected</span>;
 }
 
-const BAND_TEXT: Record<Band, { label: string; className: string }> = {
-  match: { label: "Strong match", className: "text-match" },
-  check: { label: "Check", className: "text-check" },
-  drift: { label: "Drift", className: "text-drift" },
+export const BAND_TEXT: Record<Band, { label: string; className: string }> = {
+  match: { label: "Strong", className: "text-match" },
+  check: { label: "Review", className: "text-check" },
+  drift: { label: "Drifted", className: "text-drift" },
 };
 
-// An identity score, coloured by band. It sits in its own proof chip, since
-// the band colours only reach their contrast targets on proof, not on Studio grey.
-const chip = "inline-flex items-baseline gap-2 rounded-control bg-proof px-2 py-0.5";
+export const SCORE_EXPLAINED =
+  "Likeness compares the face with this character's own reference photos and sheet. It says nothing about hands, the action or the image as a whole.";
 
-export function ScoreBadge({ score, note }: { score: number | null | undefined; note?: string }) {
+// Likeness (spec: Identity match score, Bands and actions): a whole number,
+// coloured by band, in its own proof chip, since the band colours only reach
+// their contrast targets on proof. A video adds its lowest frame. The ⓘ says
+// what the number measures; leave it out where the badge sits inside a link.
+const chip = "inline-flex items-baseline gap-2 rounded-control bg-proof px-2 py-0.5 text-ink";
+
+export function ScoreBadge({ score, lowest, note, info = true }: { score: number | null | undefined; lowest?: number; note?: string; info?: boolean }) {
   if (score === undefined) return <span className={cn(chip, "text-control text-ink-muted")}>Scoring</span>;
   if (score === null) return <span className={cn(chip, "text-control text-ink-muted")}>{note ?? "No face found to score"}</span>;
-  const b = BAND_TEXT[band(score)];
+  const whole = Math.round(score);
+  const b = BAND_TEXT[band(whole)];
   return (
     <span className={chip}>
-      <span className={cn("font-display text-panel font-extrabold", b.className)}>{score}</span>
+      <span className="text-control">Likeness</span>
+      <span className={cn("font-display text-panel font-extrabold", b.className)}>{whole}</span>
       <span className={cn("text-control font-semibold", b.className)}>{b.label}</span>
+      {lowest !== undefined && <span className="text-control text-ink-muted">Lowest frame {Math.round(lowest)}</span>}
+      {info && <ScoreInfo />}
     </span>
+  );
+}
+
+function ScoreInfo() {
+  return (
+    <Popover.Root>
+      <Popover.Trigger asChild>
+        <button type="button" aria-label="What Likeness measures" className="self-center rounded-full px-0.5 text-control leading-none text-ink-muted hover:text-ink">
+          ⓘ
+        </button>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content side="top" sideOffset={6} className="z-50 max-w-64 rounded-control border border-rule bg-proof p-3 text-control text-ink">
+          {SCORE_EXPLAINED}
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }
