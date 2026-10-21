@@ -3,6 +3,7 @@ import {
   chainStale,
   continues,
   exportJobId,
+  exportLabel,
   lineSourceJobId,
   mergeEdits,
   newScene,
@@ -14,6 +15,7 @@ import {
   shotCast,
   shotScene,
   shotSeed,
+  shotSummary,
   type Scene,
   type Shot,
 } from "./director";
@@ -175,5 +177,20 @@ describe("mergeEdits", () => {
     expect(merged.shots).toHaveLength(2);
     expect(merged.shots[0]!.id).toBe(stored.shots[1]!.id);
     expect(merged.shots[1]!.anchorJobIds).toEqual([]);
+  });
+});
+
+describe("shot and export labels", () => {
+  it("sums a shot's camera up in one line", () => {
+    const s = scene();
+    const shot: Shot = { ...s.shots[0]!, size: "WS", lens: "35mm", movement: "static", durationSec: 5 };
+    expect(shotSummary(shot)).toBe("Wide · 35 mm · Static · 5 s");
+  });
+
+  it("numbers exports oldest first, with length and transitions", () => {
+    const s: Scene = { ...scene(), exportGenerationIds: ["new", "old"], exportInfo: { new: { crossfade: true, durationSec: 14.2 }, old: { crossfade: false, durationSec: 15 } } };
+    expect(exportLabel(s, "new")).toBe("Export 2 · 14 s · crossfades");
+    expect(exportLabel(s, "old")).toBe("Export 1 · 15 s · straight cuts");
+    expect(exportLabel({ ...s, exportInfo: undefined }, "old")).toBe("Export 1");
   });
 });

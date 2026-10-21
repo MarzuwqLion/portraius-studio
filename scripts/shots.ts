@@ -39,7 +39,7 @@ const remix = await encodeRecipe({ format: "portraius.recipe", version: 1, ...ye
 
 // A route is a hash to visit, or a Tour chapter whose "Try this with Walt"
 // button to press (it opens a studio with Walt cast).
-type Route = { name: string; hash: string } | { name: string; tryChapter: string };
+type Route = { name: string; hash: string; scrollTo?: string } | { name: string; tryChapter: string };
 
 const BASE_ROUTES: Route[] = [
   { name: "first-run", hash: "/" },
@@ -164,6 +164,33 @@ async function seedWork(page: Page, waltId: string): Promise<void> {
       await db.generations.put({ id: "shots-gen-video", type: "video", modelId: "minimax/minimax-h3", jobId: "shots-job-video", characterIds: [waltId], identityScore: 95, worstScore: 93, assets: [{ ...clip, kind: "video" }, { ...frame, kind: "frame" }], prompt: "{lead} looks up from an envelope toward the door and almost smiles", createdAt: now - 120_000 });
       await db.jobs.put({ id: "shots-job-video", kind: "video", modelId: "minimax/minimax-h3", requestId: "shots-video", idempotencyKey: "shots-job-video", input: { model: { resolution: "768P" }, characterIds: [waltId], prompt: "{lead} looks up from an envelope toward the door", request: { mode: "image", ratio: "16:9" } }, status: "done", generationIds: ["shots-gen-video"], createdAt: now - 120_000, updatedAt: now - 120_000, completedAt: now - 120_000 });
       await db.jobs.put({ id: "shots-job-failed", kind: "image", modelId: "vertexai/gemini-nano-banana-2.1", requestId: "shots-failed", idempotencyKey: "shots-job-failed", input: { model: {}, characterIds: [], prompt: "A lighthouse in fog", request: { aspectRatio: "1:1" } }, status: "failed", error: { code: "provider_error", message: "The provider didn't finish this one. Retry it?", requestId: "shots-failed", retry: "manual" }, generationIds: [], createdAt: now - 60_000, updatedAt: now - 60_000 });
+      // A Director scene: three shots with anchors, two with a take, and one export.
+      const letter = await blob("the-letter.mp4");
+      await db.generations.put({ id: "shots-gen-export", type: "scene", modelId: "portraius/director-export", jobId: "scene:shots-scene", characterIds: [waltId], assets: [{ ...letter, kind: "video" }], prompt: "The Letter", createdAt: now - 30_000 });
+      const shot = (n: number, action: string, size: string, lens: string, movement: string, anchor: string, take?: string) => ({ id: `shots-shot-${n}`, n, size, angle: "eye", lens, movement, action, durationSec: 5, continuity: "cut", rolls: 0, anchorJobIds: [anchor], anchorJobId: anchor, ...(take ? { takeJobId: take } : {}) });
+      const scene = {
+        id: "shots-scene",
+        title: "The Letter",
+        logline: "A retired harbour pilot finds a letter he never sent.",
+        cast: [{ slot: "lead", characterId: waltId }],
+        location: "A late-night diner with red vinyl booths",
+        film: { genre: "drama", body: "digital-cinema", era: "present", pacing: "standard" },
+        ratio: "16:9",
+        sound: true,
+        seed: 7,
+        nextShot: 3,
+        shots: [
+          shot(0, "{lead} sits alone in a corner booth, rain on the window", "WS", "35mm", "static", "shots-job-2", "shots-job-video"),
+          shot(1, "{lead} slides an old envelope out of his coat and turns it over", "MCU", "50mm", "slow-push-in", "shots-job-3", "shots-job-video"),
+          shot(2, "{lead} looks up toward the diner door and almost smiles", "CU", "85mm", "static", "shots-job-1"),
+        ],
+        exportGenerationIds: ["shots-gen-export"],
+        exportInfo: { "shots-gen-export": { crossfade: true, durationSec: 15 } },
+        createdAt: now - 600_000,
+        updatedAt: now - 30_000,
+      };
+      const json = new Blob([JSON.stringify(scene)], { type: "application/json" });
+      await db.blobs.put({ id: "scene:shots-scene", blob: json, mime: json.type, bytes: json.size });
       await db.jobs.put({ id: "shots-job-queued", kind: "video", modelId: "byteplus/dreamina-seedance-2-5-260628", requestId: "shots-queued", idempotencyKey: "shots-job-queued", input: { model: {}, characterIds: [], prompt: "Rain on a diner window at night", request: { mode: "text", ratio: "16:9" } }, status: "queued", queuePosition: 2, generationIds: [], createdAt: now - 10_000, updatedAt: now - 10_000 });
     },
     { waltId, samples: `${server.config.base}samples/`, dbModule: dbModule() },
@@ -183,7 +210,7 @@ try {
       routes.push({ name: "character-walt", hash: `/characters/${waltId}` });
       if (phase === "work") {
         await seedWork(page, waltId);
-        routes.push({ name: "library-take", hash: "/library/shots-gen-1" }, { name: "library-video", hash: "/library/shots-gen-video" });
+        routes.push({ name: "library-take", hash: "/library/shots-gen-1" }, { name: "library-video", hash: "/library/shots-gen-video" }, { name: "director-work", hash: "/director/shots-scene" }, { name: "director-export", hash: "/director/shots-scene", scrollTo: 'section[aria-label="Export"]' });
       }
       routes.push({ name: "tour-try-image", tryChapter: "images" }, { name: "tour-try-recast", tryChapter: "recast" }, { name: "director-scene", tryChapter: "director" });
     }
@@ -194,8 +221,13 @@ try {
         mkdirSync(dir, { recursive: true });
         await setTheme(page, theme);
         for (const route of routes) {
-          if ("hash" in route) await visit(page, route.hash);
-          else await tryChapter(page, route.tryChapter);
+          if ("hash" in route) {
+            await visit(page, route.hash);
+            if (route.scrollTo) {
+              await page.locator(route.scrollTo).scrollIntoViewIfNeeded();
+              await page.waitForTimeout(300);
+            }
+          } else await tryChapter(page, route.tryChapter);
           // A picked take, so the grease mark and its label show.
           if (phase === "work" && route.name === "image") {
             await page.locator('button[aria-label^="Pick:"]').last().click();

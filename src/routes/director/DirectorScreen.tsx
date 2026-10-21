@@ -8,9 +8,10 @@ import { CastPicker } from "@/components/studio/CastPicker";
 import { PromptEditor, PromptText } from "@/components/studio/PromptEditor";
 import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
+import { SocialExport } from "@/components/studio/SocialExport";
 import { SpeakAction } from "@/components/studio/Speak";
 import { Take } from "@/components/studio/Take";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useEstimateLabel, useJob, useJobImageUrl, useJobs } from "@/lib/jobs/hooks";
@@ -25,6 +26,7 @@ import {
   deleteScene,
   drawAnchors,
   exportJobId,
+  exportLabel,
   lineSourceJobId,
   exportScene,
   finalizeShot,
@@ -793,16 +795,38 @@ function Timeline({
   );
 }
 
+// An export ends on a large player (spec: Decisions, October 21, item 13),
+// named like "Export 2 · 14 s · crossfades", with what to do next. Earlier
+// exports sit in a short list under it. A new export scrolls into view.
 function Exports({ scene }: { scene: Scene }) {
-  if (!scene.exportGenerationIds.length) return null;
+  const [latest, ...earlier] = scene.exportGenerationIds;
+  const box = useRef<HTMLElement>(null);
+  const seen = useRef(latest);
+  useEffect(() => {
+    if (latest && latest !== seen.current) box.current?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    seen.current = latest;
+  }, [latest]);
+  if (!latest) return null;
   return (
-    <section aria-label="Exports" className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4 border-t border-rule pt-6">
-      {scene.exportGenerationIds.map((id) => (
-        <ExportTake key={id} generationId={id} title={scene.title} aspect={aspectOf(scene.ratio)} />
-      ))}
+    <section ref={box} aria-label="Export" className="grid scroll-mt-6 gap-4 border-t border-rule pt-6">
+      <ExportPlayer scene={scene} generationId={latest} />
+      {earlier.length > 0 && (
+        <details className="grid gap-2">
+          <summary className="cursor-pointer text-control font-semibold">Earlier exports ({earlier.length})</summary>
+          <ul className="grid gap-1 pt-2">
+            {earlier.map((id) => (
+              <li key={id}>
+                <ExportLink scene={scene} generationId={id} />
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </section>
   );
 }
+
+const exportFileName = (title: string) => `${title.replace(/[^\w -]+/g, "").trim() || "scene"}.mp4`;
 
 // "Draft shots with AI" (spec: Director, Workflow step 2), beside the
 // logline it works from: Claude drafts 3 to 6 shots from the scene card,
@@ -913,27 +937,47 @@ function StripFrame({ shot, index, chained, aspect, open }: { shot: Shot; index:
   );
 }
 
-function ExportTake({ generationId, title, aspect }: { generationId: string; title: string; aspect: string }): ReactNode {
+function ExportPlayer({ scene, generationId }: { scene: Scene; generationId: string }): ReactNode {
   const generation = useGeneration(generationId);
-  const asset = generation?.assets.find((a) => a.kind === "video");
-  const url = useBlobUrl(asset?.blobId);
+  const url = useBlobUrl(generation?.assets.find((a) => a.kind === "video")?.blobId);
   if (!generation) return null;
+  const label = exportLabel(scene, generationId);
   return (
-    <figure className="grid gap-2">
-      <span className="relative block overflow-hidden rounded-media border border-rule" style={{ aspectRatio: aspect }}>
-        {url && <video src={url} controls playsInline className="develop absolute inset-0 size-full object-contain" aria-label={`${title}, exported`} />}
+    <figure className="grid gap-3">
+      <figcaption className="font-display text-screen font-extrabold">{label}</figcaption>
+      <span className="relative block w-full max-w-5xl overflow-hidden rounded-media border border-rule" style={{ aspectRatio: aspectOf(scene.ratio), maxHeight: "70vh" }}>
+        {url && <video src={url} controls playsInline className="develop absolute inset-0 size-full object-contain" aria-label={`${scene.title}, ${label}`} />}
       </span>
-      <figcaption className="flex flex-wrap items-center gap-3 text-control">
-        <span>{new Date(generation.createdAt).toLocaleString()}</span>
+      <div className="flex flex-wrap items-start gap-3">
         {url && (
-          <a href={url} download={`${title.replace(/[^\w -]+/g, "").trim() || "scene"}.mp4`} className="font-semibold underline">
+          <a href={url} download={exportFileName(scene.title)} className={buttonVariants({ variant: "primary" })}>
             Download
           </a>
         )}
-        <Link to={`/library/${generation.id}`} className="underline">
-          In the library
+        <SocialExport generationId={generationId} onSeamless />
+        <Link to={`/library/${generation.id}`} className={buttonVariants({ variant: "secondary", className: ON_SEAMLESS })}>
+          Open in library
         </Link>
-      </figcaption>
+      </div>
     </figure>
+  );
+}
+
+function ExportLink({ scene, generationId }: { scene: Scene; generationId: string }): ReactNode {
+  const generation = useGeneration(generationId);
+  const url = useBlobUrl(generation?.assets.find((a) => a.kind === "video")?.blobId);
+  if (!generation) return null;
+  return (
+    <span className="flex flex-wrap items-baseline gap-3 text-control">
+      <span className="font-semibold">{exportLabel(scene, generationId)}</span>
+      {url && (
+        <a href={url} download={exportFileName(scene.title)} className="underline underline-offset-4">
+          Download
+        </a>
+      )}
+      <Link to={`/library/${generation.id}`} className="underline underline-offset-4">
+        Open in library
+      </Link>
+    </span>
   );
 }
