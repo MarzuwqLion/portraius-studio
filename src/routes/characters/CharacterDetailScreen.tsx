@@ -250,7 +250,7 @@ export function CharacterDetailScreen() {
       <Screen title="Character">
         <p className="text-body">
           This character isn't in your vault.{" "}
-          <Link to="/characters" className="font-semibold underline underline-offset-4">
+          <Link to="/characters" className="font-semibold text-accent-text underline underline-offset-4">
             Back to characters
           </Link>
         </p>

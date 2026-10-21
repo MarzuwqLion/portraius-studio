@@ -37,7 +37,7 @@ export function GenerationScreen() {
       <Screen title="Take">
         <p className="text-body">
           This take isn't in your library.{" "}
-          <Link to="/library" className="font-semibold underline underline-offset-4">
+          <Link to="/library" className="font-semibold text-accent-text underline underline-offset-4">
             Back to the library
           </Link>
         </p>
@@ -87,7 +87,7 @@ export function GenerationScreen() {
                     <span key={c.id}>
                       {i > 0 && ", "}
                       {c.name ? (
-                        <Link to={`/characters/${c.id}`} className="underline underline-offset-4">
+                        <Link to={`/characters/${c.id}`} className="text-accent-text underline underline-offset-4">
                           {c.name}
                         </Link>
                       ) : (

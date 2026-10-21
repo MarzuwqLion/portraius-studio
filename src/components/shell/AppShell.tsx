@@ -12,7 +12,7 @@ function RailLink({ item, compact = false }: { item: NavItem; compact?: boolean 
         cn(
           "flex flex-col items-center justify-center gap-1 rounded-control text-control text-ink hover:bg-tint-hover",
           compact ? "min-w-0 flex-1 py-2" : "w-full py-3",
-          isActive && "bg-tint-active font-semibold",
+          isActive && "bg-accent font-semibold text-on-accent hover:bg-accent",
         )
       }
     >
@@ -27,7 +27,7 @@ export function AppShell() {
     <div className="flex h-full flex-col bg-proof text-ink">
       <div className="flex min-h-0 flex-1">
         <nav aria-label="Studio" className="hidden w-24 shrink-0 flex-col gap-1 border-r border-rule p-2 md:flex">
-          <NavLink to="/" className="mb-2 px-1 py-2 text-center font-display text-panel font-extrabold leading-none">
+          <NavLink to="/" className="mb-2 px-1 py-2 text-center font-display text-panel font-extrabold leading-none text-accent-text">
             Portraius
           </NavLink>
           {WORK_NAV.map((item) => (

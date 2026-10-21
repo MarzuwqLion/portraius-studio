@@ -110,7 +110,7 @@ export function SplitView({ original, recast, aspect, label }: { original: strin
           step={0.01}
           value={time}
           onChange={(e) => seek(Number(e.target.value))}
-          className="w-full accent-ink"
+          className="w-full"
           aria-label="Scrub both clips"
         />
       </div>

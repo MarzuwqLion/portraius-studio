@@ -1,22 +1,28 @@
 /*
  * Portraius Studio design tokens. The only file in src/ that holds colour values.
- * The theme follows the system unless Settings sets data-theme on <html>.
+ * Dark is the default theme (data-theme="dark" on <html> from the first paint);
+ * "Match system" removes the attribute and the media query below decides.
+ * Media sits on --seamless, which is neutral grey in both themes; the cognac
+ * and plum identity stays in the chrome (spec: Visual direction, Why grey).
  */
 
 :root {
   --seamless: #64676b;
-  --proof: #eef0f1;
-  --ink: #26292c;
-  --rule: #c9cdd1;
-  --grease: #d2352b;
+  --proof: #f7f3ee;
+  --ink: #2e2131;
+  --rule: #887785;
+  --accent: #a65c35;
+  --on-accent: #ffffff;
+  --accent-text: #a65c35;
+  --grease: #e3955f;
   --match: #4f6b34;
-  --check: #8a5e0c;
+  --check: #7a5a00;
   --drift: #a3313a;
 
   /* Text that sits directly on --seamless. Proof in light, ink in dark, because
-     dark proof on dark seamless is only about 1.8:1. */
+     dark proof on dark seamless is only about 1.3:1. */
   --on-seamless: var(--proof);
-  /* Text and icons on an --ink fill (the primary button). */
+  /* Text and icons on an --ink fill (a picked segment). */
   --on-ink: var(--proof);
 
   /* Quiet interaction tints, mixed from ink so no new colours appear. */
@@ -44,13 +50,13 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --seamless: #4e5155;
-    --proof: #26292c;
-    --ink: #e6e8ea;
-    --rule: #3a3e42;
-    --grease: #f0574b;
+    --seamless: #2e2f31;
+    --proof: #221a24;
+    --ink: #f2ece6;
+    --rule: #806c7e;
+    --accent-text: #d08a5c;
     --match: #9bbf7a;
-    --check: #e0b455;
+    --check: #e8c25a;
     --drift: #f08a90;
     --on-seamless: var(--ink);
     color-scheme: dark;
@@ -58,13 +64,13 @@
 }
 
 :root[data-theme="dark"] {
-  --seamless: #4e5155;
-  --proof: #26292c;
-  --ink: #e6e8ea;
-  --rule: #3a3e42;
-  --grease: #f0574b;
+  --seamless: #2e2f31;
+  --proof: #221a24;
+  --ink: #f2ece6;
+  --rule: #806c7e;
+  --accent-text: #d08a5c;
   --match: #9bbf7a;
-  --check: #e0b455;
+  --check: #e8c25a;
   --drift: #f08a90;
   --on-seamless: var(--ink);
   color-scheme: dark;

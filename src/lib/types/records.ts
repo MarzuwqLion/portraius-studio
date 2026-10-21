@@ -118,7 +118,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   id: "app",
   keyStorage: "session",
-  theme: "system",
+  theme: "dark",
   autoRetry: true,
   keepDrafts: true,
 };

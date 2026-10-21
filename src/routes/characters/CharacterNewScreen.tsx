@@ -112,7 +112,7 @@ function Wizard({ path }: { path: CreatePath }) {
       {needsKey && (
         <p className="mb-6 max-w-[70ch] text-body">
           This step draws with Nano Banana 2.1, which needs your Comfy API key.{" "}
-          <Link to="/settings" className="font-semibold underline underline-offset-4">
+          <Link to="/settings" className="font-semibold text-accent-text underline underline-offset-4">
             Add it in Settings
           </Link>
           , then come back. Your progress is kept.

@@ -50,7 +50,7 @@ export function RealismAction({ generationId, onStarted, className }: { generati
     <div className={cn("flex flex-wrap items-center gap-3", className)}>
       <label htmlFor={id} className="flex items-center gap-2 text-control">
         Strength
-        <input id={id} type="range" min={20} max={100} step={10} value={strength} onChange={(e) => setStrength(Number(e.target.value))} className="w-24 accent-ink" />
+        <input id={id} type="range" min={20} max={100} step={10} value={strength} onChange={(e) => setStrength(Number(e.target.value))} className="w-24" />
         <span className="w-6 tabular-nums">{strength}</span>
       </label>
       <Button size="sm" variant="secondary" onClick={() => void run()} disabled={busy}>

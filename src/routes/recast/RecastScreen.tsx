@@ -267,8 +267,8 @@ export function RecastScreen() {
         <Field label={`Trim: ${fmt(range[0])} to ${fmt(range[1])} (${fmt(length)})`} hint={`${MODE_LABEL[mode]} takes ${limits.minSec} to ${limits.maxSec} s.`}>
           {() => (
             <div className="grid gap-2">
-              <input type="range" min={0} max={rawInfo.durationSec} step={0.1} value={range[0]} aria-label="Start" onChange={(e) => setRange([Math.min(Number(e.target.value), range[1] - 0.5), range[1]])} className="w-full accent-ink" />
-              <input type="range" min={0} max={rawInfo.durationSec} step={0.1} value={range[1]} aria-label="End" onChange={(e) => setRange([range[0], Math.max(Number(e.target.value), range[0] + 0.5)])} className="w-full accent-ink" />
+              <input type="range" min={0} max={rawInfo.durationSec} step={0.1} value={range[0]} aria-label="Start" onChange={(e) => setRange([Math.min(Number(e.target.value), range[1] - 0.5), range[1]])} className="w-full" />
+              <input type="range" min={0} max={rawInfo.durationSec} step={0.1} value={range[1]} aria-label="End" onChange={(e) => setRange([range[0], Math.max(Number(e.target.value), range[0] + 0.5)])} className="w-full" />
               {!lengthOk && <p className="text-control text-drift">Trim to {limits.minSec} to {limits.maxSec} s.</p>}
               <Button type="button" variant="secondary" size="sm" className="justify-self-start" disabled={!lengthOk || progress !== undefined} onClick={() => void prepare()}>
                 {progress !== undefined ? `Preparing ${Math.round(progress * 100)}%` : prepared ? "Prepare again" : "Prepare clip"}

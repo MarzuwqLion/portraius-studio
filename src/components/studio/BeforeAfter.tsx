@@ -48,7 +48,7 @@ export function BeforeAfter({ before, after, aspect, alt }: { before: string; af
         max={100}
         value={wipe}
         onChange={(e) => setWipe(Number(e.target.value))}
-        className="w-full accent-ink"
+        className="w-full"
         aria-label="Wipe between before and after"
       />
     </div>

@@ -24,7 +24,7 @@ export function CastPicker({ id, value, onChange }: { id?: string; value: CastPi
     return (
       <p className="text-control text-ink-muted">
         No characters yet.{" "}
-        <Link to="/characters/new" className="font-semibold text-ink underline underline-offset-4">
+        <Link to="/characters/new" className="font-semibold text-accent-text underline underline-offset-4">
           Make one
         </Link>{" "}
         to put them in a shot.

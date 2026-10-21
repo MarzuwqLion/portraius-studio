@@ -57,17 +57,21 @@ export function contrast(a: Rgb, b: Rgb): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-// The spec's targets. --grease on --seamless (the pick mark) is about 1.2:1
-// in light and 2.3:1 in dark by luminance, under WCAG's 3:1 for graphics; the
-// hue carries it, and a change is a design call (docs/notes/m8-notes.md).
+// The spec's targets (Colour tokens, October 21). --grease on light --seamless
+// (the pick mark) is about 2.4:1, under WCAG's 3:1 for graphics, so every pick
+// also carries a "✓ Selected" label; in dark it's about 5.6:1.
 const pairs: { text: string; on: string; min: number; why: string }[] = [
-  { text: "--ink", on: "--proof", min: 11, why: "ink on proof, about 12:1" },
+  { text: "--ink", on: "--proof", min: 13, why: "ink on proof, about 14:1" },
   { text: "--ink-muted", on: "--proof", min: 4.5, why: "secondary text" },
   { text: "--on-seamless", on: "--seamless", min: 4.5, why: "text on Studio grey" },
-  { text: "--on-ink", on: "--ink", min: 4.5, why: "primary button label" },
-  { text: "--match", on: "--proof", min: 4.5, why: "Strong match" },
-  { text: "--check", on: "--proof", min: 4.5, why: "Check" },
-  { text: "--drift", on: "--proof", min: 4.5, why: "Drift and errors" },
+  { text: "--on-ink", on: "--ink", min: 4.5, why: "a picked segment" },
+  { text: "--on-accent", on: "--accent", min: 4.5, why: "primary button label" },
+  { text: "--accent-text", on: "--proof", min: 4.5, why: "links and accent text" },
+  { text: "--accent", on: "--proof", min: 3, why: "focus ring and active rail item" },
+  { text: "--rule", on: "--proof", min: 3, why: "input borders" },
+  { text: "--match", on: "--proof", min: 4.5, why: "Strong" },
+  { text: "--check", on: "--proof", min: 4.5, why: "Review" },
+  { text: "--drift", on: "--proof", min: 4.5, why: "Drifted and errors" },
 ];
 
 describe("contrast targets", () => {

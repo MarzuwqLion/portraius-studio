@@ -4,13 +4,13 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 // shadcn/ui button, restyled to the studio tokens: 6 px radius, no shadow,
-// ink fill for the primary action.
+// cognac fill for the primary action.
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-control font-body font-semibold text-control transition-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        primary: "bg-ink text-on-ink hover:opacity-90 active:opacity-80",
+        primary: "bg-accent text-on-accent hover:opacity-90 active:opacity-80",
         secondary: "border border-rule bg-transparent text-ink hover:bg-tint-hover active:bg-tint-active",
         ghost: "bg-transparent text-ink hover:bg-tint-hover active:bg-tint-active",
         danger: "border border-drift bg-transparent text-drift hover:bg-tint-hover",

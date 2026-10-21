@@ -265,7 +265,7 @@ export function VideoScreen() {
       </Field>
 
       <Field label={`Duration: ${durationSec} s`}>
-        {(id) => <input id={id} type="range" min={spec.duration[0]} max={spec.duration[1]} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} className="w-full accent-ink" />}
+        {(id) => <input id={id} type="range" min={spec.duration[0]} max={spec.duration[1]} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} className="w-full" />}
       </Field>
 
       <div className="grid grid-cols-2 gap-3">

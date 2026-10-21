@@ -61,7 +61,7 @@ function KeySection() {
           </>
         )}
         . Get one with Router access at{" "}
-        <a href="https://platform.comfy.org" target="_blank" rel="noreferrer" className="font-semibold underline underline-offset-4">
+        <a href="https://platform.comfy.org" target="_blank" rel="noreferrer" className="font-semibold text-accent-text underline underline-offset-4">
           platform.comfy.org
         </a>
         .
