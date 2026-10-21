@@ -128,7 +128,7 @@ export function CharactersScreen() {
     <Screen
       title="Cast and elements"
       actions={
-        <div className="flex items-start gap-3">
+        <div className="flex flex-wrap items-start gap-3">
           <ImportButton onRead={setPending} />
           {!empty && (
             <>

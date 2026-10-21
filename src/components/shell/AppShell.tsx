@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from "react-router";
+import { useLayoutEffect, useRef } from "react";
+import { NavLink, Outlet, useLocation, useNavigationType } from "react-router";
 import { cn } from "@/lib/utils";
 import { JobsTray } from "./JobsTray";
 import { SETTINGS_NAV, WORK_NAV, type NavItem } from "./nav";
@@ -22,7 +23,28 @@ function RailLink({ item, compact = false }: { item: NavItem; compact?: boolean 
   );
 }
 
+// <main> outlives the routes, so it would keep one screen's scroll for the
+// next. A new navigation (push or replace) opens at the top, the call sheet
+// included; back and forward return to where that screen was left.
+function useScrollPerScreen() {
+  const main = useRef<HTMLElement>(null);
+  const location = useLocation();
+  const type = useNavigationType();
+  const positions = useRef(new Map<string, number>());
+  useLayoutEffect(() => {
+    const el = main.current;
+    if (!el) return;
+    el.scrollTop = type === "POP" ? (positions.current.get(location.key) ?? 0) : 0;
+    if (type !== "POP") el.querySelectorAll<HTMLElement>("[data-scroll-top]").forEach((inner) => (inner.scrollTop = 0));
+  }, [location.key]);
+  const onScroll = () => {
+    if (main.current) positions.current.set(location.key, main.current.scrollTop);
+  };
+  return { main, onScroll };
+}
+
 export function AppShell() {
+  const { main, onScroll } = useScrollPerScreen();
   return (
     <div className="flex h-full flex-col bg-proof text-ink">
       <div className="flex min-h-0 flex-1">
@@ -37,7 +59,7 @@ export function AppShell() {
             <RailLink item={SETTINGS_NAV} />
           </div>
         </nav>
-        <main className="min-w-0 flex-1 overflow-auto">
+        <main ref={main} onScroll={onScroll} className="min-w-0 flex-1 overflow-auto">
           <Outlet />
         </main>
       </div>
