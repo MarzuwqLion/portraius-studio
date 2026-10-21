@@ -48,6 +48,18 @@ export function AppShell() {
   const { main, onScroll } = useScrollPerScreen();
   return (
     <div className="flex h-full flex-col bg-proof text-ink">
+      {/* The first focus stop on every screen, seen only when focused. Not a
+          #fragment: the hash belongs to the router. */}
+      <a
+        href="#"
+        onClick={(e) => {
+          e.preventDefault();
+          main.current?.focus();
+        }}
+        className="sr-only rounded-control bg-accent text-control font-semibold text-on-accent focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-3 focus:py-2"
+      >
+        Skip to content
+      </a>
       <div className="flex min-h-0 flex-1">
         <nav aria-label="Studio" className="hidden w-24 shrink-0 flex-col gap-1 border-r border-rule p-2 md:flex">
           <NavLink to="/" className="mb-2 px-1 py-2 text-center font-display text-panel font-extrabold leading-none text-accent-text">
@@ -60,7 +72,7 @@ export function AppShell() {
             <RailLink item={SETTINGS_NAV} />
           </div>
         </nav>
-        <main ref={main} onScroll={onScroll} className="min-w-0 flex-1 overflow-auto">
+        <main ref={main} tabIndex={-1} onScroll={onScroll} className="min-w-0 flex-1 overflow-auto focus:outline-none">
           <Outlet />
         </main>
       </div>

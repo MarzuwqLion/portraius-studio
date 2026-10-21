@@ -199,6 +199,27 @@ const CHECKS: Check[] = [
     },
   },
   {
+    name: "the first Tab is Skip to content, and it moves focus to the main area",
+    applies: (route, _phase, viewport) => ["first-run", "image", "director", "settings"].includes(route) && !viewport.phone,
+    run: async (page) => {
+      // Start from the top of the document, as a fresh page load does.
+      await page.evaluate(() => {
+        const start = document.createElement("span");
+        start.id = "shots-focus-start";
+        start.tabIndex = -1;
+        document.body.prepend(start);
+        start.focus();
+      });
+      await page.keyboard.press("Tab");
+      await page.evaluate(() => document.getElementById("shots-focus-start")?.remove());
+      const first = await page.evaluate(() => document.activeElement?.textContent?.trim());
+      await page.keyboard.press("Enter");
+      const after = await page.evaluate(() => document.activeElement?.tagName);
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      return first === "Skip to content" && after === "MAIN" ? undefined : `first stop "${first}", then focus on ${after}`;
+    },
+  },
+  {
     name: "a remix link from a preset shows its example",
     applies: (route) => route === "remix",
     run: async (page) => ((await page.getByText("Example with Walt Harmon, a designed character. Your cast fills the slots.").count()) ? undefined : "no example above the recipe"),
