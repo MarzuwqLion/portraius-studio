@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Job } from "@/lib/types/jobs";
 import { OutputTake } from "./OutputTake";
 
-const retryJob = vi.fn(async () => undefined);
+const retryJob = vi.fn(async (_id: string) => undefined);
 vi.mock("@/lib/jobs/runner", () => ({ retryJob: (id: string) => retryJob(id) }));
 vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} });
 
