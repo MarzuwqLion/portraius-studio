@@ -14,6 +14,7 @@ export function Take({
   onPick,
   pickLabel,
   seed,
+  fit = "contain",
   children,
   className,
 }: {
@@ -25,6 +26,7 @@ export function Take({
   onPick?: () => void;
   pickLabel?: string;
   seed?: number;
+  fit?: "contain" | "cover"; // cover crops to fill: element cards, whose photos come in any shape
   children?: ReactNode; // status text while the image isn't ready
   className?: string;
 }) {
@@ -33,7 +35,7 @@ export function Take({
     <span className="relative block">
       <span className="relative block w-full overflow-hidden rounded-media border border-rule bg-seamless" style={{ aspectRatio: aspect }}>
         {src ? (
-          <img src={src} alt={alt} className="develop absolute inset-0 size-full object-contain" />
+          <img src={src} alt={alt} className={cn("develop absolute inset-0 size-full", fit === "cover" ? "object-cover" : "object-contain")} />
         ) : (
           <span className="absolute inset-0 flex items-center justify-center p-3 text-center text-control text-on-seamless">{children}</span>
         )}

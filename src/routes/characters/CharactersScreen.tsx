@@ -9,6 +9,7 @@ import { THUMB } from "@/lib/characters/format";
 import { addImport, readImport, type PendingImport } from "@/lib/characters/manage";
 import { useBlobUrl, useCharacters } from "@/lib/store/hooks";
 import type { CharacterRecord } from "@/lib/types/records";
+import { cn } from "@/lib/utils";
 
 export function CharacterBadges({ record }: { record: CharacterRecord }) {
   return (
@@ -28,7 +29,12 @@ function CharacterCard({ record }: { record: CharacterRecord }) {
   const thumb = useBlobUrl(record.blobIds[THUMB]);
   return (
     <Link to={`/characters/${record.id}`} className="grid gap-3 rounded-media p-2 hover:bg-tint-hover">
-      <Take src={thumb} alt={`${record.name}, front view`} aspect={record.kind === "element" && record.file.elementType === "location" ? "16 / 9" : "4 / 5"} />
+      <Take
+        src={thumb}
+        alt={record.kind === "element" ? record.name : `${record.name}, front view`}
+        aspect={record.kind === "element" && record.file.elementType === "location" ? "16 / 9" : "4 / 5"}
+        fit={record.kind === "element" ? "cover" : "contain"}
+      />
       <div className="grid gap-2">
         <span className="text-panel font-semibold">{record.name}</span>
         <CharacterBadges record={record} />
@@ -102,14 +108,25 @@ function ImportSummaryPanel({ pending, onDone }: { pending: PendingImport; onDon
   );
 }
 
+type Tab = "person" | "element";
+const TABS: { value: Tab; label: string }[] = [
+  { value: "person", label: "People" },
+  { value: "element", label: "Elements" },
+];
+
+// Cast and elements (spec: Decisions, October 21, item 14): people and
+// elements on their own tabs, so a vault of props doesn't bury the cast.
 export function CharactersScreen() {
   const characters = useCharacters();
   const [pending, setPending] = useState<PendingImport>();
+  const [tab, setTab] = useState<Tab>("person");
   const empty = characters !== undefined && characters.length === 0;
+  const shown = characters?.filter((c) => c.kind === tab) ?? [];
+  const count = (kind: Tab) => characters?.filter((c) => c.kind === kind).length ?? 0;
 
   return (
     <Screen
-      title="Characters"
+      title="Cast and elements"
       actions={
         <div className="flex items-start gap-3">
           <ImportButton onRead={setPending} />
@@ -140,13 +157,42 @@ export function CharactersScreen() {
           </div>
         </div>
       ) : (
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {characters?.map((record) => (
-            <li key={record.id}>
-              <CharacterCard record={record} />
-            </li>
-          ))}
-        </ul>
+        <div className="grid gap-6">
+          <div role="tablist" aria-label="Cast and elements" className="flex gap-1 border-b border-rule">
+            {TABS.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                role="tab"
+                id={`tab-${t.value}`}
+                aria-selected={tab === t.value}
+                aria-controls="vault-panel"
+                onClick={() => setTab(t.value)}
+                className={cn("-mb-px border-b-2 px-3 py-2 text-body font-semibold", tab === t.value ? "border-accent text-ink" : "border-transparent text-ink-muted hover:text-ink")}
+              >
+                {t.label} <span className="text-control font-normal text-ink-muted">{count(t.value)}</span>
+              </button>
+            ))}
+          </div>
+          <div id="vault-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
+            {shown.length ? (
+              <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {shown.map((record) => (
+                  <li key={record.id}>
+                    <CharacterCard record={record} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex min-h-60 flex-col items-center justify-center gap-4 rounded-media bg-seamless p-8 text-center text-on-seamless">
+                <p className="text-body">{tab === "person" ? "No people yet." : "No elements yet: outfits, props and locations you can put in any shot."}</p>
+                <Link to={tab === "person" ? "/characters/new" : "/characters/new?from=element"} className={buttonVariants({ variant: "primary" })}>
+                  {tab === "person" ? "Make a character" : "Make an element"}
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </Screen>
   );

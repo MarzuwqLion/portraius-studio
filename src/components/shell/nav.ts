@@ -7,7 +7,7 @@ export interface NavItem {
 }
 
 export const WORK_NAV: readonly NavItem[] = [
-  { to: "/characters", label: "Characters", icon: Users },
+  { to: "/characters", label: "Cast", icon: Users },
   { to: "/image", label: "Image", icon: Image },
   { to: "/video", label: "Video", icon: Film },
   { to: "/recast", label: "Recast", icon: Repeat2 },

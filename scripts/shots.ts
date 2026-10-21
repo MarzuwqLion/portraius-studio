@@ -54,6 +54,7 @@ await server.listen();
 const base = `http://localhost:${PORT}${server.config.base}`;
 const browser = await chromium.launch();
 const report: string[] = ["# Shots report", "", `Generated ${new Date().toISOString()}.`, "", "| Pass | Size | Theme | Screen | Primary action in view |", "| --- | --- | --- | --- | --- |"];
+const cut: string[] = ["", "## Truncated select values", ""];
 
 // Hash changes only, so the app never reloads and seeded jobs are never resumed.
 async function visit(page: Page, hash: string): Promise<void> {
@@ -82,6 +83,21 @@ async function foldCheck(page: Page, label: RegExp): Promise<string> {
   if (!box) return "hidden";
   const inView = box.y >= 0 && box.y + box.height <= viewport.height && box.x + box.width <= viewport.width;
   return inView ? "yes" : `no (button bottom at ${Math.round(box.y + box.height)} px)`;
+}
+
+// Selects whose chosen value doesn't fit: the option's text, measured in the
+// select's own font, against the room left of the arrow.
+async function truncatedSelects(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const canvas = document.createElement("canvas").getContext("2d")!;
+    return [...document.querySelectorAll("select")].flatMap((select) => {
+      const text = select.selectedOptions[0]?.text ?? "";
+      const style = getComputedStyle(select);
+      canvas.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      const room = select.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 20;
+      return select.offsetParent && canvas.measureText(text).width > room ? [text] : [];
+    });
+  });
 }
 
 async function addWalt(page: Page): Promise<string> {
@@ -180,6 +196,8 @@ try {
           }
           await page.screenshot({ path: join(dir, `${route.name}.png`) });
           const label = FOLD_CHECKS[route.name];
+          const truncated = await truncatedSelects(page);
+          if (truncated.length) cut.push(`- ${phase} ${viewport.name} ${theme} ${route.name}: ${truncated.map((t) => `"${t}"`).join(", ")}`);
           if (label) report.push(`| ${phase} | ${viewport.name} | ${theme} | ${route.name} | ${await foldCheck(page, label)} |`);
         }
       }
@@ -187,7 +205,8 @@ try {
     await context.close();
     console.log(`✓ ${phase}: ${routes.length} screens × ${VIEWPORTS.length} sizes × ${THEMES.length} themes`);
   }
-  writeFileSync(join(out, `report-${phases.join("-")}.md`), `${report.join("\n")}\n`);
+  if (cut.length === 3) cut.push("None.");
+  writeFileSync(join(out, `report-${phases.join("-")}.md`), `${[...report, ...cut].join("\n")}\n`);
   console.log(`Shots and report-${phases.join("-")}.md in ${out}`);
 } finally {
   await browser.close();

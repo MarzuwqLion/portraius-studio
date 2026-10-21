@@ -241,7 +241,7 @@ function SceneEditor({ sceneId }: { sceneId: string }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col md:flex-row">
-      <section aria-label="Call sheet" className="shrink-0 overflow-auto border-rule p-6 md:w-80 md:border-r">
+      <section aria-label="Call sheet" className="shrink-0 overflow-auto border-rule p-6 md:w-80 md:border-r xl:w-96">
         <ScreenTitle className="mb-6">Director</ScreenTitle>
         {callSheet}
       </section>

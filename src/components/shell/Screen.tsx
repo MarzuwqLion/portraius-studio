@@ -24,7 +24,7 @@ export function Screen({ title, actions, children }: { title: ReactNode; actions
 export function WorkScreen({ title, callSheet, footer, set }: { title: ReactNode; callSheet: ReactNode; footer?: ReactNode; set: ReactNode }) {
   return (
     <div className="flex h-full min-h-0 flex-col md:flex-row">
-      <section aria-label="Call sheet" className="flex shrink-0 flex-col border-rule md:min-h-0 md:w-80 md:border-r">
+      <section aria-label="Call sheet" className="flex shrink-0 flex-col border-rule md:min-h-0 md:w-80 md:border-r xl:w-96">
         <div className="p-6 md:min-h-0 md:flex-1 md:overflow-auto">
           <ScreenTitle className="mb-6">{title}</ScreenTitle>
           {callSheet}

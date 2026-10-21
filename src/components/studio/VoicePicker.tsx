@@ -37,12 +37,14 @@ export function VoicePicker({
           onChange={onChange}
           {...(placeholder !== undefined ? { placeholder } : {})}
           {...(label ? { label } : {})}
-          options={VOICES.map((v) => ({ value: v.id, label: `${v.label}: ${v.description}` }))}
+          options={VOICES.map((v) => ({ value: v.id, label: v.label }))}
         />
         <Button type="button" size="default" variant="secondary" disabled={!chosen} onClick={hear}>
           Hear it
         </Button>
       </div>
+      {/* The description goes under the select, so the chosen name never truncates. */}
+      {chosen && <p className="text-control text-ink-muted">{chosen.description}</p>}
     </div>
   );
 }
