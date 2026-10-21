@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { RECAST_PRESETS } from "@/lib/presets/load";
 import type { Job } from "@/lib/types/jobs";
-import { LIMITS, fitsLimits, isFirstOfTwo, modeOf, nearestRatio, recastNeeds, settingPrompt, type RecastForm } from "./recast";
+import { LIMITS, defaultRange, fitsLimits, isFirstOfTwo, modeOf, nearestRatio, recastNeeds, settingPrompt, tooShort, type RecastForm } from "./recast";
 
 const recastJob = (request: object): Job => ({ id: "j", kind: "recast", input: { request } }) as unknown as Job;
 
@@ -34,11 +34,29 @@ describe("fitsLimits", () => {
   });
 });
 
+describe("defaultRange", () => {
+  it("uses the whole clip when it fits", () => {
+    expect(defaultRange(8, LIMITS.motion)).toEqual([0, 8]);
+    expect(defaultRange(3.5, LIMITS.motion)).toEqual([0, 3.5]);
+  });
+
+  it("uses the first allowed seconds of a longer clip", () => {
+    expect(defaultRange(22, LIMITS.motion)).toEqual([0, 15]);
+    expect(defaultRange(12, LIMITS.swap)).toEqual([0, 10]);
+  });
+
+  it("calls a clip short only past startRecast's rounding", () => {
+    expect(tooShort(3.5, LIMITS.motion)).toBe(true);
+    expect(tooShort(3.96, LIMITS.motion)).toBe(false);
+    expect(tooShort(3.5, LIMITS.swap)).toBe(false);
+  });
+});
+
 describe("recastNeeds", () => {
   const done: RecastForm = {
     mode: "motion",
     hasClip: true,
-    lengthOk: true,
+    tooShort: false,
     prepared: { blobId: "b", info: { durationSec: 6, width: 1920, height: 1080 } },
     needsPerformer: true,
     hasPerformer: true,
@@ -52,14 +70,28 @@ describe("recastNeeds", () => {
 
   it("names the first missing step, in call-sheet order", () => {
     expect(recastNeeds({ ...done, hasClip: false, rights: false })).toBe("Upload a clip");
-    expect(recastNeeds({ ...done, prepared: undefined, hasPerformer: false })).toBe("Prepare the clip");
-    expect(recastNeeds({ ...done, prepared: undefined, lengthOk: false })).toBe("Trim the clip to 4 to 15 s, then prepare it");
+    expect(recastNeeds({ ...done, tooShort: true, prepared: undefined })).toBe("Recast needs a 4 to 15 s clip");
+    expect(recastNeeds({ ...done, prepared: undefined, hasPerformer: false })).toBe("Preparing the clip");
     expect(recastNeeds({ ...done, hasPerformer: false, rights: false })).toBe("Pick a performer");
     expect(recastNeeds({ ...done, rights: false })).toMatch(/rights/);
   });
 
-  it("asks for the clip again when a preset in another mode can't take it", () => {
-    expect(recastNeeds({ ...done, mode: "swap", needsPerformer: false })).toBe("Prepare the clip again for Object swap");
+  it("never asks the visitor to prepare or trim", () => {
+    const forms: RecastForm[] = [{ ...done, prepared: undefined }, { ...done, preparing: 0 }, { ...done, mode: "swap", needsPerformer: false }];
+    for (const form of forms) expect(recastNeeds(form)).not.toMatch(/prepare it|Prepare|Trim/);
+  });
+
+  it("shows how far the clip has prepared", () => {
+    expect(recastNeeds({ ...done, preparing: 0 })).toBe("Preparing the clip");
+    expect(recastNeeds({ ...done, preparing: 0.4 })).toBe("Preparing the clip, 40%");
+  });
+
+  it("waits for the clip again when a preset in another mode can't take it", () => {
+    expect(recastNeeds({ ...done, mode: "swap", needsPerformer: false })).toBe("Preparing the clip");
+  });
+
+  it("names the mode's own limits when the clip is too short", () => {
+    expect(recastNeeds({ ...done, mode: "swap", needsPerformer: false, tooShort: true })).toBe("Recast needs a 3 to 10 s clip");
   });
 
   it("wants a replacement image only for Object Swap", () => {

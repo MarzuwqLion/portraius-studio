@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { WorkScreen } from "@/components/shell/Screen";
 import { CastPicker } from "@/components/studio/CastPicker";
@@ -27,6 +27,7 @@ import type { CastPick } from "@/lib/studio/cast";
 import { randomSeed } from "@/lib/studio/image";
 import {
   LIMITS,
+  defaultRange,
   GROUP_LABEL,
   GROUP_ORDER,
   groupOf,
@@ -38,6 +39,7 @@ import {
   recastNeeds,
   startRecast,
   storeClip,
+  tooShort,
   type PreparedClip,
   type RecastRequest,
 } from "@/lib/studio/recast";
@@ -144,12 +146,20 @@ function DropStage({ full, onClip, onSample, onUpload }: { full: boolean; onClip
   );
 }
 
+// A prepared clip, and the part of which raw clip it was made from.
+type Ready = PreparedClip & { source: string };
+
 export function RecastScreen() {
   const [rawBlobId, setRawBlobId] = useState<string>();
   const [rawInfo, setRawInfo] = useState<ClipInfo>();
   const [presetId, setPresetId] = useState(RECAST_PRESETS.find((p) => p.id === "swap-me-in")?.id ?? RECAST_PRESETS[0]!.id);
+  // The whole clip, or its first allowed seconds, until the visitor trims
+  // (spec: Recast, Input). `range` follows the sliders as they move; `trim` is
+  // what gets prepared, set when a slider is released.
   const [range, setRange] = useState<[number, number]>([0, 0]);
-  const [prepared, setPrepared] = useState<PreparedClip>();
+  const [trim, setTrim] = useState<[number, number]>([0, 0]);
+  const [trimmed, setTrimmed] = useState(false);
+  const [prepared, setPrepared] = useState<Ready>();
   const [progress, setProgress] = useState<number>();
   const [others, setOthers] = useState(false);
   const [rights, setRights] = useState(false);
@@ -172,16 +182,22 @@ export function RecastScreen() {
   const preset = RECAST_PRESETS.find((p) => p.id === presetId)!;
   const mode = modeOf(preset);
   const limits = LIMITS[mode];
+  const limitsNow = useRef(limits);
+  limitsNow.current = limits;
   const people = mode === "motion" || (mode === "style" && preset.recipe.slots.some((s) => s.kind === "person"));
 
-  // A new clip starts the trim over.
+  // A new clip starts the trim over, and prepares straight away.
   async function takeClip(blob: Blob) {
     setError(undefined);
     try {
       const info = await clipInfo(blob);
       setRawBlobId(await storeClip(blob));
       setRawInfo(info);
-      setRange([0, Math.min(info.durationSec, limits.maxSec)]);
+      // Read at the time: a Tour launch picks its preset just before the sample arrives.
+      const whole = defaultRange(info.durationSec, limitsNow.current);
+      setRange(whole);
+      setTrim(whole);
+      setTrimmed(false);
       setPrepared(undefined);
       setOthers(false);
       setRights(false);
@@ -206,38 +222,75 @@ export function RecastScreen() {
     if (launch.sampleClip) void takeSample();
   });
 
-  // A preset with a shorter limit shortens the trim. The prepared clip stays
-  // and is used again whenever it fits the preset's limits.
+  // A preset whose limits the trim doesn't fit goes back to the first allowed
+  // seconds. The prepared clip stays and is used again whenever it fits.
   function choosePreset(p: Preset) {
     setPresetId(p.id);
-    const max = LIMITS[modeOf(p)].maxSec;
-    setRange((r) => (r[1] - r[0] > max ? [r[0], r[0] + max] : r));
+    const next = LIMITS[modeOf(p)];
+    if (!rawInfo || trim[1] - trim[0] <= next.maxSec + 0.05) return;
+    const first = defaultRange(rawInfo.durationSec, next);
+    setRange(first);
+    setTrim(first);
+    setTrimmed(false);
   }
 
-  async function prepare() {
-    if (!rawBlobId) return;
-    setError(undefined);
-    setProgress(0);
-    try {
-      const raw = (await db.blobs.get(rawBlobId))!.blob;
-      const blob = await trimClip(raw, { startSec: range[0], endSec: range[1], maxHeight: limits.maxHeight, minHeight: limits.minHeight, fps: limits.fps, keepAudio: true }, setProgress);
-      const info = await clipInfo(blob);
-      setPrepared({ blobId: await storeClip(blob), info, fps: limits.fps });
-      setOthers((await facesInClip(blob).catch(() => 0)) > 1);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setProgress(undefined);
-    }
+  // A slider stops moving: what it now shows is what gets prepared. The
+  // sliders keep the length within the mode's maximum as they move.
+  function moveRange(next: [number, number], moved: "start" | "end") {
+    const [start, end] = next;
+    if (end - start <= limits.maxSec) return setRange(next);
+    setRange(moved === "start" ? [start, start + limits.maxSec] : [end - limits.maxSec, end]);
+  }
+  function commitRange() {
+    if (range[0] === trim[0] && range[1] === trim[1]) return;
+    setTrim(range);
+    setTrimmed(true);
   }
 
-  const length = range[1] - range[0];
-  const lengthOk = length >= limits.minSec - 0.05 && length <= limits.maxSec + 0.05;
+  // Prepare whatever the call sheet now asks for, one clip at a time; a
+  // request overtaken by a newer one is dropped when its turn comes.
+  const source = rawBlobId ? `${rawBlobId}:${trim[0]}:${trim[1]}` : undefined;
+  const length = trim[1] - trim[0];
+  const short = Boolean(rawInfo) && tooShort(length, limits);
+  const current = prepared && prepared.source === source && fitsLimits(prepared, limits) ? prepared : undefined;
+  const queue = useRef<Promise<void>>(Promise.resolve());
+  const wanted = useRef<string>(undefined);
+  const want = source && rawInfo && !short && !current ? `${source}:${limits.fps ?? ""}:${limits.maxHeight}:${limits.minHeight ?? ""}` : undefined;
+  useEffect(() => {
+    if (!want || !rawBlobId || wanted.current === want) return;
+    wanted.current = want;
+    const options = { startSec: trim[0], endSec: trim[1], maxHeight: limits.maxHeight, minHeight: limits.minHeight, fps: limits.fps, keepAudio: true };
+    const from = source!;
+    const latest = () => wanted.current === want;
+    queue.current = queue.current.then(async () => {
+      if (!latest()) return;
+      setError(undefined);
+      setProgress(0);
+      try {
+        const raw = (await db.blobs.get(rawBlobId))!.blob;
+        const blob = await trimClip(raw, options, (share) => latest() && setProgress(share));
+        if (!latest()) return;
+        const info = await clipInfo(blob);
+        setPrepared({ blobId: await storeClip(blob), info, fps: options.fps, source: from });
+        const faces = await facesInClip(blob).catch(() => 0);
+        if (latest()) setOthers(faces > 1);
+      } catch (err) {
+        if (latest()) setError((err as Error).message);
+      } finally {
+        if (latest()) {
+          setProgress(undefined);
+          wanted.current = undefined;
+        }
+      }
+    });
+  }, [want]);
+
   const needs = recastNeeds({
     mode,
     hasClip: Boolean(rawBlobId),
-    lengthOk,
-    prepared,
+    tooShort: short,
+    ...(progress !== undefined ? { preparing: progress } : {}),
+    prepared: current,
     needsPerformer: people,
     hasPerformer: cast.length > 0,
     hasReplacement: Boolean(swapImageBlobId),
@@ -245,7 +298,8 @@ export function RecastScreen() {
   });
   const ready = !needs;
   // The price follows the clip's length, so it shows once there is a clip.
-  const clipSec = Math.round(prepared?.info.durationSec ?? Math.min(length, limits.maxSec));
+  // While the clip prepares, it comes from the raw length.
+  const clipSec = Math.round(current?.info.durationSec ?? Math.min(length, limits.maxSec));
   const price = usePrice(
     rawBlobId && clipSec > 0
       ? async () => [
@@ -258,16 +312,16 @@ export function RecastScreen() {
   );
 
   async function recast() {
-    if (!prepared || !ready) return;
+    if (!current || !ready) return;
     setBusy(true);
     setError(undefined);
     try {
       await startRecast({
         presetId,
-        clipBlobId: prepared.blobId,
-        clipDurationSec: prepared.info.durationSec,
-        clipWidth: prepared.info.width,
-        clipHeight: prepared.info.height,
+        clipBlobId: current.blobId,
+        clipDurationSec: current.info.durationSec,
+        clipWidth: current.info.width,
+        clipHeight: current.info.height,
         cast,
         ...(swapImageBlobId ? { swapImageBlobId } : {}),
         direction,
@@ -287,6 +341,16 @@ export function RecastScreen() {
         {() => (
           <div className="grid gap-2">
             {rawUrl && <video src={rawUrl} controls muted playsInline className="w-full rounded-media border border-rule bg-seamless" />}
+            {rawInfo && tooShort(rawInfo.durationSec, limits) ? (
+              <p className="text-control text-drift">Recast needs a clip of at least {limits.minSec} s.</p>
+            ) : (
+              rawInfo &&
+              !trimmed &&
+              rawInfo.durationSec > limits.maxSec + 0.05 && <p className="text-control">Using the first {limits.maxSec} s. Trim to pick a different part.</p>
+            )}
+            {rawInfo && trimmed && short && <p className="text-control text-drift">Trim to {limits.minSec} to {limits.maxSec} s.</p>}
+            {current && <p className="text-control text-ink-muted">Ready: {fmt(current.info.durationSec)} at {current.info.height}p.</p>}
+            {current && others && <p className="text-control text-drift">Other people in the clip will still appear. Make sure they're OK with it.</p>}
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="secondary" size="sm" onClick={() => clipInput.current?.click()}>
                 {rawBlobId ? "Replace clip" : "Upload a clip"}
@@ -337,20 +401,36 @@ export function RecastScreen() {
       </Field>
 
       {rawInfo && (
-        <Field label={`Trim: ${fmt(range[0])} to ${fmt(range[1])} (${fmt(length)})`} hint={`${MODE_LABEL[mode]} takes ${limits.minSec} to ${limits.maxSec} s.`}>
-          {() => (
-            <div className="grid gap-2">
-              <input type="range" min={0} max={rawInfo.durationSec} step={0.1} value={range[0]} aria-label="Start" onChange={(e) => setRange([Math.min(Number(e.target.value), range[1] - 0.5), range[1]])} className="w-full" />
-              <input type="range" min={0} max={rawInfo.durationSec} step={0.1} value={range[1]} aria-label="End" onChange={(e) => setRange([range[0], Math.max(Number(e.target.value), range[0] + 0.5)])} className="w-full" />
-              {!lengthOk && <p className="text-control text-drift">Trim to {limits.minSec} to {limits.maxSec} s.</p>}
-              <Button type="button" variant="secondary" size="sm" className="justify-self-start" disabled={!lengthOk || progress !== undefined} onClick={() => void prepare()}>
-                {progress !== undefined ? `Preparing ${Math.round(progress * 100)}%` : prepared ? "Prepare again" : "Prepare clip"}
-              </Button>
-              {prepared && fitsLimits(prepared, limits) && <p className="text-control text-ink-muted">Ready: {fmt(prepared.info.durationSec)} at {prepared.info.height}p.</p>}
-              {others && <p className="text-control text-drift">Other people in the clip will still appear. Make sure they're OK with it.</p>}
-            </div>
-          )}
-        </Field>
+        <details className="grid gap-2 border-t border-rule pt-3">
+          <summary className="cursor-pointer text-control font-semibold">Trim (optional)</summary>
+          <div className="mt-2 grid gap-2">
+            <p className="text-control">
+              {fmt(range[0])} to {fmt(range[1])} ({fmt(range[1] - range[0])})
+            </p>
+            {(["start", "end"] as const).map((end) => (
+              <input
+                key={end}
+                type="range"
+                min={0}
+                max={rawInfo.durationSec}
+                step={0.1}
+                value={end === "start" ? range[0] : range[1]}
+                aria-label={end === "start" ? "Start" : "End"}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  moveRange(end === "start" ? [Math.min(v, range[1] - 0.5), range[1]] : [range[0], Math.max(v, range[0] + 0.5)], end);
+                }}
+                onPointerUp={commitRange}
+                onKeyUp={commitRange}
+                onBlur={commitRange}
+                className="w-full"
+              />
+            ))}
+            <p className="text-control text-ink-muted">
+              {MODE_LABEL[mode]} takes {limits.minSec} to {limits.maxSec} s. The clip prepares again when you let go.
+            </p>
+          </div>
+        </details>
       )}
 
       {people && <Field label="Performer">{(id) => <CastPicker id={id} value={cast.slice(0, 1)} onChange={(picks) => setCast(picks.slice(-1))} />}</Field>}
