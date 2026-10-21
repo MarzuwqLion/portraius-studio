@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { WorkScreen } from "@/components/shell/Screen";
 import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
+import { EmptyExample } from "@/components/studio/EmptyExample";
 import { GenerateFooter } from "@/components/studio/GenerateFooter";
 import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
@@ -228,7 +229,7 @@ export function ImageScreen() {
   const set = (
     <div className="h-full w-full self-stretch overflow-auto">
       {groups.length === 0 && realism.length === 0 ? (
-        <p className="flex h-full items-center justify-center text-body">Takes appear here.</p>
+        <EmptyExample presets={IMAGE_PRESETS} value={presetId} onPick={applyPreset} />
       ) : (
         <div className="grid gap-6">
           {pickedJob && (

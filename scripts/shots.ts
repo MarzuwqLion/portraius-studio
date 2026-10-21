@@ -191,6 +191,14 @@ const CHECKS: Check[] = [
     },
   },
   {
+    name: "the empty Image set shows the Film still example",
+    applies: (route, phase) => route === "tour-try-image" && phase === "walt",
+    run: async (page) => {
+      const example = page.locator('section[aria-label="Set"]').getByText("Example: Film still with Walt Harmon, a designed character. Your takes appear here.");
+      return (await example.count()) && (await example.isVisible()) ? undefined : "no example on the set";
+    },
+  },
+  {
     name: "Recast waits only for the key: no prepare, trim or rights step",
     applies: (route) => route === "tour-try-recast",
     run: async (page) => {

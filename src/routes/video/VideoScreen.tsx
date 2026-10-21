@@ -4,6 +4,7 @@ import { Shuffle } from "lucide-react";
 import { WorkScreen } from "@/components/shell/Screen";
 import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
+import { EmptyExample } from "@/components/studio/EmptyExample";
 import { GenerateFooter } from "@/components/studio/GenerateFooter";
 import { Field, Segmented, Select } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
@@ -333,7 +334,7 @@ export function VideoScreen() {
   const set = (
     <div className="h-full w-full self-stretch overflow-auto">
       {clips.length === 0 ? (
-        <p className="flex h-full items-center justify-center text-body">Clips appear here.</p>
+        <EmptyExample presets={VIDEO_PRESETS} value={presetId} onPick={applyPreset} />
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-6">
           {clips.map((job) => {

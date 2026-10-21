@@ -58,6 +58,7 @@ import {
   type Shot,
 } from "@/lib/studio/director";
 import { agentInput, collectDraft, draftShots } from "@/lib/studio/agent";
+import { loadTour, sampleUrl, tryWithWalt } from "@/lib/tour/tour";
 import { compileImageRequest, randomSeed } from "@/lib/studio/image";
 import type { Job } from "@/lib/types/jobs";
 import { cn } from "@/lib/utils";
@@ -83,17 +84,53 @@ export function DirectorScreen() {
 function SceneList() {
   const navigate = useNavigate();
   const scenes = useLiveQuery(listScenes, []);
+  const [starting, setStarting] = useState(false);
+  const [error, setError] = useState<string>();
   async function create() {
     const scene = await saveScene(newScene(randomSeed()));
     navigate(`/director/${scene.id}`);
   }
+  // The Letter from the Tour, the same way its "Try this with Walt" makes it.
+  async function startSample() {
+    setStarting(true);
+    setError(undefined);
+    try {
+      navigate((await tryWithWalt(await loadTour(), "director")).to);
+    } catch (err) {
+      setError((err as Error).message);
+      setStarting(false);
+    }
+  }
+  const empty = scenes !== undefined && !scenes.length;
   return (
-    <Screen title="Director" actions={<Button onClick={() => void create()}>New scene</Button>}>
+    <Screen
+      title="Director"
+      actions={
+        <div className="flex flex-wrap gap-3">
+          {empty && (
+            <Button variant="secondary" disabled={starting} onClick={() => void startSample()}>
+              Start from the sample scene
+            </Button>
+          )}
+          <Button onClick={() => void create()}>New scene</Button>
+        </div>
+      }
+    >
       <p className="mb-6 text-body text-ink-muted md:hidden">Director works best on a desktop screen.</p>
-      {scenes && !scenes.length && (
+      {empty && (
         <Note>A scene is a short sequence of shots: set the film once, plan the shots, pick an anchor still for each, animate them, and export one stitched MP4.</Note>
       )}
-      <ul className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
+      {error && (
+        <p role="alert" className="mt-4 text-body text-drift">
+          {error}
+        </p>
+      )}
+      <ul className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
+        {empty && (
+          <li>
+            <SampleSceneCard disabled={starting} onStart={() => void startSample()} />
+          </li>
+        )}
         {scenes?.map((scene) => (
           <li key={scene.id}>
             <SceneCard scene={scene} />
@@ -101,6 +138,23 @@ function SceneList() {
         ))}
       </ul>
     </Screen>
+  );
+}
+
+// The sample scene as a card, with the Tour's first anchor as its cover: the
+// opening frame of The Letter, which shot 1 animates from.
+function SampleSceneCard({ disabled, onStart }: { disabled: boolean; onStart: () => void }) {
+  return (
+    <button type="button" disabled={disabled} onClick={onStart} className="grid w-full overflow-hidden rounded-media border border-rule text-left hover:bg-tint-hover">
+      <span className="relative block aspect-video bg-seamless">
+        <video src={`${sampleUrl("the-letter.mp4")}#t=0.1`} muted playsInline preload="metadata" aria-hidden className="size-full object-cover" />
+      </span>
+      <span className="grid gap-1 p-4">
+        <span className="font-display text-panel font-extrabold">The Letter</span>
+        <span className="line-clamp-2 text-body">A retired harbour pilot finds a letter he never sent.</span>
+        <span className="text-control text-ink-muted">{disabled ? "Adding Walt Harmon" : "Sample scene · 3 shots · 15 s · with Walt Harmon"}</span>
+      </span>
+    </button>
   );
 }
 
