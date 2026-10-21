@@ -3,7 +3,9 @@
 // passes, each in its own fresh browser profile:
 //
 //   fresh  nothing stored, no key: what a judge sees first
-//   walt   after "Add Walt Harmon to your vault" on the Tour
+//   walt   after "Try this with Walt" on the Tour, which adds him, plus the
+//          Tour's handoffs: Image with Walt and a preset, Recast with the
+//          sample clip, and the Director sample scene
 //   work   Walt plus a few finished, failed and queued jobs made from the
 //          Tour's own samples, so takes, scores and the activity row show
 //
@@ -27,7 +29,7 @@ const VIEWPORTS = [
 ] as const;
 const THEMES = ["light", "dark"] as const;
 // The primary action on each work screen, by its label's first word.
-const FOLD_CHECKS: Record<string, RegExp> = { image: /^Generate/, video: /^(Make draft|Generate)/, recast: /^Recast/ };
+const FOLD_CHECKS: Record<string, RegExp> = { image: /^Generate/, video: /^(Make draft|Generate)/, recast: /^Recast/, "tour-try-image": /^Generate/, "tour-try-recast": /^Recast/ };
 
 type Phase = "fresh" | "walt" | "work";
 const only = process.argv.slice(2).filter((a): a is Phase => ["fresh", "walt", "work"].includes(a));
@@ -35,7 +37,11 @@ const phases: Phase[] = only.length ? only : ["fresh", "walt", "work"];
 
 const remix = await encodeRecipe({ format: "portraius.recipe", version: 1, ...yearbook.recipe } as Parameters<typeof encodeRecipe>[0]);
 
-const BASE_ROUTES: { name: string; hash: string }[] = [
+// A route is a hash to visit, or a Tour chapter whose "Try this with Walt"
+// button to press (it opens a studio with Walt cast).
+type Route = { name: string; hash: string } | { name: string; tryChapter: string };
+
+const BASE_ROUTES: Route[] = [
   { name: "first-run", hash: "/" },
   { name: "characters", hash: "/characters" },
   { name: "characters-new", hash: "/characters/new" },
@@ -100,13 +106,22 @@ async function truncatedSelects(page: Page): Promise<string[]> {
   });
 }
 
-async function addWalt(page: Page): Promise<string> {
+const dbModule = () => `${server.config.base}src/lib/store/db.ts`;
+
+async function tryChapter(page: Page, chapter: string): Promise<void> {
   await visit(page, "/tour");
-  await page.getByRole("button", { name: /Add Walt Harmon/ }).click();
-  const open = page.getByRole("link", { name: /Open Walt Harmon/ });
-  await open.waitFor({ timeout: 60_000 });
-  const href = (await open.getAttribute("href")) ?? "";
-  return href.replace(/^#/, "").replace(/^\/characters\//, "");
+  await page.locator(`#tour-${chapter}`).getByRole("button", { name: /^Try this with/ }).click();
+  await page.waitForURL((url) => !url.hash.startsWith("#/tour"), { timeout: 60_000 });
+  // The studio applies the launch, and Recast loads its sample clip.
+  await page.waitForTimeout(chapter === "recast" ? 2000 : 500);
+}
+
+async function addWalt(page: Page): Promise<string> {
+  await tryChapter(page, "images");
+  return page.evaluate(async (m) => {
+    const { db } = await import(/* @vite-ignore */ m);
+    return ((await db.characters.toArray()) as { id: string }[])[0]!.id;
+  }, dbModule());
 }
 
 // Finished, failed and queued jobs made from the Tour's samples, written
@@ -146,21 +161,8 @@ async function seedWork(page: Page, waltId: string): Promise<void> {
       await db.jobs.put({ id: "shots-job-failed", kind: "image", modelId: "vertexai/gemini-nano-banana-2.1", requestId: "shots-failed", idempotencyKey: "shots-job-failed", input: { model: {}, characterIds: [], prompt: "A lighthouse in fog", request: { aspectRatio: "1:1" } }, status: "failed", error: { code: "provider_error", message: "The provider didn't finish this one. Retry it?", requestId: "shots-failed", retry: "manual" }, generationIds: [], createdAt: now - 60_000, updatedAt: now - 60_000 });
       await db.jobs.put({ id: "shots-job-queued", kind: "video", modelId: "byteplus/dreamina-seedance-2-5-260628", requestId: "shots-queued", idempotencyKey: "shots-job-queued", input: { model: {}, characterIds: [], prompt: "Rain on a diner window at night", request: { mode: "text", ratio: "16:9" } }, status: "queued", queuePosition: 2, generationIds: [], createdAt: now - 10_000, updatedAt: now - 10_000 });
     },
-    { waltId, samples: `${server.config.base}samples/`, dbModule: `${server.config.base}src/lib/store/db.ts` },
+    { waltId, samples: `${server.config.base}samples/`, dbModule: dbModule() },
   );
-}
-
-async function scene(page: Page): Promise<string | undefined> {
-  await visit(page, "/director");
-  const create = page.getByRole("button", { name: "New scene" });
-  if (!(await create.count())) return undefined;
-  await create.click();
-  await page.waitForURL(/#\/director\/[^/]+$/);
-  for (let i = 0; i < 2; i++) {
-    const add = page.getByRole("button", { name: /^Add (a )?shot$/ }).first();
-    if (await add.count()) await add.click();
-  }
-  return new URL(page.url()).hash.replace(/^#/, "");
 }
 
 try {
@@ -178,8 +180,7 @@ try {
         await seedWork(page, waltId);
         routes.push({ name: "library-take", hash: "/library/shots-gen-1" }, { name: "library-video", hash: "/library/shots-gen-video" });
       }
-      const sceneHash = await scene(page);
-      if (sceneHash) routes.push({ name: "director-scene", hash: sceneHash });
+      routes.push({ name: "tour-try-image", tryChapter: "images" }, { name: "tour-try-recast", tryChapter: "recast" }, { name: "director-scene", tryChapter: "director" });
     }
     for (const viewport of VIEWPORTS) {
       await page.setViewportSize(viewport);
@@ -188,7 +189,8 @@ try {
         mkdirSync(dir, { recursive: true });
         await setTheme(page, theme);
         for (const route of routes) {
-          await visit(page, route.hash);
+          if ("hash" in route) await visit(page, route.hash);
+          else await tryChapter(page, route.tryChapter);
           // A picked take, so the grease mark and its label show.
           if (phase === "work" && route.name === "image") {
             await page.locator('button[aria-label^="Pick:"]').last().click();

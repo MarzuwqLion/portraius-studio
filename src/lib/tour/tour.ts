@@ -3,6 +3,9 @@
 // each sample is; it's regenerated when the sample character changes.
 import { z } from "zod";
 import { addImport, readImport } from "@/lib/characters/manage";
+import { newScene, newShot, saveScene, type Shot } from "@/lib/studio/director";
+import { randomSeed } from "@/lib/studio/image";
+import type { Launch } from "@/lib/studio/launch";
 
 const file = z.string().regex(/^[a-z0-9][a-z0-9-]*\.(jpg|png|mp4)$/);
 const size = { width: z.number().int().positive(), height: z.number().int().positive() };
@@ -62,4 +65,54 @@ export async function addSampleCharacter(tour: Tour): Promise<string> {
   const pending = await readImport(await res.blob());
   if (pending.replaces) return pending.bundle.file.id;
   return (await addImport(pending)).id;
+}
+
+// "Try this with Walt" (spec: Decisions, October 21, item 11): where each
+// chapter sends the visitor, with Walt cast and the matching preset picked.
+export interface TryTarget {
+  to: "/image" | "/video" | "/recast" | "/director";
+  presetId?: string;
+  sampleClip?: boolean;
+  scene?: boolean; // Director: a new three-shot scene with Walt in it
+}
+
+export const TRY_WITH: Record<string, TryTarget> = {
+  character: { to: "/image", presetId: "studio-headshot" },
+  images: { to: "/image", presetId: "film-still" },
+  realism: { to: "/image", presetId: "profile-photo" },
+  video: { to: "/video", presetId: "night-walk" },
+  recast: { to: "/recast", presetId: "swap-me-in", sampleClip: true },
+  director: { to: "/director", scene: true },
+  elements: { to: "/image", presetId: "editorial-cover" },
+};
+
+// The Letter's three shots, to direct again with your own key.
+const SAMPLE_SHOTS: Pick<Shot, "action" | "size" | "lens" | "movement" | "durationSec">[] = [
+  { action: "{lead} sits alone in a corner booth of a late-night diner, rain on the window", size: "WS", lens: "35mm", movement: "static", durationSec: 5 },
+  { action: "{lead} slides an old envelope out of his coat and turns it over in his hands", size: "MCU", lens: "50mm", movement: "slow-push-in", durationSec: 5 },
+  { action: "{lead} looks up toward the diner door and almost smiles", size: "CU", lens: "85mm", movement: "static", durationSec: 5 },
+];
+
+export async function startSampleScene(characterId: string): Promise<string> {
+  const scene = newScene(randomSeed());
+  scene.title = "The Letter, again";
+  scene.logline = "A retired harbour pilot finds a letter he never sent.";
+  scene.location = "A late-night diner with red vinyl booths";
+  scene.cast = [{ slot: "lead", characterId }];
+  for (const s of SAMPLE_SHOTS) {
+    scene.shots.push({ ...newShot(scene, scene.shots.at(-1)), ...s });
+    scene.nextShot += 1;
+  }
+  return (await saveScene(scene)).id;
+}
+
+// Walt into the vault if he isn't there, then where to go and what to open with.
+export async function tryWithWalt(tour: Tour, chapter: string): Promise<{ to: string; state?: Launch }> {
+  const target = TRY_WITH[chapter] ?? { to: "/image" };
+  const characterId = await addSampleCharacter(tour);
+  if (target.scene) return { to: `/director/${await startSampleScene(characterId)}` };
+  return {
+    to: target.to,
+    state: { cast: [{ slot: "lead", characterId }], ...(target.presetId ? { presetId: target.presetId } : {}), ...(target.sampleClip ? { sampleClip: true } : {}) },
+  };
 }

@@ -1,12 +1,12 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Note, Screen } from "@/components/shell/Screen";
 import { BeforeAfter } from "@/components/studio/BeforeAfter";
 import { SplitView } from "@/components/studio/SplitView";
 import { ScoreBadge, Take } from "@/components/studio/Take";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useKeyStore } from "@/lib/session/key";
-import { addSampleCharacter, loadTour, sampleUrl, type Tour, type TourItem } from "@/lib/tour/tour";
+import { loadTour, sampleUrl, tryWithWalt, type Tour, type TourItem } from "@/lib/tour/tour";
 import { cn } from "@/lib/utils";
 
 const aspect = (m: { width: number; height: number }) => `${m.width} / ${m.height}`;
@@ -65,30 +65,58 @@ function Sample({ item }: { item: TourItem }) {
   );
 }
 
-function CharacterSection({ tour }: { tour: Tour }) {
-  const { character } = tour;
-  const [added, setAdded] = useState<string>();
+// Every chapter ends here (spec: Decisions, October 21, item 11): Walt into
+// the vault if he isn't there, then the matching studio with Walt cast and the
+// preset picked.
+function TryWithWalt({ tour, chapter }: { tour: Tour; chapter: string }) {
+  const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-
-  async function add() {
+  const first = tour.character.name.split(" ")[0];
+  async function go() {
     setBusy(true);
     setError(undefined);
     try {
-      setAdded(await addSampleCharacter(tour));
+      const { to, state } = await tryWithWalt(tour, chapter);
+      navigate(to, state ? { state } : undefined);
     } catch (err) {
       setError((err as Error).message);
-    } finally {
       setBusy(false);
     }
   }
-
   return (
-    <section aria-labelledby="tour-character" className="grid gap-4">
-      <h2 id="tour-character" className="font-display text-screen font-extrabold">
-        A character is a file you own
+    <div className="flex flex-wrap items-center gap-3">
+      <Button onClick={() => void go()} disabled={busy}>
+        {busy ? `Adding ${first}` : `Try this with ${first}`}
+      </Button>
+      {error && (
+        <p className="text-control text-drift" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Chapter({ id, title, body, tour, children }: { id: string; title: string; body: ReactNode; tour: Tour; children: ReactNode }) {
+  return (
+    <section id={`tour-${id}`} aria-labelledby={`tour-${id}-title`} className="grid scroll-mt-16 gap-4 lg:scroll-mt-6">
+      <h2 id={`tour-${id}-title`} className="font-display text-screen font-extrabold">
+        {title}
       </h2>
-      <p className="max-w-[70ch] text-body">{character.description}</p>
+      <p className="max-w-[70ch] text-body">{body}</p>
+      {children}
+      <TryWithWalt tour={tour} chapter={id} />
+    </section>
+  );
+}
+
+const CHARACTER_TITLE = "A character is a file you own";
+
+function CharacterChapter({ tour }: { tour: Tour }) {
+  const { character } = tour;
+  return (
+    <Chapter id="character" title={CHARACTER_TITLE} body={character.description} tour={tour}>
       <div className="grid gap-6 rounded-media bg-seamless p-6 text-on-seamless">
         <div className="grid gap-2">
           <Take src={sampleUrl(character.sheet.src)} alt={`Turnaround sheet for ${character.name}`} aspect={aspect(character.sheet)} className="mx-auto w-full max-w-4xl" />
@@ -108,27 +136,59 @@ function CharacterSection({ tour }: { tour: Tour }) {
           ))}
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-3">
-        {added ? (
-          <>
-            <span className="text-body">{character.name} is in your vault.</span>
-            <Link to={`/characters/${added}`} className={buttonVariants({ variant: "secondary" })}>
-              Open {character.name}
-            </Link>
-          </>
-        ) : (
-          <Button variant="secondary" onClick={() => void add()} disabled={busy}>
-            Add {character.name} to your vault
-          </Button>
-        )}
-        <span className="text-control text-ink-muted">Then use him in any studio with your own key, no photos needed.</span>
-      </div>
-      {error && (
-        <p className="text-control text-drift" role="alert">
-          {error}
-        </p>
-      )}
-    </section>
+    </Chapter>
+  );
+}
+
+const SHORT: Record<string, string> = {
+  character: "Character",
+  images: "Images",
+  realism: "Make it real",
+  video: "Video",
+  recast: "Recast",
+  director: "Director",
+  elements: "Elements",
+};
+
+// The chapter list stays in view and marks the chapter on screen. Buttons,
+// not #links: the hash belongs to the router.
+function Chapters({ chapters }: { chapters: { id: string; short: string }[] }) {
+  const [current, setCurrent] = useState(chapters[0]?.id);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (visible) setCurrent(visible.target.id.replace(/^tour-/, ""));
+      },
+      { rootMargin: "0px 0px -60% 0px" },
+    );
+    for (const c of chapters) {
+      const el = document.getElementById(`tour-${c.id}`);
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, [chapters.map((c) => c.id).join()]);
+  return (
+    <nav aria-label="Tour chapters" className="sticky top-0 z-10 -mx-6 overflow-x-auto border-b border-rule bg-proof px-6 py-2 lg:top-6 lg:mx-0 lg:self-start lg:border-0 lg:p-0">
+      <ol className="flex gap-1 lg:grid">
+        {chapters.map((c, i) => (
+          <li key={c.id} className="shrink-0">
+            <button
+              type="button"
+              aria-current={current === c.id ? "true" : undefined}
+              onClick={() => document.getElementById(`tour-${c.id}`)?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" })}
+              className={cn(
+                "flex w-full items-baseline gap-2 rounded-control px-2 py-1.5 text-left text-control hover:bg-tint-hover",
+                current === c.id ? "bg-tint-active font-semibold text-ink" : "text-ink-muted",
+              )}
+            >
+              <span className="font-display text-panel font-extrabold">{i + 1}</span>
+              {c.short}
+            </button>
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }
 
@@ -141,66 +201,62 @@ export function TourScreen() {
     loadTour().then(setTour, (err: Error) => setError(err.message));
   }, []);
 
+  const chapters = tour ? ["character", ...tour.sections.map((s) => s.id)].map((id) => ({ id, short: SHORT[id] ?? id })) : [];
+  const first = tour?.character.name.split(" ")[0];
+
   return (
     <Screen
       title="Tour"
       actions={
-        <div className="flex flex-wrap gap-2">
-          {keyLocation === "none" ? (
-            <Link to="/settings" className={buttonVariants({ variant: "primary" })}>
-              Add your key
-            </Link>
-          ) : (
-            <Link to="/image" className={buttonVariants({ variant: "primary" })}>
-              Open Image
-            </Link>
-          )}
-        </div>
+        keyLocation === "none" ? (
+          <Link to="/settings" className={buttonVariants({ variant: "secondary" })}>
+            Add your key
+          </Link>
+        ) : undefined
       }
     >
-      <div className="grid gap-12">
-        <Note>
-          Everything here was made in Portraius Studio with a designed character, and plays from this site. Nothing calls a model, so no key is
-          needed. Each sample is labelled.
-        </Note>
-        {error && (
-          <p className="text-body text-drift" role="alert">
-            {error}
-          </p>
-        )}
-        {tour && (
-          <>
-            <CharacterSection tour={tour} />
-            {tour.sections.map((section) => (
-              <section key={section.id} aria-labelledby={`tour-${section.id}`} className="grid gap-4">
-                <h2 id={`tour-${section.id}`} className="font-display text-screen font-extrabold">
-                  {section.title}
-                </h2>
-                <p className="max-w-[70ch] text-body">{section.body}</p>
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,22rem),1fr))] gap-6 rounded-media bg-seamless p-6">
-                  {section.items.map((item) => (
-                    <Sample key={JSON.stringify(item.media)} item={item} />
-                  ))}
+      <div className="grid gap-8 lg:grid-cols-[11rem_minmax(0,1fr)]">
+        {tour ? <Chapters chapters={chapters} /> : <span />}
+        <div className="grid min-w-0 gap-14">
+          <Note>
+            Everything here was made in Portraius Studio{tour ? ` with ${tour.character.name}, a designed character,` : ""} and plays from this site. Nothing
+            calls a model, so no key is needed. Each chapter ends with a button that opens that studio with {first ?? "him"} cast and the preset picked.
+          </Note>
+          {error && (
+            <p className="text-body text-drift" role="alert">
+              {error}
+            </p>
+          )}
+          {tour && (
+            <>
+              <CharacterChapter tour={tour} />
+              {tour.sections.map((section) => (
+                <Chapter key={section.id} id={section.id} title={section.title} body={section.body} tour={tour}>
+                  <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,22rem),1fr))] gap-6 rounded-media bg-seamless p-6">
+                    {section.items.map((item) => (
+                      <Sample key={JSON.stringify(item.media)} item={item} />
+                    ))}
+                  </div>
+                </Chapter>
+              ))}
+              <section className="grid gap-3 border-t border-rule pt-6">
+                <h2 className="text-panel font-semibold">Make your own</h2>
+                <p className="max-w-[70ch] text-body">
+                  Paste a Comfy API key with Router access in Settings. It stays in this browser and goes only to Comfy. Then make a character from
+                  your photos, design one, or keep using {tour.character.name}.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Link to="/settings" className={buttonVariants({ variant: "primary" })}>
+                    Add your key
+                  </Link>
+                  <Link to="/characters/new" className={buttonVariants({ variant: "secondary" })}>
+                    Make a character
+                  </Link>
                 </div>
               </section>
-            ))}
-            <section className="grid gap-3 border-t border-rule pt-6">
-              <h2 className="text-panel font-semibold">Make your own</h2>
-              <p className="max-w-[70ch] text-body">
-                Paste a Comfy API key with Router access in Settings. It stays in this browser and goes only to Comfy. Then make a character from
-                your photos, design one, or use {tour.character.name}.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Link to="/settings" className={buttonVariants({ variant: "primary" })}>
-                  Add your key
-                </Link>
-                <Link to="/characters/new" className={buttonVariants({ variant: "secondary" })}>
-                  Make a character
-                </Link>
-              </div>
-            </section>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </Screen>
   );

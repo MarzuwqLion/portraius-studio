@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { WorkScreen } from "@/components/shell/Screen";
 import { CastPicker } from "@/components/studio/CastPicker";
+import { useLaunch } from "@/components/studio/useLaunch";
 import { GenerateFooter } from "@/components/studio/GenerateFooter";
 import { Field, Select, TextArea } from "@/components/studio/fields";
 import { jobStatusText } from "@/components/studio/JobTake";
@@ -38,8 +39,10 @@ import {
   type PreparedClip,
   type RecastRequest,
 } from "@/lib/studio/recast";
+import { SAMPLE_CLIP } from "@/lib/studio/launch";
 import { storeUpload } from "@/lib/studio/uploads";
 import { H3_RESOLUTIONS } from "@/lib/studio/video";
+import { sampleUrl } from "@/lib/tour/tour";
 import type { Job } from "@/lib/types/jobs";
 import { cn } from "@/lib/utils";
 
@@ -131,6 +134,22 @@ export function RecastScreen() {
       setError((err as Error).message);
     }
   }
+
+  // The sample clip from public/samples/: the Tour's "Try this with Walt",
+  // and "try the sample" on the empty set.
+  async function takeSample() {
+    setError(undefined);
+    const res = await fetch(sampleUrl(SAMPLE_CLIP)).catch(() => undefined);
+    if (!res?.ok) return setError("The sample clip didn't load. Try again.");
+    await takeClip(await res.blob());
+  }
+
+  useLaunch((launch) => {
+    const p = RECAST_PRESETS.find((r) => r.id === launch.presetId);
+    if (p) choosePreset(p);
+    if (launch.cast) setCast(launch.cast.slice(0, 1));
+    if (launch.sampleClip) void takeSample();
+  });
 
   // A preset with a shorter limit shortens the trim. The prepared clip stays
   // and is used again whenever it fits the preset's limits.

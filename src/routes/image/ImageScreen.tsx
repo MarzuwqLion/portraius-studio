@@ -9,6 +9,7 @@ import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
 import { PresetPicker } from "@/components/studio/PresetPicker";
 import { PromptEditor } from "@/components/studio/PromptEditor";
+import { useLaunch } from "@/components/studio/useLaunch";
 import { RealismAction, RealismTake } from "@/components/studio/Realism";
 import { SaveAsElement } from "@/components/studio/SaveAsElement";
 import { Take } from "@/components/studio/Take";
@@ -88,6 +89,12 @@ export function ImageScreen() {
   useEffect(() => {
     if (recipeParam) applyPreset(IMAGE_PRESETS.find((p) => p.id === recipeParam));
   }, [recipeParam]);
+
+  // The Tour's "Try this with Walt": a preset and a cast.
+  useLaunch((launch) => {
+    if (launch.presetId) applyPreset(IMAGE_PRESETS.find((p) => p.id === launch.presetId));
+    if (launch.cast) setCast(launch.cast);
+  });
 
   // The compiled prompt, kept current as the controls change.
   useEffect(() => {

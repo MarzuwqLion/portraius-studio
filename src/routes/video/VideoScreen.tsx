@@ -9,6 +9,7 @@ import { Field, Segmented, Select } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
 import { PresetPicker } from "@/components/studio/PresetPicker";
 import { PromptEditor } from "@/components/studio/PromptEditor";
+import { useLaunch } from "@/components/studio/useLaunch";
 import { Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -165,6 +166,12 @@ export function VideoScreen() {
       live = false;
     };
   }, [mode, sourceBlobId]);
+
+  // The Tour's "Try this with Walt": a preset and a cast.
+  useLaunch((launch) => {
+    if (launch.presetId) applyPreset(VIDEO_PRESETS.find((p) => p.id === launch.presetId));
+    if (launch.cast) setCast(launch.cast);
+  });
 
   // ?from=<generationId>: that image becomes the first frame.
   useEffect(() => {
