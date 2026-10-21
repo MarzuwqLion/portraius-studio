@@ -14,6 +14,8 @@ import { useJobs } from "@/lib/jobs/hooks";
 import { voice } from "@/lib/presets/load";
 import { deleteCharacter, isUsable, loadBundle } from "@/lib/store/characters";
 import { useBlobUrl, useCharacter } from "@/lib/store/hooks";
+import { nextSlot } from "@/lib/studio/cast";
+import type { Launch } from "@/lib/studio/launch";
 import type { CharacterRecord } from "@/lib/types/records";
 import { CharacterBadges } from "./CharactersScreen";
 
@@ -239,6 +241,29 @@ function DeletePanel({ record }: { record: CharacterRecord }) {
   );
 }
 
+// The next step from a character's page (Decisions, October 21, U5, item 6):
+// a studio with them cast, through the same Launch state as the Tour's
+// handoff, with no preset. Recast takes a person as its performer, so an
+// element goes to Image and Video only.
+function UseIn({ record }: { record: CharacterRecord }) {
+  const navigate = useNavigate();
+  const state: Launch = { cast: [{ slot: nextSlot(record, []), characterId: record.id }] };
+  const targets = [
+    { to: "/image", label: "Use in an image" },
+    { to: "/video", label: "Use in a video" },
+    ...(record.kind === "person" ? [{ to: "/recast", label: "Use in a recast" }] : []),
+  ];
+  return (
+    <div className="flex flex-wrap gap-2">
+      {targets.map((t, i) => (
+        <Button key={t.to} variant={i === 0 ? "primary" : "secondary"} onClick={() => navigate(t.to, { state })}>
+          {t.label}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
 export function CharacterDetailScreen() {
   const { id } = useParams();
   const record = useCharacter(id);
@@ -261,6 +286,7 @@ export function CharacterDetailScreen() {
   return (
     <Screen title={record.name} actions={<CharacterBadges record={record} />}>
       <div className="grid gap-10">
+        {isUsable(record) && <UseIn record={record} />}
         {record.locked && (
           <p className="max-w-[70ch] text-body text-drift">
             Imported without a consent record. You can view this character, but it can't be used in any generation. The person in the photos can
