@@ -89,6 +89,59 @@ function RecastResult({ job }: { job: Job }) {
   );
 }
 
+// The empty set (spec: Decisions, October 21, item 12): the whole set takes a
+// dropped clip, with the sample's original and recast looping behind the
+// invitation. With earlier recasts below, it shrinks to a band.
+function DropStage({ full, onClip, onSample, onUpload }: { full: boolean; onClip: (blob: Blob) => void; onSample: () => void; onUpload: () => void }) {
+  const [over, setOver] = useState(false);
+  const still = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const loop = (name: string, label: string) => (
+    <video
+      src={`${sampleUrl(name)}${still ? "#t=5" : ""}`}
+      muted
+      loop
+      playsInline
+      autoPlay={!still}
+      preload="auto"
+      aria-label={label}
+      className="size-full object-cover"
+    />
+  );
+  return (
+    <section
+      aria-label="Drop a clip"
+      onDragOver={(e) => {
+        e.preventDefault();
+        setOver(true);
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setOver(false);
+        const file = [...e.dataTransfer.files].find((f) => f.type.startsWith("video/"));
+        if (file) onClip(file);
+      }}
+      className={cn("relative grid overflow-hidden rounded-media border-2 border-dashed", full ? "h-full" : "h-64", over ? "border-on-seamless" : "border-rule")}
+    >
+      <div aria-hidden className="absolute inset-0 grid grid-cols-2">
+        {loop("concert-original.mp4", "Sample original")}
+        {loop("concert-recast.mp4", "Sample recast")}
+      </div>
+      <div className="absolute inset-0 bg-seamless/75" />
+      <div className="relative grid content-center justify-items-center gap-4 p-6 text-center">
+        <p className="font-display text-screen font-extrabold">Drop a clip, or try the sample</p>
+        <p className="max-w-[52ch] text-body">A clip you filmed or have the rights to use. Behind this: the sample, before and after.</p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button onClick={onSample}>Try the sample</Button>
+          <Button variant="secondary" className="border-on-seamless text-on-seamless" onClick={onUpload}>
+            Upload a clip
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function RecastScreen() {
   const [rawBlobId, setRawBlobId] = useState<string>();
   const [rawInfo, setRawInfo] = useState<ClipInfo>();
@@ -362,16 +415,16 @@ export function RecastScreen() {
   );
 
   const set = (
-    <div className="h-full w-full self-stretch overflow-auto">
-      {jobs.length === 0 ? (
-        <p className="flex h-full items-center justify-center text-body">Original and recast play side by side here.</p>
-      ) : (
-        <div className="mx-auto grid max-w-4xl gap-10">
+    <div className={cn("grid h-full w-full gap-10 self-stretch overflow-auto", !rawBlobId && jobs.length === 0 ? "grid-rows-[minmax(28rem,1fr)]" : "content-start")}>
+      {!rawBlobId && <DropStage full={jobs.length === 0} onClip={(blob) => void takeClip(blob)} onSample={() => void takeSample()} onUpload={() => clipInput.current?.click()} />}
+      {jobs.length > 0 && (
+        <div className="mx-auto grid w-full max-w-4xl gap-10">
           {jobs.map((job) => (
             <RecastResult key={job.id} job={job} />
           ))}
         </div>
       )}
+      {rawBlobId && jobs.length === 0 && <p className="flex h-full items-center justify-center text-body">Original and recast play side by side here.</p>}
     </div>
   );
 
