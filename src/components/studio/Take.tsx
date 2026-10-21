@@ -16,6 +16,7 @@ export function Take({
   pickLabel,
   seed,
   fit = "contain",
+  selectedLabel = true,
   children,
   className,
 }: {
@@ -28,6 +29,7 @@ export function Take({
   pickLabel?: string;
   seed?: number;
   fit?: "contain" | "cover"; // cover crops to fill: element cards, whose photos come in any shape
+  selectedLabel?: boolean; // false when the caller puts "✓ Selected" in its own row
   children?: ReactNode; // status text while the image isn't ready
   className?: string;
 }) {
@@ -47,7 +49,7 @@ export function Take({
   );
   // Every pick says so in words: the mark is only 2.4:1 on light Studio grey
   // (spec: Signature: grease-pencil marks).
-  const selected = picked && <SelectedLabel />;
+  const selected = picked && selectedLabel && <SelectedLabel className="mt-3" />;
   if (!onPick) {
     return (
       <figure className={cn("relative", className)}>
@@ -64,8 +66,8 @@ export function Take({
   );
 }
 
-export function SelectedLabel() {
-  return <span className="mt-3 inline-flex rounded-control bg-proof px-2 py-0.5 text-control font-semibold text-ink">✓ Selected</span>;
+export function SelectedLabel({ className }: { className?: string }) {
+  return <span className={cn("inline-flex rounded-control bg-proof px-2 py-0.5 text-control font-semibold text-ink", className)}>✓ Selected</span>;
 }
 
 export const BAND_TEXT: Record<Band, { label: string; className: string }> = {

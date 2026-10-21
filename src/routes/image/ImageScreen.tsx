@@ -24,7 +24,7 @@ import { compileImagePrompt, slotsIn } from "@/lib/prompts/compile";
 import type { GenerateImageInput, ImageAspectRatio } from "@/lib/registry/inputs";
 import { MODEL_IDS } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
-import { useBlobUrl } from "@/lib/store/hooks";
+import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
 import { describeCast, type CastPick } from "@/lib/studio/cast";
 import { startImages, type ImageRequest } from "@/lib/studio/image";
 import { generationImageBlobId, storeUpload } from "@/lib/studio/uploads";
@@ -51,6 +51,18 @@ function useImageGroups(): Job[][] {
   return images
     .filter((j) => !j.parentJobId || !byId.has(j.parentJobId))
     .map((root) => [root, ...images.filter((j) => j.parentJobId === root.id)].sort((a, b) => (scores?.get(b.id) ?? -1) - (scores?.get(a.id) ?? -1)));
+}
+
+// The action bar says what it acts on (Decisions, October 21, U5, item 10).
+function SelectedThumb({ generationId }: { generationId: string }) {
+  const generation = useGeneration(generationId);
+  const url = useBlobUrl(generation?.assets.find((a) => a.kind === "image")?.blobId);
+  return (
+    <span className="mr-1 flex items-center gap-2">
+      <span className="block size-10 shrink-0 overflow-hidden rounded-media border border-rule bg-seamless">{url && <img src={url} alt="" className="size-full object-cover" />}</span>
+      <span className="text-control font-semibold">Selected take</span>
+    </span>
+  );
 }
 
 export function ImageScreen() {
@@ -234,6 +246,7 @@ export function ImageScreen() {
         <div className="grid gap-6">
           {pickedJob && (
             <div className="flex flex-wrap items-center gap-2 rounded-control bg-proof p-2 text-ink">
+              <SelectedThumb generationId={pickedJob.generationIds[0]!} />
               <Button
                 size="sm"
                 variant="secondary"
