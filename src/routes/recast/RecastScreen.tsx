@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { WorkScreen } from "@/components/shell/Screen";
 import { CastPicker } from "@/components/studio/CastPicker";
@@ -13,18 +13,31 @@ import { useEstimateLabel, useRecentJobs } from "@/lib/jobs/hooks";
 import { retryJob, type JobInput } from "@/lib/jobs/runner";
 import { clipInfo, trimClip, type ClipInfo } from "@/lib/media/video-prep";
 import { RECAST_PRESETS } from "@/lib/presets/load";
+import type { Preset } from "@/lib/presets/schema";
 import type { H3Input } from "@/lib/registry/inputs";
 import { MODEL_IDS } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
 import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
 import type { CastPick } from "@/lib/studio/cast";
 import { randomSeed } from "@/lib/studio/image";
-import { LIMITS, facesInClip, isFirstOfTwo, modeOf, startRecast, storeClip, type RecastMode, type RecastRequest } from "@/lib/studio/recast";
+import {
+  LIMITS,
+  MODE_LABEL,
+  facesInClip,
+  fitsLimits,
+  isFirstOfTwo,
+  modeOf,
+  recastNeeds,
+  startRecast,
+  storeClip,
+  type PreparedClip,
+  type RecastMode,
+  type RecastRequest,
+} from "@/lib/studio/recast";
 import { storeUpload } from "@/lib/studio/uploads";
 import type { Job } from "@/lib/types/jobs";
 import { cn } from "@/lib/utils";
 
-const MODE_LABEL: Record<RecastMode, string> = { motion: "Motion Transfer", swap: "Object Swap", style: "Style swap" };
 const fmt = (s: number) => `${s.toFixed(1)} s`;
 
 function RecastResult({ job }: { job: Job }) {
@@ -68,7 +81,7 @@ export function RecastScreen() {
   const [rawInfo, setRawInfo] = useState<ClipInfo>();
   const [presetId, setPresetId] = useState(RECAST_PRESETS.find((p) => p.id === "swap-me-in")?.id ?? RECAST_PRESETS[0]!.id);
   const [range, setRange] = useState<[number, number]>([0, 0]);
-  const [prepared, setPrepared] = useState<{ blobId: string; info: ClipInfo } | undefined>();
+  const [prepared, setPrepared] = useState<PreparedClip>();
   const [progress, setProgress] = useState<number>();
   const [others, setOthers] = useState(false);
   const [rights, setRights] = useState(false);
@@ -92,25 +105,30 @@ export function RecastScreen() {
   const mode = modeOf(preset);
   const limits = LIMITS[mode];
   const people = mode === "motion" || (mode === "style" && preset.recipe.slots.some((s) => s.kind === "person"));
+  const needsId = useId();
 
-  // A new clip, or a mode with other limits: start the trim over.
-  useEffect(() => {
-    if (!rawInfo) return;
-    const end = Math.min(rawInfo.durationSec, limits.maxSec);
-    setRange([0, end]);
-    setPrepared(undefined);
-  }, [rawInfo, limits.maxSec]);
-
+  // A new clip starts the trim over.
   async function takeClip(blob: Blob) {
     setError(undefined);
     try {
       const info = await clipInfo(blob);
       setRawBlobId(await storeClip(blob));
       setRawInfo(info);
+      setRange([0, Math.min(info.durationSec, limits.maxSec)]);
+      setPrepared(undefined);
+      setOthers(false);
       setRights(false);
     } catch (err) {
       setError((err as Error).message);
     }
+  }
+
+  // A preset with a shorter limit shortens the trim. The prepared clip stays
+  // and is used again whenever it fits the preset's limits.
+  function choosePreset(p: Preset) {
+    setPresetId(p.id);
+    const max = LIMITS[modeOf(p)].maxSec;
+    setRange((r) => (r[1] - r[0] > max ? [r[0], r[0] + max] : r));
   }
 
   async function prepare() {
@@ -121,7 +139,7 @@ export function RecastScreen() {
       const raw = (await db.blobs.get(rawBlobId))!.blob;
       const blob = await trimClip(raw, { startSec: range[0], endSec: range[1], maxHeight: limits.maxHeight, minHeight: limits.minHeight, fps: limits.fps, keepAudio: true }, setProgress);
       const info = await clipInfo(blob);
-      setPrepared({ blobId: await storeClip(blob), info });
+      setPrepared({ blobId: await storeClip(blob), info, fps: limits.fps });
       setOthers((await facesInClip(blob).catch(() => 0)) > 1);
     } catch (err) {
       setError((err as Error).message);
@@ -132,7 +150,17 @@ export function RecastScreen() {
 
   const length = range[1] - range[0];
   const lengthOk = length >= limits.minSec - 0.05 && length <= limits.maxSec + 0.05;
-  const ready = Boolean(prepared && rights && (!people || cast.length) && (mode !== "swap" || swapImageBlobId));
+  const needs = recastNeeds({
+    mode,
+    hasClip: Boolean(rawBlobId),
+    lengthOk,
+    prepared,
+    needsPerformer: people,
+    hasPerformer: cast.length > 0,
+    hasReplacement: Boolean(swapImageBlobId),
+    rights,
+  });
+  const ready = !needs;
   const price = useEstimateLabel(
     mode === "swap" ? MODEL_IDS.happyHorseEdit : MODEL_IDS.minimaxH3,
     ready
@@ -222,7 +250,7 @@ export function RecastScreen() {
                       key={p.id}
                       type="button"
                       aria-pressed={p.id === presetId}
-                      onClick={() => setPresetId(p.id)}
+                      onClick={() => choosePreset(p)}
                       className={cn("h-8 rounded-control border px-3 text-control font-semibold", p.id === presetId ? "border-ink bg-ink text-on-ink" : "border-rule hover:bg-tint-hover")}
                     >
                       {p.title}
@@ -245,7 +273,7 @@ export function RecastScreen() {
               <Button type="button" variant="secondary" size="sm" className="justify-self-start" disabled={!lengthOk || progress !== undefined} onClick={() => void prepare()}>
                 {progress !== undefined ? `Preparing ${Math.round(progress * 100)}%` : prepared ? "Prepare again" : "Prepare clip"}
               </Button>
-              {prepared && <p className="text-control text-ink-muted">Ready: {fmt(prepared.info.durationSec)} at {prepared.info.height}p.</p>}
+              {prepared && fitsLimits(prepared, limits) && <p className="text-control text-ink-muted">Ready: {fmt(prepared.info.durationSec)} at {prepared.info.height}p.</p>}
               {others && <p className="text-control text-drift">Other people in the clip will still appear. Make sure they're OK with it.</p>}
             </div>
           )}
@@ -300,9 +328,14 @@ export function RecastScreen() {
           {error}
         </p>
       )}
-      <Button onClick={() => void recast()} disabled={!ready || busy}>
+      <Button onClick={() => void recast()} disabled={!ready || busy} aria-describedby={needs ? needsId : undefined}>
         Recast · {price}
       </Button>
+      {needs && (
+        <p id={needsId} className="text-control font-semibold">
+          {needs}
+        </p>
+      )}
       <p className="text-control text-ink-muted">{mode === "swap" ? "Object Swap runs on HappyHorse 1.0 video edit." : "Recasts with people run on H3; Seedance doesn't accept them."}</p>
     </div>
   );

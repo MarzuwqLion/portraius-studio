@@ -9,7 +9,7 @@
 // (which retimes the clip), Wan 2.7 and BFL (docs/notes/recast-ab.md).
 import { onJobDone, onRestart, startJob, type JobInput } from "@/lib/jobs/runner";
 import { prepareImage } from "@/lib/media/image-prep";
-import { loadFfmpeg } from "@/lib/media/video-prep";
+import { loadFfmpeg, type ClipInfo } from "@/lib/media/video-prep";
 import { preset as findPreset } from "@/lib/presets/load";
 import type { Preset } from "@/lib/presets/schema";
 import { compileVideoPrompt } from "@/lib/prompts/compile";
@@ -21,6 +21,8 @@ import type { Job } from "@/lib/types/jobs";
 import { buildCast, dataUri, type CastPick } from "./cast";
 
 export type RecastMode = "motion" | "swap" | "style";
+
+export const MODE_LABEL: Record<RecastMode, string> = { motion: "Motion Transfer", swap: "Object Swap", style: "Style swap" };
 
 export interface ClipLimits {
   minSec: number;
@@ -41,6 +43,52 @@ export const LIMITS: Record<RecastMode, ClipLimits> = {
 export function modeOf(p: Preset): RecastMode {
   const mode = p.recipe.params?.mode;
   return mode === "swap" || mode === "style" ? mode : "motion";
+}
+
+// A trimmed clip, and the frame rate it was resampled to, if it was.
+export interface PreparedClip {
+  blobId: string;
+  info: ClipInfo;
+  fps?: number;
+}
+
+// Whether a clip prepared for one mode can go to another as it is, so
+// switching presets only asks for a new one when the limits differ.
+export function fitsLimits(clip: Pick<PreparedClip, "info" | "fps">, limits: ClipLimits): boolean {
+  const { durationSec, height } = clip.info;
+  return (
+    durationSec >= limits.minSec - 0.05 &&
+    durationSec <= limits.maxSec + 0.05 &&
+    height <= limits.maxHeight &&
+    (limits.minHeight === undefined || height >= limits.minHeight) &&
+    (limits.fps === undefined || clip.fps === limits.fps)
+  );
+}
+
+export interface RecastForm {
+  mode: RecastMode;
+  hasClip: boolean;
+  lengthOk: boolean;         // the trim fits the mode
+  prepared?: PreparedClip;
+  needsPerformer: boolean;
+  hasPerformer: boolean;
+  hasReplacement: boolean;
+  rights: boolean;
+}
+
+// The first thing the Recast button is waiting for, in call-sheet order, or
+// undefined when it can run. The screen shows it under the button.
+export function recastNeeds(form: RecastForm): string | undefined {
+  const limits = LIMITS[form.mode];
+  if (!form.hasClip) return "Upload a clip.";
+  if (!form.prepared || !fitsLimits(form.prepared, limits)) {
+    if (!form.lengthOk) return `Trim the clip to ${limits.minSec} to ${limits.maxSec} s, then prepare it.`;
+    return form.prepared ? `Prepare the clip again for ${MODE_LABEL[form.mode]}.` : "Prepare the clip.";
+  }
+  if (form.needsPerformer && !form.hasPerformer) return "Pick a performer.";
+  if (form.mode === "swap" && !form.hasReplacement) return "Upload a replacement image.";
+  if (!form.rights) return "Confirm you filmed the clip or have the rights to use it.";
+  return undefined;
 }
 
 // H3 needs a concrete ratio with reference media; pick the nearest it supports.

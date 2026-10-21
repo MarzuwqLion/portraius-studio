@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { RECAST_PRESETS } from "@/lib/presets/load";
 import type { Job } from "@/lib/types/jobs";
-import { isFirstOfTwo, modeOf, nearestRatio, settingPrompt } from "./recast";
+import { LIMITS, fitsLimits, isFirstOfTwo, modeOf, nearestRatio, recastNeeds, settingPrompt, type RecastForm } from "./recast";
 
 const recastJob = (request: object): Job => ({ id: "j", kind: "recast", input: { request } }) as unknown as Job;
 
@@ -11,6 +11,61 @@ describe("nearestRatio", () => {
     expect(nearestRatio(768, 960)).toBe("3:4");
     expect(nearestRatio(1080, 1920)).toBe("9:16");
     expect(nearestRatio(1000, 1000)).toBe("1:1");
+  });
+});
+
+describe("fitsLimits", () => {
+  const clip = (durationSec: number, fps?: number) => ({ info: { durationSec, width: 1920, height: 1080 }, ...(fps ? { fps } : {}) });
+
+  it("keeps a clip prepared for Object Swap when the preset moves to Motion Transfer", () => {
+    expect(fitsLimits(clip(5, 30), LIMITS.swap)).toBe(true);
+    expect(fitsLimits(clip(5, 30), LIMITS.motion)).toBe(true);
+  });
+
+  it("asks again when the new mode is shorter or resamples", () => {
+    expect(fitsLimits(clip(12), LIMITS.swap)).toBe(false);
+    expect(fitsLimits(clip(5), LIMITS.swap)).toBe(false); // not resampled to 30 fps
+    expect(fitsLimits(clip(3.5, 30), LIMITS.motion)).toBe(false);
+  });
+
+  it("allows the same rounding as startRecast", () => {
+    expect(fitsLimits(clip(10.04, 30), LIMITS.swap)).toBe(true);
+    expect(fitsLimits(clip(3.96), LIMITS.style)).toBe(true);
+  });
+});
+
+describe("recastNeeds", () => {
+  const done: RecastForm = {
+    mode: "motion",
+    hasClip: true,
+    lengthOk: true,
+    prepared: { blobId: "b", info: { durationSec: 6, width: 1920, height: 1080 } },
+    needsPerformer: true,
+    hasPerformer: true,
+    hasReplacement: false,
+    rights: true,
+  };
+
+  it("is nothing once the call sheet is complete", () => {
+    expect(recastNeeds(done)).toBeUndefined();
+  });
+
+  it("names the first missing step, in call-sheet order", () => {
+    expect(recastNeeds({ ...done, hasClip: false, rights: false })).toBe("Upload a clip.");
+    expect(recastNeeds({ ...done, prepared: undefined, hasPerformer: false })).toBe("Prepare the clip.");
+    expect(recastNeeds({ ...done, prepared: undefined, lengthOk: false })).toBe("Trim the clip to 4 to 15 s, then prepare it.");
+    expect(recastNeeds({ ...done, hasPerformer: false, rights: false })).toBe("Pick a performer.");
+    expect(recastNeeds({ ...done, rights: false })).toMatch(/rights/);
+  });
+
+  it("asks for the clip again when a preset in another mode can't take it", () => {
+    expect(recastNeeds({ ...done, mode: "swap", needsPerformer: false })).toBe("Prepare the clip again for Object Swap.");
+  });
+
+  it("wants a replacement image only for Object Swap", () => {
+    const swap: RecastForm = { ...done, mode: "swap", needsPerformer: false, prepared: { blobId: "b", info: { durationSec: 6, width: 1920, height: 1080 }, fps: 30 } };
+    expect(recastNeeds(swap)).toBe("Upload a replacement image.");
+    expect(recastNeeds({ ...swap, hasReplacement: true })).toBeUndefined();
   });
 });
 
