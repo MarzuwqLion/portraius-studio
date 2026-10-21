@@ -273,7 +273,8 @@ export function VideoScreen() {
         </Field>
       )}
 
-      <Field label="Model" hint={routedForPeople ? "People render on H3: Seedance 2.5 doesn't accept images of real-looking people." : undefined}>
+      {/* The picker and the takes agree: people always render on H3 (Decisions, October 21, item 9). */}
+      <Field label="Model" hint="People in the shot render on MiniMax H3.">
         {(id) =>
           routedForPeople ? (
             <Select id={id} value={effective} onChange={() => undefined} options={VIDEO_MODELS.filter((m) => m.id === effective).map((m) => ({ value: m.id, label: m.label }))} />

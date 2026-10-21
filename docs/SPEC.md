@@ -661,7 +661,7 @@ Don't mix `first_frame` with `reference_image` items until M3 confirms Seedance 
 
 Duration 4 to 30 s, aspect ratio (reference and text modes only), audio on or off (`generate_audio`), camera preset, seed, and model. The model dropdown lists registry video models; controls a model doesn't support are hidden (for example, H3 tops out at 15 s and has no draft mode).
 
-MiniMax H3 is the second model in the dropdown, labelled "H3 (2K)". It runs 4 to 15 s at `768P` or `2K` (shown as "768p" and "2K"), has no draft mode (so its button says "Generate" with the full price), and can't combine keyframe inputs with reference inputs in one request. Seedance 2.5 is the default for clips without people; a clip with a cast or a face in its first frame renders on H3 whatever the dropdown says, and the line under the picker says so: "People in the shot render on MiniMax H3."
+MiniMax H3 is the second model in the dropdown, labelled "MiniMax H3" (it was "H3 (2K)" until the UI pass, which read wrong at the 768p default). It runs 4 to 15 s at `768P` or `2K` (shown as "768p" and "2K"), has no draft mode (so its button says "Generate" with the full price), and can't combine keyframe inputs with reference inputs in one request. Seedance 2.5 is the default for clips without people; a clip with a cast or a face in its first frame renders on H3 whatever the dropdown says, and the line under the picker says so: "People in the shot render on MiniMax H3."
 
 ### Draft, then final
 

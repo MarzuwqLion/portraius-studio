@@ -25,7 +25,7 @@ export const H3_RESOLUTIONS = (["768P", "2K"] as const).map((value) => ({ value,
 
 export const VIDEO_MODELS: { id: VideoModel; label: string; duration: [number, number]; draft: boolean }[] = [
   { id: MODEL_IDS.seedance, label: "Seedance 2.5", duration: [4, 30], draft: true },
-  { id: MODEL_IDS.minimaxH3, label: "H3 (2K)", duration: [4, 15], draft: false },
+  { id: MODEL_IDS.minimaxH3, label: "MiniMax H3", duration: [4, 15], draft: false },
 ];
 export const DEFAULT_MODEL: VideoModel = DEFAULT_VIDEO_MODEL;
 
