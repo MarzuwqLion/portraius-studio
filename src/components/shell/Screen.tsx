@@ -25,7 +25,7 @@ export function WorkScreen({ title, callSheet, footer, set }: { title: ReactNode
   return (
     <div className="flex h-full min-h-0 flex-col md:flex-row">
       <section aria-label="Call sheet" className="flex shrink-0 flex-col border-rule md:min-h-0 md:w-80 md:border-r xl:w-96">
-        <div data-scroll-top className="p-6 md:min-h-0 md:flex-1 md:overflow-auto">
+        <div data-scroll-top className="px-6 pt-4 pb-6 md:min-h-0 md:flex-1 md:overflow-auto md:pt-6">
           <ScreenTitle className="mb-4 md:mb-6">{title}</ScreenTitle>
           {callSheet}
         </div>

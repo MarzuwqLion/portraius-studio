@@ -155,7 +155,7 @@ export function ImageScreen() {
 
   const callSheet = (
     <form
-      className="grid gap-5"
+      className="grid gap-4 md:gap-5"
       onSubmit={(e) => {
         e.preventDefault();
         void generate();

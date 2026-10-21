@@ -376,7 +376,7 @@ export function RecastScreen() {
   }
 
   const callSheet = (
-    <div className="grid gap-5">
+    <div className="grid gap-4 md:gap-5">
       <Field label="Clip" hint="A clip you filmed or have the rights to use.">
         {() => (
           <div className="grid gap-2">
