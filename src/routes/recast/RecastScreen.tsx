@@ -163,6 +163,9 @@ export function RecastScreen() {
   const [progress, setProgress] = useState<number>();
   const [others, setOthers] = useState(false);
   const [rights, setRights] = useState(false);
+  // The bundled sample needs no rights check: the checkbox attests to clips
+  // people bring (Decisions, October 21, U5, item 2).
+  const [sample, setSample] = useState(false);
   const [cast, setCast] = useState<CastPick[]>([]);
   const [swapImageBlobId, setSwapImageBlobId] = useState<string>();
   const [direction, setDirection] = useState("");
@@ -186,8 +189,9 @@ export function RecastScreen() {
   limitsNow.current = limits;
   const people = mode === "motion" || (mode === "style" && preset.recipe.slots.some((s) => s.kind === "person"));
 
-  // A new clip starts the trim over, and prepares straight away.
-  async function takeClip(blob: Blob) {
+  // A new clip starts the trim over, and prepares straight away. Any clip but
+  // the sample brings the rights checkbox back, unticked.
+  async function takeClip(blob: Blob, isSample = false) {
     setError(undefined);
     try {
       const info = await clipInfo(blob);
@@ -201,6 +205,7 @@ export function RecastScreen() {
       setPrepared(undefined);
       setOthers(false);
       setRights(false);
+      setSample(isSample);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -212,7 +217,7 @@ export function RecastScreen() {
     setError(undefined);
     const res = await fetch(sampleUrl(SAMPLE_CLIP)).catch(() => undefined);
     if (!res?.ok) return setError("The sample clip didn't load. Try again.");
-    await takeClip(await res.blob());
+    await takeClip(await res.blob(), true);
   }
 
   useLaunch((launch) => {
@@ -294,7 +299,7 @@ export function RecastScreen() {
     needsPerformer: people,
     hasPerformer: cast.length > 0,
     hasReplacement: Boolean(swapImageBlobId),
-    rights,
+    rights: sample || rights,
   });
   const ready = !needs;
   // The price follows the clip's length, so it shows once there is a clip.
@@ -471,10 +476,14 @@ export function RecastScreen() {
         </Field>
       )}
 
-      <label className="flex items-start gap-3 text-body">
-        <Checkbox checked={rights} onCheckedChange={(v) => setRights(v === true)} className="mt-0.5" />
-        <span>I filmed this or have the rights to use it.</span>
-      </label>
+      {sample ? (
+        <p className="text-control text-ink-muted">The sample ships with Portraius Studio, so there's no rights check.</p>
+      ) : (
+        <label className="flex items-start gap-3 text-body">
+          <Checkbox checked={rights} onCheckedChange={(v) => setRights(v === true)} className="mt-0.5" />
+          <span>I filmed this or have the rights to use it.</span>
+        </label>
+      )}
 
       {error && (
         <p className="text-control text-drift" role="alert">
