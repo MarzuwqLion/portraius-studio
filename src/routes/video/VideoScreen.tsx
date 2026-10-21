@@ -124,7 +124,8 @@ export function VideoScreen() {
   const [scene, setScene] = useState("");
   const [cast, setCast] = useState<CastPick[]>([]);
   const [sourceBlobId, setSourceBlobId] = useState<string>();
-  const [durationSec, setDurationSec] = useState(8);
+  // 5 s keeps the default draft cheap (Decisions, October 21, U5, item 8).
+  const [durationSec, setDurationSec] = useState(5);
   const [ratio, setRatio] = useState<VideoRatio>("16:9");
   const [audio, setAudio] = useState(true);
   const [seed, setSeed] = useState(randomSeed);

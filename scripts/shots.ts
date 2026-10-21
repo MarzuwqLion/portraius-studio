@@ -199,6 +199,14 @@ const CHECKS: Check[] = [
     },
   },
   {
+    name: "the default Video draft is ≈ $0.74 (5 s)",
+    applies: (route, phase) => route === "video" && phase === "fresh",
+    run: async (page) => {
+      const text = await footerText(page);
+      return /≈ \$0\.74/.test(text) ? undefined : `the footer reads "${text}"`;
+    },
+  },
+  {
     name: "Recast waits only for the key: no prepare, trim or rights step",
     applies: (route) => route === "tour-try-recast",
     run: async (page) => {
