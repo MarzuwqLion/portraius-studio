@@ -905,7 +905,7 @@ Every preset is a JSON file in the repo that anyone can add through a pull reque
 }
 ```
 
-Presets are validated with zod (`lib/presets/schema.ts`) and loaded at build time into a gallery of tiles on each studio screen. The `thumbnail` names a file next to the preset: a WebP or JPEG still for an image preset; for a video or Recast preset, a short muted MP4 loop (about 3 s, 360 px on the long side) that plays on hover and focus, with its first frame as the still. Both stay under the 200 KB cap. A preset without a thumbnail shows its title on a Studio grey tile.
+Presets are validated with zod (`lib/presets/schema.ts`) and loaded at build time into a gallery of tiles on each studio screen. The `thumbnail` names a file next to the preset: a WebP or JPEG still for an image preset; for a video or Recast preset, a still or a short muted MP4 loop (about 3 s, 360 px on the long side) that plays on hover and focus. `npm run thumbnails` makes them with the sample character (docs/notes/u2-notes.md). Both stay under the 200 KB cap. A preset without a thumbnail shows its title on a Studio grey tile.
 
 ### Contribution flow
 
