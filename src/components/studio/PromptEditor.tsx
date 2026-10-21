@@ -153,6 +153,9 @@ export function PromptEditor({
   const faces = useCharacterThumbs();
   const [mention, setMention] = useState<Mention>();
   const [active, setActive] = useState(0);
+  // Tabbing in puts the caret at the end, where people add to a prompt;
+  // Chrome would leave it at the start, in front of a leading chip.
+  const pointer = useRef(false);
 
   const usable = useMemo(() => (characters ?? []).filter(isUsable), [characters]);
   const bySlot = useMemo(() => {
@@ -308,6 +311,13 @@ export function PromptEditor({
         onKeyDown={onKeyDown}
         onKeyUp={(e) => (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "Home" || e.key === "End") && findMention()}
         onClick={findMention}
+        onMouseDown={() => (pointer.current = true)}
+        onFocus={() => {
+          // Only while it still has focus: a selection set after Tab has
+          // moved on would pull focus back.
+          if (!pointer.current) requestAnimationFrame(() => box.current && document.activeElement === box.current && placeCaret(box.current, Number.MAX_SAFE_INTEGER));
+          pointer.current = false;
+        }}
         onBlur={() => setMention(undefined)}
         onPaste={(e) => {
           e.preventDefault();
