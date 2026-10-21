@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowDown, ArrowLeft, ArrowUp, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, Trash2 } from "lucide-react";
 import { Note, Screen, ScreenTitle } from "@/components/shell/Screen";
 import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
-import { PromptEditor } from "@/components/studio/PromptEditor";
+import { PromptEditor, PromptText } from "@/components/studio/PromptEditor";
 import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
 import { SpeakAction } from "@/components/studio/Speak";
@@ -17,7 +17,7 @@ import { useEstimateLabel, useJob, useJobImageUrl, useJobs } from "@/lib/jobs/ho
 import { withPrice } from "@/lib/jobs/estimate";
 import { MODEL_IDS, registryEntry } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
-import { useBlobUrl, useGeneration, useObjectUrl } from "@/lib/store/hooks";
+import { useBlobUrl, useCharacters, useGeneration, useObjectUrl } from "@/lib/store/hooks";
 import {
   animateShot,
   chainStale,
@@ -48,6 +48,7 @@ import {
   shotCamera,
   shotCast,
   shotScene,
+  shotSummary,
   stopWaiting,
   takeIsDraft,
   type Scene,
@@ -203,6 +204,9 @@ function SceneEditor({ sceneId }: { sceneId: string }) {
   const editor = useSceneEditor(sceneId);
   const navigate = useNavigate();
   const { scene, edit, run, error } = editor;
+  // Only one shot shows its whole form; the rest fold to a row. "last"
+  // follows a shot just added.
+  const [openId, setOpenId] = useState<string>();
   // A plan asked for before a reload is collected when the scene opens again.
   const collecting = useRef(false);
   const pendingPlan = scene?.agentRequest?.requestId;
@@ -234,7 +238,11 @@ function SceneEditor({ sceneId }: { sceneId: string }) {
       shots.splice(to, 0, shot!);
       return { ...s, shots };
     });
-  const addShot = () => edit((s) => ({ ...s, nextShot: s.nextShot + 1, shots: [...s.shots, newShot(s, s.shots.at(-1))] }));
+  const addShot = () => {
+    edit((s) => ({ ...s, nextShot: s.nextShot + 1, shots: [...s.shots, newShot(s, s.shots.at(-1))] }));
+    setOpenId("last");
+  };
+  const openShot = openId === "last" ? scene.shots.at(-1) : (scene.shots.find((s) => s.id === openId) ?? scene.shots[0]);
   const removeShot = (shotId: string) => edit((s) => ({ ...s, shots: s.shots.filter((shot) => shot.id !== shotId) }));
 
   const callSheet = (
@@ -288,7 +296,18 @@ function SceneEditor({ sceneId }: { sceneId: string }) {
         )}
         <div className="grid gap-6">
           {scene.shots.map((shot, i) => (
-            <ShotCard key={shot.id} scene={scene} shot={shot} index={i} editor={editor} onChange={(patch) => setShot(shot.id, patch)} onMove={(to) => move(i, to)} onRemove={() => removeShot(shot.id)} />
+            <ShotCard
+              key={shot.id}
+              scene={scene}
+              shot={shot}
+              index={i}
+              editor={editor}
+              open={shot.id === openShot?.id}
+              onOpen={() => setOpenId(shot.id)}
+              onChange={(patch) => setShot(shot.id, patch)}
+              onMove={(to) => move(i, to)}
+              onRemove={() => removeShot(shot.id)}
+            />
           ))}
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="secondary" className="border-on-seamless text-on-seamless" onClick={addShot}>
@@ -310,6 +329,81 @@ function ShotCard({
   shot,
   index,
   editor,
+  open,
+  onOpen,
+  onChange,
+  onMove,
+  onRemove,
+}: {
+  scene: Scene;
+  shot: Shot;
+  index: number;
+  editor: Editor;
+  open: boolean;
+  onOpen: () => void;
+  onChange: (patch: Partial<Shot>) => void;
+  onMove: (to: number) => void;
+  onRemove: () => void;
+}) {
+  if (!open) return <CollapsedShot scene={scene} shot={shot} index={index} onOpen={onOpen} onMove={onMove} onRemove={onRemove} />;
+  return <OpenShot scene={scene} shot={shot} index={index} editor={editor} onChange={onChange} onMove={onMove} onRemove={onRemove} />;
+}
+
+// A shot that isn't being edited, in one row (spec: Decisions, October 21,
+// item 13): its anchor, the first line of its action and its camera.
+function CollapsedShot({ scene, shot, index, onOpen, onMove, onRemove }: { scene: Scene; shot: Shot; index: number; onOpen: () => void; onMove: (to: number) => void; onRemove: () => void }) {
+  const chained = continues(scene, shot);
+  const anchor = useJobImageUrl(shot.anchorJobId);
+  const chainFrame = useChainFrameUrl(chained ? previousShot(scene, shot) : undefined);
+  const still = chained ? chainFrame : anchor;
+  const job = useJob(exportJobId(shot));
+  const characters = useCharacters();
+  const names = Object.fromEntries(
+    scene.cast.flatMap((c) => {
+      const name = characters?.find((r) => r.id === c.characterId)?.name;
+      return name ? [[c.slot, name]] : [];
+    }),
+  );
+  const firstLine = shot.action.split("\n")[0]?.trim();
+  return (
+    <article aria-label={`Shot ${index + 1}`} className="flex items-center gap-2 rounded-media border border-rule bg-proof p-2 text-ink">
+      <button type="button" aria-expanded={false} onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3 rounded-control p-1 text-left hover:bg-tint-hover">
+        <span className="relative w-28 shrink-0 overflow-hidden rounded-media border border-rule bg-seamless" style={{ aspectRatio: aspectOf(scene.ratio) }}>
+          {still ? (
+            <img src={still} alt="" className="size-full object-cover" />
+          ) : (
+            <span className="absolute inset-0 flex items-center justify-center font-display text-panel font-extrabold text-on-seamless">{index + 1}</span>
+          )}
+        </span>
+        <span className="grid min-w-0 gap-0.5">
+          <span className="flex items-baseline gap-2">
+            <span className="font-display text-panel font-extrabold">Shot {index + 1}</span>
+            <span className="text-control text-ink-muted">{shotStatus(shot, job, chained)}</span>
+          </span>
+          <span className="truncate text-body">{firstLine ? <PromptText text={firstLine} names={names} /> : <span className="text-ink-muted">No action yet</span>}</span>
+          <span className="text-control text-ink-muted">{shotSummary(shot)}</span>
+        </span>
+      </button>
+      <span className="flex shrink-0 gap-1">
+        <Button variant="ghost" size="icon" aria-label={`Move shot ${index + 1} earlier`} disabled={index === 0} onClick={() => onMove(index - 1)}>
+          <ArrowUp className="size-4" />
+        </Button>
+        <Button variant="ghost" size="icon" aria-label={`Move shot ${index + 1} later`} disabled={index === scene.shots.length - 1} onClick={() => onMove(index + 1)}>
+          <ArrowDown className="size-4" />
+        </Button>
+        <Button variant="ghost" size="icon" aria-label={`Remove shot ${index + 1}`} onClick={onRemove}>
+          <Trash2 className="size-4" />
+        </Button>
+      </span>
+    </article>
+  );
+}
+
+function OpenShot({
+  scene,
+  shot,
+  index,
+  editor,
   onChange,
   onMove,
   onRemove,
@@ -323,6 +417,7 @@ function ShotCard({
   onRemove: () => void;
 }) {
   const [count, setCount] = useState("2");
+  const [cameraOpen, setCameraOpen] = useState(false);
   const { run, busy } = editor;
   const take = useJob(shot.takeJobId);
   const final = useJob(shot.finalJobId);
@@ -404,12 +499,29 @@ function ShotCard({
             />
           )}
         </Field>
-        <CameraPicker
-          groups={["size", "angle", "lens", "aperture", "movement", "lighting"]}
-          withLook={false}
-          value={{ size: shot.size, angle: shot.angle, lens: shot.lens, aperture: shot.aperture, movement: shot.movement, lighting: shot.lighting }}
-          onChange={(c) => onChange({ size: c.size ?? shot.size, angle: c.angle ?? shot.angle, lens: c.lens ?? shot.lens, aperture: c.aperture, movement: c.movement ?? "static", lighting: c.lighting })}
-        />
+        {/* The camera folds to its summary and opens on click. */}
+        <div className="grid gap-3">
+          <button
+            type="button"
+            aria-expanded={cameraOpen}
+            onClick={() => setCameraOpen(!cameraOpen)}
+            className="flex items-center justify-between gap-2 rounded-control border border-rule px-3 py-2 text-left hover:bg-tint-hover"
+          >
+            <span className="grid">
+              <span className="text-control font-semibold">Camera</span>
+              <span className="text-control text-ink-muted">{shotSummary(shot)}</span>
+            </span>
+            <ChevronDown aria-hidden className={cn("size-4 shrink-0", cameraOpen && "rotate-180")} />
+          </button>
+          {cameraOpen && (
+            <CameraPicker
+              groups={["size", "angle", "lens", "aperture", "movement", "lighting"]}
+              withLook={false}
+              value={{ size: shot.size, angle: shot.angle, lens: shot.lens, aperture: shot.aperture, movement: shot.movement, lighting: shot.lighting }}
+              onChange={(c) => onChange({ size: c.size ?? shot.size, angle: c.angle ?? shot.angle, lens: c.lens ?? shot.lens, aperture: c.aperture, movement: c.movement ?? "static", lighting: c.lighting })}
+            />
+          )}
+        </div>
         <Field label="Length">{(id) => <Select id={id} value={String(shot.durationSec)} options={DURATIONS} onChange={(v) => onChange({ durationSec: Number(v ?? 5) })} />}</Field>
         {index > 0 && (
           <Field label="Starts with" hint={shot.continuity === "continue" ? `Picks up from the last frame of shot ${index}, with no anchor still.` : undefined}>
@@ -745,6 +857,13 @@ function OneTake({ scene, editor }: { scene: Scene; editor: Editor }) {
   );
 }
 
+// Where a shot stands, in a word or two.
+function shotStatus(shot: Shot, job: Job | undefined, chained: boolean): string {
+  if (!job) return chained ? (shot.waiting ? "Waiting" : "Not animated") : !shot.anchorJobId ? "No anchor" : "Not animated";
+  if (job.status !== "done") return "Working";
+  return shot.lipSyncJobId ? "With the line" : shot.finalJobId ? "Final" : takeIsDraft(job) ? "Draft" : "Ready";
+}
+
 function StripFrame({ shot, index, chained, aspect }: { shot: Shot; index: number; chained: boolean; aspect: string }) {
   const anchor = useJobImageUrl(shot.anchorJobId);
   const job = useJob(exportJobId(shot));
@@ -752,23 +871,7 @@ function StripFrame({ shot, index, chained, aspect }: { shot: Shot; index: numbe
   // A continued shot's still is the frame its take started from.
   const startFrame = useBlobUrl((take?.input as { request?: { sourceBlobId?: string } } | undefined)?.request?.sourceBlobId);
   const still = chained ? startFrame : anchor;
-  const status = !job
-    ? chained
-      ? shot.waiting
-        ? "Waiting"
-        : "Not animated"
-      : !shot.anchorJobId
-        ? "No anchor"
-        : "Not animated"
-    : job.status === "done"
-      ? shot.lipSyncJobId
-        ? "With the line"
-        : shot.finalJobId
-        ? "Final"
-        : takeIsDraft(job)
-          ? "Draft"
-          : "Ready"
-      : "Working";
+  const status = shotStatus(shot, job, chained);
   return (
     <figure className="grid gap-1">
       <Take src={still} alt={`Shot ${index + 1}`} aspect={aspect}>

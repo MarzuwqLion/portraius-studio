@@ -9,6 +9,7 @@ import { MAX_ONE_TAKE_SHOTS, MAX_SHOT_PROMPT } from "@/lib/adapters/kling-omni";
 import { onJobDone, retryJob, startJob, type JobInput } from "@/lib/jobs/runner";
 import { stitchClips, type StitchSource } from "@/lib/media/stitch";
 import { clipInfo } from "@/lib/media/video-prep";
+import { cameraOption } from "@/lib/presets/load";
 import { isStylised, type CameraSelection } from "@/lib/prompts/camera";
 import { compileOneTakeShots, slotsIn } from "@/lib/prompts/compile";
 import type { GenerateImageInput, ImageAspectRatio, KlingInput, VideoRatio } from "@/lib/registry/inputs";
@@ -66,6 +67,7 @@ export interface Scene {
   exportGenerationIds: string[];
   oneTakeJobIds?: string[];       // Kling one-takes of the whole scene, newest first
   agentRequest?: { requestId: string; startedAt: number };  // a "Draft with AI" plan still to collect
+  exportInfo?: Record<string, { crossfade: boolean; durationSec: number }>;  // by export generation ID, for its label
   createdAt: number;
   updatedAt: number;
 }
@@ -458,6 +460,20 @@ export function exportJobId(shot: Shot): string | undefined {
   return shot.lipSyncJobId ?? shot.finalJobId ?? shot.takeJobId;
 }
 
+// A shot's camera in a line (spec: Decisions, October 21, item 13):
+// "Wide · 35 mm · Static · 5 s".
+export function shotSummary(shot: Shot): string {
+  const label = (group: "size" | "lens" | "movement", id: string | undefined) => cameraOption(group, id)?.label;
+  return [label("size", shot.size), label("lens", shot.lens), label("movement", shot.movement), `${shot.durationSec} s`].filter(Boolean).join(" · ");
+}
+
+// "Export 2 · 14 s · crossfades": the nth export, oldest first.
+export function exportLabel(scene: Scene, generationId: string): string {
+  const n = scene.exportGenerationIds.length - scene.exportGenerationIds.indexOf(generationId);
+  const info = scene.exportInfo?.[generationId];
+  return [`Export ${n}`, ...(info ? [`${Math.round(info.durationSec)} s`, info.crossfade ? "crossfades" : "straight cuts"] : [])].join(" · ");
+}
+
 // ---- One take (P2) ----
 
 // Kling V3 Omni shoots the whole scene as one clip, each shot with its own
@@ -608,7 +624,8 @@ export async function exportScene(sceneId: string, crossfade: boolean, onProgres
       createdAt: Date.now(),
     });
   });
-  await updateScene(scene.id, (s) => ({ ...s, exportGenerationIds: [id, ...s.exportGenerationIds] }));
+  const durationSec = (await clipInfo(blob)).durationSec;
+  await updateScene(scene.id, (s) => ({ ...s, exportGenerationIds: [id, ...s.exportGenerationIds], exportInfo: { ...s.exportInfo, [id]: { crossfade, durationSec } } }));
   return id;
 }
 

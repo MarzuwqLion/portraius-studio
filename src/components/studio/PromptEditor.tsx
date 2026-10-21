@@ -345,14 +345,15 @@ export function PromptEditor({
   );
 }
 
-// A stored prompt, read-only, with each slot shown as its mention: "@lead".
-export function PromptText({ text, className }: { text: string; className?: string }) {
+// A stored prompt, read-only, with each slot shown as its mention: the cast
+// member's name when known, else "@lead".
+export function PromptText({ text, names, className }: { text: string; names?: Readonly<Record<string, string>>; className?: string }) {
   return (
     <span className={className}>
       {scenePieces(text).map((p, i) =>
         "slot" in p ? (
           <mark key={i} className="rounded-control bg-tint-hover px-1 font-semibold text-ink">
-            @{p.slot}
+            {names?.[p.slot] ?? `@${p.slot}`}
           </mark>
         ) : (
           p.text
