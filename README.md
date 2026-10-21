@@ -80,16 +80,16 @@ call sends `fallback_provider=false`), so each model is served by its own provid
 
 | Model | Router ID | What it does here |
 | --- | --- | --- |
-| Nano Banana 2.1 | `vertexai/gemini-nano-banana-2.1` | Character sheets and views, designed faces, element sheets, every image, Still first's opening frame, Director's anchors |
+| Nano Banana 2.1 | `vertexai/gemini-nano-banana-2.1` | Character sheets and views, designed faces, element sheets, every image, the opening frame in Image, then animate, Director's anchors |
 | Seedance 2.5 | `byteplus/dreamina-seedance-2-5-260628` | Video without people: a 480p draft, then a 1080p final from the draft's ID |
-| MiniMax H3 | `minimax/minimax-h3` | Every video with a person in it, and Recast's Motion Transfer. Seedance refuses photoreal people as input images |
-| HappyHorse 1.0 video edit | `wan/happyhorse-1.0-video-edit` | Recast's Object Swap and setting changes, keeping the clip's timing |
+| MiniMax H3 | `minimax/minimax-h3` | Every video with a person in it, and Recast's Motion transfer. Seedance refuses photoreal people as input images |
+| HappyHorse 1.0 video edit | `wan/happyhorse-1.0-video-edit` | Recast's Object swap and Setting changes, keeping the clip's timing |
 | Freepik skin enhancer | `freepik/ai-skin-enhancer-faithful` | Make it real |
 | Kling V3 Omni | `kling/kling-v3-omni` | Director's one-take: every shot of a scene in one clip, each with its own prompt |
 | ElevenLabs v4 | `elevenlabs/eleven_v4` | A character's lines, in 12 checked stock voices |
 | Sync-3 | `synclabs/sync-3` | Lip sync: moves the mouth of a finished clip to a line |
 | Claude Sonnet 5.5 | `anthropic/claude-sonnet-5-5` | Director's "Draft shots with AI" |
-| Wan 2.7, BFL video edit | `wan/wan2.7-videoedit`, `bfl/video-edit-v1` | Object Swap alternatives, compared with Kling in [`docs/notes/recast-ab.md`](docs/notes/recast-ab.md) |
+| Wan 2.7, BFL video edit | `wan/wan2.7-videoedit`, `bfl/video-edit-v1` | Object swap alternatives, compared with Kling in [`docs/notes/recast-ab.md`](docs/notes/recast-ab.md) |
 
 ## Costs
 

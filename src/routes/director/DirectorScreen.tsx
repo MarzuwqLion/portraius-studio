@@ -468,7 +468,7 @@ function ShotCard({
                 job={take}
                 alt={`Shot ${index + 1} take`}
                 aspect={aspect}
-                label={takeIsDraft(take) ? "Draft, 480p" : take.modelId === MODEL_IDS.minimaxH3 ? "MiniMax H3, 768P" : (registryEntry(take.modelId)?.label ?? "Take")}
+                label={takeIsDraft(take) ? "Draft, 480p" : take.modelId === MODEL_IDS.minimaxH3 ? "MiniMax H3, 768p" : (registryEntry(take.modelId)?.label ?? "Take")}
                 actions={
                   failed(take) ? (
                     <Button size="sm" variant="secondary" className={`justify-self-start ${ON_SEAMLESS}`} onClick={() => void run(`retry:${shot.id}`, () => retryShotJob(scene.id, shot.id, "take"))}>

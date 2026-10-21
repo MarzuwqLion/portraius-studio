@@ -31,6 +31,8 @@ import {
   isDraft,
   isFinal,
   lastFrameBlobId,
+  H3_RESOLUTIONS,
+  resolutionLabel,
   renderFinal,
   rerollClip,
   retrySilent,
@@ -43,9 +45,9 @@ import type { Job } from "@/lib/types/jobs";
 
 const MODES: { value: VideoMode; label: string }[] = [
   { value: "text", label: "Text" },
-  { value: "still", label: "Still first" },
-  { value: "references", label: "References" },
-  { value: "image", label: "From image" },
+  { value: "still", label: "Image, then animate" },
+  { value: "references", label: "Use references" },
+  { value: "image", label: "Animate an image" },
 ];
 const RATIOS: VideoRatio[] = ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "9:21"];
 
@@ -53,7 +55,7 @@ type ClipInput = JobInput & { request?: VideoRequest };
 
 function clipLabel(job: Job): string {
   if (job.kind === "image") return "Opening still";
-  if (job.modelId === MODEL_IDS.minimaxH3) return `H3 ${((job.input as JobInput<H3Input>).model).resolution}`;
+  if (job.modelId === MODEL_IDS.minimaxH3) return `H3 ${resolutionLabel((job.input as JobInput<H3Input>).model.resolution)}`;
   return isFinal(job) ? "Final 1080p" : "Draft 480p";
 }
 
@@ -89,12 +91,12 @@ function ClipActions({ job, followUps, onContinue }: { job: Job; followUps: Job[
         )}
         {job.status === "done" && job.kind === "video" && generationId && (
           <Button size="sm" variant="secondary" className={ON_SEAMLESS} onClick={() => run(async () => onContinue(await lastFrameBlobId(generationId)))} disabled={busy}>
-            Continue
+            Continue from last frame
           </Button>
         )}
         {job.status === "done" && job.kind === "video" && generationId && (
           <Button asChild size="sm" variant="secondary" className={ON_SEAMLESS}>
-            <Link to={`/library/${generationId}`}>Speak</Link>
+            <Link to={`/library/${generationId}`}>Add a line</Link>
           </Button>
         )}
         {job.status === "failed" && job.error?.refusalSubject === "output_audio" && (
@@ -243,6 +245,7 @@ export function VideoScreen() {
 
       {needsCast && <Field label="Cast">{(id) => <CastPicker id={id} value={cast} onChange={setCast} />}</Field>}
       {mode === "still" && <p className="text-control text-ink-muted">Nano Banana 2.1 draws the opening still with your cast, then the clip starts from it.</p>}
+      {mode === "references" && <p className="text-control text-ink-muted">Your cast's sheets set who is in the shot and what they wear; the model frames the opening itself.</p>}
 
       {mode === "image" && (
         <Field label="First frame">
@@ -290,7 +293,7 @@ export function VideoScreen() {
         )}
         {effective === MODEL_IDS.minimaxH3 && (
           <Field label="Resolution">
-            {(id) => <Select id={id} value={h3Resolution} onChange={(v) => v && setH3Resolution(v)} options={[{ value: "768P", label: "768P" }, { value: "2K", label: "2K" }]} />}
+            {(id) => <Select id={id} value={h3Resolution} onChange={(v) => v && setH3Resolution(v)} options={H3_RESOLUTIONS} />}
           </Field>
         )}
         <Field label="Seed">

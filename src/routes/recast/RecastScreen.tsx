@@ -24,6 +24,9 @@ import type { CastPick } from "@/lib/studio/cast";
 import { randomSeed } from "@/lib/studio/image";
 import {
   LIMITS,
+  GROUP_LABEL,
+  GROUP_ORDER,
+  groupOf,
   MODE_LABEL,
   facesInClip,
   fitsLimits,
@@ -33,10 +36,10 @@ import {
   startRecast,
   storeClip,
   type PreparedClip,
-  type RecastMode,
   type RecastRequest,
 } from "@/lib/studio/recast";
 import { storeUpload } from "@/lib/studio/uploads";
+import { H3_RESOLUTIONS } from "@/lib/studio/video";
 import type { Job } from "@/lib/types/jobs";
 import { cn } from "@/lib/utils";
 
@@ -249,11 +252,11 @@ export function RecastScreen() {
       <Field label="Preset">
         {() => (
           <div className="grid gap-3">
-            {(["motion", "swap", "style"] as RecastMode[]).map((m) => (
-              <div key={m} className="grid gap-1">
-                <span className="text-control text-ink-muted">{MODE_LABEL[m]}</span>
+            {GROUP_ORDER.map((g) => (
+              <div key={g} className="grid gap-1">
+                <span className="text-control text-ink-muted">{GROUP_LABEL[g]}</span>
                 <div className="flex flex-wrap gap-1">
-                  {RECAST_PRESETS.filter((p) => modeOf(p) === m).map((p) => (
+                  {RECAST_PRESETS.filter((p) => groupOf(p) === g).map((p) => (
                     <button
                       key={p.id}
                       type="button"
@@ -322,7 +325,7 @@ export function RecastScreen() {
 
       {mode !== "swap" && (
         <Field label="Resolution">
-          {(id) => <Select id={id} value={h3Resolution} onChange={(v) => v && setH3Resolution(v)} options={[{ value: "768P", label: "768P" }, { value: "2K", label: "2K" }]} />}
+          {(id) => <Select id={id} value={h3Resolution} onChange={(v) => v && setH3Resolution(v)} options={H3_RESOLUTIONS} />}
         </Field>
       )}
 

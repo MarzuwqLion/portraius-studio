@@ -19,6 +19,10 @@ import { randomSeed } from "./image";
 export type VideoMode = "text" | "still" | "references" | "image";
 export type VideoModel = typeof MODEL_IDS.seedance | typeof MODEL_IDS.minimaxH3;
 
+// H3's resolutions as the screen names them: "768p", though the request says 768P.
+export const resolutionLabel = (r: H3Input["resolution"]) => (r === "768P" ? "768p" : r);
+export const H3_RESOLUTIONS = (["768P", "2K"] as const).map((value) => ({ value, label: resolutionLabel(value) }));
+
 export const VIDEO_MODELS: { id: VideoModel; label: string; duration: [number, number]; draft: boolean }[] = [
   { id: MODEL_IDS.seedance, label: "Seedance 2.5", duration: [4, 30], draft: true },
   { id: MODEL_IDS.minimaxH3, label: "H3 (2K)", duration: [4, 15], draft: false },

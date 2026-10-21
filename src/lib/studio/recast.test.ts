@@ -59,7 +59,7 @@ describe("recastNeeds", () => {
   });
 
   it("asks for the clip again when a preset in another mode can't take it", () => {
-    expect(recastNeeds({ ...done, mode: "swap", needsPerformer: false })).toBe("Prepare the clip again for Object Swap");
+    expect(recastNeeds({ ...done, mode: "swap", needsPerformer: false })).toBe("Prepare the clip again for Object swap");
   });
 
   it("wants a replacement image only for Object Swap", () => {

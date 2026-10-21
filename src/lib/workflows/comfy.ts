@@ -293,9 +293,9 @@ const SCENE = "{lead} looks up from a sealed envelope toward the diner door, and
 const STILL_CAMERA: CameraSelection = { size: "CU", lens: "35mm", lighting: "practicals" };
 const EMPTY_SCENE = "Rain streaks the diner window at night. Inside, an empty booth and a cup of coffee going cold under a hanging lamp";
 
-const NOTE_VIDEO = `## Portraius Studio: still first, then video
+const NOTE_VIDEO = `## Portraius Studio: image, then animate
 
-The Video studio's "Still first" mode: Nano Banana 2.1 draws the opening frame with the character in it,
+The Video studio's "Image, then animate" mode: Nano Banana 2.1 draws the opening frame with the character in it,
 then a video model animates from that frame, so the face is settled in the still.
 
 **With a character (top row).** Seedance 2.5 refuses photoreal people as input images, so the app renders

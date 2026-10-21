@@ -49,7 +49,7 @@ function ImportButton({ onRead }: { onRead: (pending: PendingImport) => void }) 
   return (
     <div className="grid justify-items-end gap-1">
       <Button variant="secondary" onClick={() => input.current?.click()}>
-        Import file
+        Import .portraius
       </Button>
       <input
         ref={input}

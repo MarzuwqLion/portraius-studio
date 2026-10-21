@@ -22,7 +22,18 @@ import { buildCast, dataUri, type CastPick } from "./cast";
 
 export type RecastMode = "motion" | "swap" | "style";
 
-export const MODE_LABEL: Record<RecastMode, string> = { motion: "Motion Transfer", swap: "Object Swap", style: "Style swap" };
+export const MODE_LABEL: Record<RecastMode, string> = { motion: "Motion transfer", swap: "Object swap", style: "Style swap" };
+
+// How the screen groups presets. A swap of the background changes the place,
+// not a thing in it, so it gets its own Setting group (Decisions, October 21).
+export type PresetGroup = RecastMode | "setting";
+export const GROUP_LABEL: Record<PresetGroup, string> = { motion: "Motion transfer", swap: "Object swap", setting: "Setting", style: "Style swap" };
+export const GROUP_ORDER: PresetGroup[] = ["motion", "swap", "setting", "style"];
+
+export function groupOf(p: Preset): PresetGroup {
+  const mode = modeOf(p);
+  return mode === "swap" && p.recipe.params?.target === "background" ? "setting" : mode;
+}
 
 export interface ClipLimits {
   minSec: number;

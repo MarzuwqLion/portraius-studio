@@ -5,7 +5,7 @@ The app's two core flows as ComfyUI graphs, built from Comfy's partner nodes. Ea
 | File | What it reproduces |
 | --- | --- |
 | `character-sheet.json`, `character-sheet.api.json` | Photos to a character: the 16:9 turnaround sheet from every photo, then the front, three-quarter, profile and full-body views from the photos plus that sheet |
-| `still-first-video.json`, `still-first-video.api.json` | The Video studio's "Still first": a still with the character in it, then a clip animated from that frame. A second row does a shot without people as a cheap Seedance draft, then its 1080p final |
+| `still-first-video.json`, `still-first-video.api.json` | The Video studio's "Image, then animate": a still with the character in it, then a clip animated from that frame. A second row does a shot without people as a cheap Seedance draft, then its 1080p final |
 
 The `.json` files are the graph you open and edit. The `.api.json` files are the **Workflow (API)** format, for
 sending to a ComfyUI server's `/prompt` route from a script.
@@ -32,9 +32,9 @@ sending to a ComfyUI server's `/prompt` route from a script.
 | Node (as listed in ComfyUI) | Node ID | Model | Used in |
 | --- | --- | --- | --- |
 | Nano Banana 2.1 | `GeminiNanoBanana2V2` | Gemini Nano Banana 2.1, the app's image model | Both |
-| MiniMax H3 First-Last-Frame to Video | `MinimaxHailuo03FirstLastFrameNode` | MiniMax H3 at 768P | Still first, with a character |
-| ByteDance Seedance 2.5 First-Last-Frame to Video | `ByteDance2FirstLastFrameNode` | Seedance 2.5 Draft at 480p | Still first, without people |
-| ByteDance Seedance 2.5 Draft to Final Video | `ByteDance2DraftToFinalVideoNode` | Seedance 2.5 at 1080p, from the draft's ID | Still first, without people |
+| MiniMax H3 First-Last-Frame to Video | `MinimaxHailuo03FirstLastFrameNode` | MiniMax H3 at 768p | Image, then animate, with a character |
+| ByteDance Seedance 2.5 First-Last-Frame to Video | `ByteDance2FirstLastFrameNode` | Seedance 2.5 Draft at 480p | Image, then animate, without people |
+| ByteDance Seedance 2.5 Draft to Final Video | `ByteDance2DraftToFinalVideoNode` | Seedance 2.5 at 1080p, from the draft's ID | Image, then animate, without people |
 
 Plus core nodes: Load Image, Save Image, Save Video, Preview as Text and a note.
 

@@ -11,7 +11,7 @@ one click. Code changes are welcome too; open an issue first for anything large.
    | --- | --- |
    | `presets/image/` | Image studio templates |
    | `presets/video/` | Video studio templates |
-   | `presets/recast/` | Recast templates (Motion Transfer, Object Swap, style) |
+   | `presets/recast/` | Recast templates (Motion transfer, Object swap, Setting, style) |
 
 2. Rename it to your preset's `id`, for example `presets/image/rainy-bus-stop.json` with
    `"id": "rainy-bus-stop"`. IDs are lowercase letters, numbers, dots and dashes.
