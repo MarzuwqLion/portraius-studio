@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+import { retryJob } from "@/lib/jobs/runner";
 import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
 import type { Job } from "@/lib/types/jobs";
 import { jobStatusText } from "./JobTake";
@@ -31,6 +33,9 @@ export function OutputTake({
   const videoUrl = useBlobUrl(video?.blobId);
   const posterUrl = useBlobUrl(frame?.blobId);
   const cast = generation ? generation.characterIds.length > 0 : false;
+  // A failed take says what happened and has its own Retry, under the
+  // message; one that would fail again already says what to do instead.
+  const retryable = (job.status === "failed" || job.status === "expired") && job.error?.retry !== "never";
 
   let score: ReactNode = null;
   if (generation?.scoreNote === "stylised") score = <span className="text-control text-on-seamless">Score not available for stylised looks</span>;
@@ -57,6 +62,11 @@ export function OutputTake({
         {label && <span className="text-control font-semibold text-on-seamless">{label}</span>}
         {score}
       </div>
+      {retryable && (
+        <Button size="sm" variant="secondary" className="justify-self-start border-on-seamless text-on-seamless" onClick={() => void retryJob(job.id)}>
+          Retry
+        </Button>
+      )}
       {actions}
     </div>
   );

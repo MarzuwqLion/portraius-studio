@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CHECK_SCORE } from "@/lib/identity/score";
 import { usePrice, useRecentJobs } from "@/lib/jobs/hooks";
-import { retryJob, type JobInput } from "@/lib/jobs/runner";
+import type { JobInput } from "@/lib/jobs/runner";
 import { VIDEO_PRESETS } from "@/lib/presets/load";
 import type { Preset } from "@/lib/presets/schema";
 import type { CameraSelection } from "@/lib/prompts/camera";
@@ -104,11 +104,6 @@ function ClipActions({ job, followUps, onContinue }: { job: Job; followUps: Job[
         {job.status === "failed" && job.error?.refusalSubject === "output_audio" && (
           <Button size="sm" variant="secondary" className={ON_SEAMLESS} onClick={() => run(() => retrySilent(job.id))} disabled={busy}>
             Retry silent
-          </Button>
-        )}
-        {(job.status === "failed" || job.status === "expired") && job.error?.retry !== "never" && (
-          <Button size="sm" variant="secondary" className={ON_SEAMLESS} onClick={() => run(() => retryJob(job.id))} disabled={busy}>
-            Retry
           </Button>
         )}
       </div>
