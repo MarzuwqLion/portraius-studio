@@ -1,7 +1,8 @@
 // npm run thumbnails [-- <preset id>... | --force]: preset tile thumbnails
 // (spec: Presets and recipes, Preset file), made with the sample character
 // through the app's own studios in a headless browser, then shrunk to fit
-// presets:check's 200 KB cap and written next to each preset file.
+// presets:check's 200 KB cap and written next to each preset file. A loop
+// gets its first frame beside it as a .webp poster (U5, item 9).
 //
 // Costs Router calls (docs/notes/u2-notes.md lists them): image presets are
 // one Nano Banana 2.1 still at 1K Fast; video presets one 4 s clip at the
@@ -110,7 +111,7 @@ try {
     const t = Date.now();
     const made = await inPage(
       async ({ job, waltId, m }) => {
-        const [{ db }, image, video, prep] = await Promise.all([import(m.db), import(m.image), import(m.video), import(m.prep)]);
+        const [{ db }, image, video, prep, poster] = await Promise.all([import(m.db), import(m.image), import(m.video), import(m.prep), import(m.poster)]);
         const cast = [{ slot: "lead", characterId: waltId }];
         type J = { id: string; status: string; generationIds: string[]; requestId?: string; parentJobId?: string; error?: { message: string } };
         const settle = async (id: string): Promise<J> => {
@@ -167,7 +168,8 @@ try {
 
         if ("sample" in job) {
           const res = await fetch(`${m.samples}${job.sample.file}`);
-          return { ext: "mp4", data: await toBase64(await shrinkClip(await res.blob(), job.sample.startSec)), note: `from public/samples/${job.sample.file}` };
+          const loop = await shrinkClip(await res.blob(), job.sample.startSec);
+          return { ext: "mp4", data: await toBase64(loop), poster: await toBase64(await poster.posterStill(loop, 360, 190_000)), note: `from public/samples/${job.sample.file}` };
         }
         if ("still" in job) {
           const [id] = await image.startImages({ scene: job.still.scene, cast, aspectRatio: job.still.aspectRatio, size: "1K", quality: "fast", count: 1, camera: job.still.camera ?? {} });
@@ -181,9 +183,10 @@ try {
         const done = await settle(clipId);
         const { blob, score } = await asset(done, "video");
         const how = people ? "2K still, then MiniMax H3 768p 4 s" : "Seedance 2.5 480p draft 4 s";
-        return { ext: "mp4", data: await toBase64(await shrinkClip(blob, 0.5)), note: `${how}, request ${done.requestId}, likeness ${score ?? "not scored"}` };
+        const loop = await shrinkClip(blob, 0.5);
+        return { ext: "mp4", data: await toBase64(loop), poster: await toBase64(await poster.posterStill(loop, 360, 190_000)), note: `${how}, request ${done.requestId}, likeness ${score ?? "not scored"}` };
       },
-      { job, waltId, m: { db: mod("lib/store/db.ts"), image: mod("lib/studio/image.ts"), video: mod("lib/studio/video.ts"), prep: mod("lib/media/video-prep.ts"), samples: `${base}samples/` } },
+      { job, waltId, m: { db: mod("lib/store/db.ts"), image: mod("lib/studio/image.ts"), video: mod("lib/studio/video.ts"), prep: mod("lib/media/video-prep.ts"), poster: mod("lib/media/poster.ts"), samples: `${base}samples/` } },
     ).catch((err: Error) => ({ error: err.message }));
 
     if ("error" in made) {
@@ -193,6 +196,8 @@ try {
     }
     const file = `${job.preset}.${made.ext}`;
     writeFileSync(join(root, "presets", job.type, file), Buffer.from(made.data, "base64"));
+    // Every loop gets its first frame beside it as a poster (presets:check).
+    if ("poster" in made && made.poster) writeFileSync(join(root, "presets", job.type, `${job.preset}.webp`), Buffer.from(made.poster, "base64"));
     const path = join(root, "presets", job.type, `${job.preset}.json`);
     const data = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
     // The thumbnail goes after the license, where _template.json has it.

@@ -4,6 +4,7 @@ import { Shuffle } from "lucide-react";
 import { WorkScreen } from "@/components/shell/Screen";
 import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
+import { EmptyExample } from "@/components/studio/EmptyExample";
 import { GenerateFooter } from "@/components/studio/GenerateFooter";
 import { Field, Segmented, Select } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
@@ -15,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CHECK_SCORE } from "@/lib/identity/score";
 import { usePrice, useRecentJobs } from "@/lib/jobs/hooks";
-import { retryJob, type JobInput } from "@/lib/jobs/runner";
+import type { JobInput } from "@/lib/jobs/runner";
 import { VIDEO_PRESETS } from "@/lib/presets/load";
 import type { Preset } from "@/lib/presets/schema";
 import type { CameraSelection } from "@/lib/prompts/camera";
@@ -106,11 +107,6 @@ function ClipActions({ job, followUps, onContinue }: { job: Job; followUps: Job[
             Retry silent
           </Button>
         )}
-        {(job.status === "failed" || job.status === "expired") && job.error?.retry !== "never" && (
-          <Button size="sm" variant="secondary" className={ON_SEAMLESS} onClick={() => run(() => retryJob(job.id))} disabled={busy}>
-            Retry
-          </Button>
-        )}
       </div>
       {error && (
         <p className="justify-self-start rounded-control bg-proof px-2 py-1 text-control text-drift" role="alert">
@@ -128,7 +124,8 @@ export function VideoScreen() {
   const [scene, setScene] = useState("");
   const [cast, setCast] = useState<CastPick[]>([]);
   const [sourceBlobId, setSourceBlobId] = useState<string>();
-  const [durationSec, setDurationSec] = useState(8);
+  // 5 s keeps the default draft cheap (Decisions, October 21, U5, item 8).
+  const [durationSec, setDurationSec] = useState(5);
   const [ratio, setRatio] = useState<VideoRatio>("16:9");
   const [audio, setAudio] = useState(true);
   const [seed, setSeed] = useState(randomSeed);
@@ -238,7 +235,7 @@ export function VideoScreen() {
 
   const callSheet = (
     <form
-      className="grid gap-5"
+      className="grid gap-4 md:gap-5"
       onSubmit={(e) => {
         e.preventDefault();
         void generate();
@@ -253,7 +250,7 @@ export function VideoScreen() {
       {mode === "references" && <p className="text-control text-ink-muted">Your cast's sheets set who is in the shot and what they wear; the model frames the opening itself.</p>}
 
       <Field label="Prompt" hint="Type @ to put someone from your vault in the shot.">
-        {(id) => <PromptEditor id={id} value={scene} onChange={setScene} cast={cast} onAddCast={(pick) => setCast((c) => [...c, pick])} rows={4} maxLength={2000} placeholder="@ for your cast, then what happens: steps out of the rain into a lit doorway" />}
+        {(id) => <PromptEditor id={id} value={scene} onChange={setScene} cast={cast} onAddCast={(pick) => setCast((c) => [...c, pick])} rows={4} maxLength={2000} placeholder="Type @ to add someone, then what happens: steps out of the rain into a lit doorway" />}
       </Field>
 
       {mode === "image" && (
@@ -338,7 +335,7 @@ export function VideoScreen() {
   const set = (
     <div className="h-full w-full self-stretch overflow-auto">
       {clips.length === 0 ? (
-        <p className="flex h-full items-center justify-center text-body">Clips appear here.</p>
+        <EmptyExample presets={VIDEO_PRESETS} value={presetId} onPick={applyPreset} />
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-6">
           {clips.map((job) => {

@@ -9,7 +9,7 @@ export function ScreenTitle({ children, className }: { children: ReactNode; clas
 export function Screen({ title, actions, children }: { title: ReactNode; actions?: ReactNode; children?: ReactNode }) {
   return (
     <div className="flex min-h-full flex-col">
-      <header className="flex items-end justify-between gap-4 px-6 pt-6 pb-4">
+      <header className="flex flex-wrap items-end justify-between gap-4 px-6 pt-6 pb-4">
         <ScreenTitle>{title}</ScreenTitle>
         {actions}
       </header>
@@ -25,8 +25,8 @@ export function WorkScreen({ title, callSheet, footer, set }: { title: ReactNode
   return (
     <div className="flex h-full min-h-0 flex-col md:flex-row">
       <section aria-label="Call sheet" className="flex shrink-0 flex-col border-rule md:min-h-0 md:w-80 md:border-r xl:w-96">
-        <div className="p-6 md:min-h-0 md:flex-1 md:overflow-auto">
-          <ScreenTitle className="mb-6">{title}</ScreenTitle>
+        <div data-scroll-top className="px-6 pt-4 pb-6 md:min-h-0 md:flex-1 md:overflow-auto md:pt-6">
+          <ScreenTitle className="mb-4 md:mb-6">{title}</ScreenTitle>
           {callSheet}
         </div>
         {footer && <div className="sticky bottom-0 border-t border-rule bg-proof px-6 py-4">{footer}</div>}

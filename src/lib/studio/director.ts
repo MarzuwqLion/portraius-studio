@@ -461,10 +461,11 @@ export function exportJobId(shot: Shot): string | undefined {
 }
 
 // A shot's camera in a line (spec: Decisions, October 21, item 13):
-// "Wide · 35 mm · Static · 5 s".
-export function shotSummary(shot: Shot): string {
+// "Wide · 35 mm · Static · 5 s". The open shot has its own Length select, so
+// its summary leaves the length out (U5, item 13).
+export function shotSummary(shot: Shot, { length = true }: { length?: boolean } = {}): string {
   const label = (group: "size" | "lens" | "movement", id: string | undefined) => cameraOption(group, id)?.label;
-  return [label("size", shot.size), label("lens", shot.lens), label("movement", shot.movement), `${shot.durationSec} s`].filter(Boolean).join(" · ");
+  return [label("size", shot.size), label("lens", shot.lens), label("movement", shot.movement), length ? `${shot.durationSec} s` : undefined].filter(Boolean).join(" · ");
 }
 
 // "Export 2 · 14 s · crossfades": the nth export, oldest first.

@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { WorkScreen } from "@/components/shell/Screen";
 import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
+import { EmptyExample } from "@/components/studio/EmptyExample";
 import { GenerateFooter } from "@/components/studio/GenerateFooter";
 import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
@@ -23,7 +24,7 @@ import { compileImagePrompt, slotsIn } from "@/lib/prompts/compile";
 import type { GenerateImageInput, ImageAspectRatio } from "@/lib/registry/inputs";
 import { MODEL_IDS } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
-import { useBlobUrl } from "@/lib/store/hooks";
+import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
 import { describeCast, type CastPick } from "@/lib/studio/cast";
 import { startImages, type ImageRequest } from "@/lib/studio/image";
 import { generationImageBlobId, storeUpload } from "@/lib/studio/uploads";
@@ -50,6 +51,18 @@ function useImageGroups(): Job[][] {
   return images
     .filter((j) => !j.parentJobId || !byId.has(j.parentJobId))
     .map((root) => [root, ...images.filter((j) => j.parentJobId === root.id)].sort((a, b) => (scores?.get(b.id) ?? -1) - (scores?.get(a.id) ?? -1)));
+}
+
+// The action bar says what it acts on (Decisions, October 21, U5, item 10).
+function SelectedThumb({ generationId }: { generationId: string }) {
+  const generation = useGeneration(generationId);
+  const url = useBlobUrl(generation?.assets.find((a) => a.kind === "image")?.blobId);
+  return (
+    <span className="mr-1 flex items-center gap-2">
+      <span className="block size-10 shrink-0 overflow-hidden rounded-media border border-rule bg-seamless">{url && <img src={url} alt="" className="size-full object-cover" />}</span>
+      <span className="text-control font-semibold">Selected take</span>
+    </span>
+  );
 }
 
 export function ImageScreen() {
@@ -142,7 +155,7 @@ export function ImageScreen() {
 
   const callSheet = (
     <form
-      className="grid gap-5"
+      className="grid gap-4 md:gap-5"
       onSubmit={(e) => {
         e.preventDefault();
         void generate();
@@ -153,7 +166,7 @@ export function ImageScreen() {
       <Field label="Cast">{(id) => <CastPicker id={id} value={cast} onChange={setCast} />}</Field>
 
       <Field label="Prompt" hint="Type @ to put someone from your vault in the shot.">
-        {(id) => <PromptEditor id={id} value={scene} onChange={setScene} cast={cast} onAddCast={(pick) => setCast((c) => [...c, pick])} rows={4} maxLength={2000} placeholder="@ for your cast, then what happens: reading in a corner booth of a late-night diner" />}
+        {(id) => <PromptEditor id={id} value={scene} onChange={setScene} cast={cast} onAddCast={(pick) => setCast((c) => [...c, pick])} rows={4} maxLength={2000} placeholder="Type @ to add someone, then what happens: reading in a corner booth of a late-night diner" />}
       </Field>
       {unknownSlots.length > 0 && <p className="text-control text-drift">Pick someone for {unknownSlots.map((s) => `@${s}`).join(", ")} in Cast, or type @ to choose.</p>}
 
@@ -228,11 +241,12 @@ export function ImageScreen() {
   const set = (
     <div className="h-full w-full self-stretch overflow-auto">
       {groups.length === 0 && realism.length === 0 ? (
-        <p className="flex h-full items-center justify-center text-body">Takes appear here.</p>
+        <EmptyExample presets={IMAGE_PRESETS} value={presetId} onPick={applyPreset} />
       ) : (
         <div className="grid gap-6">
           {pickedJob && (
             <div className="flex flex-wrap items-center gap-2 rounded-control bg-proof p-2 text-ink">
+              <SelectedThumb generationId={pickedJob.generationIds[0]!} />
               <Button
                 size="sm"
                 variant="secondary"

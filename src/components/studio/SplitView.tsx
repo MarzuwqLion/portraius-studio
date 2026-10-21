@@ -15,9 +15,11 @@ export function SplitView({
   label,
   autoPlay = false,
   startAt = 0,
+  posters,
 }: {
   original: string;
   recast: string;
+  posters?: { original: string; recast: string }; // first frames, for browsers that can't play the clips
   aspect: string;
   label?: string;
   autoPlay?: boolean;
@@ -109,10 +111,11 @@ export function SplitView({
         }}
         onPointerMove={drag}
       >
-        <video ref={right} src={recast} muted playsInline preload="auto" className="absolute inset-0 size-full object-contain" aria-label="Recast clip" />
+        <video ref={right} src={recast} poster={posters?.recast} muted playsInline preload="auto" className="absolute inset-0 size-full object-contain" aria-label="Recast clip" />
         <video
           ref={left}
           src={original}
+          poster={posters?.original}
           muted
           playsInline
           preload="auto"

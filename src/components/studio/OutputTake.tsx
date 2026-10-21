@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+import { retryJob } from "@/lib/jobs/runner";
 import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
 import type { Job } from "@/lib/types/jobs";
 import { jobStatusText } from "./JobTake";
-import { ScoreBadge, Take } from "./Take";
+import { ScoreBadge, SelectedLabel, Take } from "./Take";
 
 // A studio output: the job's status until it lands, then the image or video as
 // a print with its identity score.
@@ -31,6 +33,9 @@ export function OutputTake({
   const videoUrl = useBlobUrl(video?.blobId);
   const posterUrl = useBlobUrl(frame?.blobId);
   const cast = generation ? generation.characterIds.length > 0 : false;
+  // A failed take says what happened and has its own Retry, under the
+  // message; one that would fail again already says what to do instead.
+  const retryable = (job.status === "failed" || job.status === "expired") && job.error?.retry !== "never";
 
   let score: ReactNode = null;
   if (generation?.scoreNote === "stylised") score = <span className="text-control text-on-seamless">Score not available for stylised looks</span>;
@@ -49,14 +54,21 @@ export function OutputTake({
           {videoUrl && <video src={videoUrl} poster={posterUrl} controls loop playsInline className="develop absolute inset-0 size-full object-contain" aria-label={alt} />}
         </figure>
       ) : (
-        <Take src={imageUrl} alt={alt} aspect={aspect} picked={picked} onPick={imageUrl ? onPick : undefined} pickLabel={`Pick: ${alt}`} seed={job.createdAt % 97}>
+        <Take src={imageUrl} alt={alt} aspect={aspect} picked={picked} onPick={imageUrl ? onPick : undefined} pickLabel={`Pick: ${alt}`} seed={job.createdAt % 97} selectedLabel={false}>
           {jobStatusText(job)}
         </Take>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      {/* The pick's words and the score share a row, so picking doesn't push the score down. */}
+      <div className="flex flex-wrap items-center gap-2">
+        {picked && <SelectedLabel />}
         {label && <span className="text-control font-semibold text-on-seamless">{label}</span>}
-        {score}
+        <span className="ml-auto">{score}</span>
       </div>
+      {retryable && (
+        <Button size="sm" variant="secondary" className="justify-self-start border-on-seamless text-on-seamless" onClick={() => void retryJob(job.id)}>
+          Retry
+        </Button>
+      )}
       {actions}
     </div>
   );

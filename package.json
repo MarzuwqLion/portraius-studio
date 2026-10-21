@@ -25,7 +25,8 @@
     "voices:check": "tsx scripts/voices-check.ts",
     "workflows": "vitest run src/lib/workflows --mode workflows",
     "workflows:check": "tsx scripts/workflows-check.ts",
-    "nodepack": "vitest run src/lib/nodepack --mode nodepack"
+    "nodepack": "vitest run src/lib/nodepack --mode nodepack",
+    "posters": "tsx scripts/posters.ts"
   },
   "dependencies": {
     "@comfyorg/sdk": "^0.5.0",

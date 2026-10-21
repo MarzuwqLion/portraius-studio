@@ -357,13 +357,30 @@ export function PromptEditor({
 
 // A stored prompt, read-only, with each slot shown as its mention: the cast
 // member's name when known, else "@lead".
-export function PromptText({ text, names, className }: { text: string; names?: Readonly<Record<string, string>>; className?: string }) {
+// A stored prompt as people read it: a slot whose cast is known shows as the
+// editor's chip, the face (when given) and the name; one that isn't, as @slot.
+export function PromptText({
+  text,
+  names,
+  faces,
+  className,
+}: {
+  text: string;
+  names?: Readonly<Record<string, string>>;
+  faces?: Readonly<Record<string, string>>;
+  className?: string;
+}) {
   return (
     <span className={className}>
       {scenePieces(text).map((p, i) =>
-        "slot" in p ? (
+        "slot" in p && names?.[p.slot] ? (
+          <span key={i} className={cn(CHIP, CHIP_CAST, "font-body")} title={`${names[p.slot]}, as ${p.slot}`}>
+            {faces?.[p.slot] ? <img src={faces[p.slot]} alt="" className={FACE} /> : <span className={FACE} />}
+            {names[p.slot]}
+          </span>
+        ) : "slot" in p ? (
           <mark key={i} className="rounded-control bg-tint-hover px-1 font-semibold text-ink">
-            {names?.[p.slot] ?? `@${p.slot}`}
+            @{p.slot}
           </mark>
         ) : (
           p.text
@@ -371,4 +388,21 @@ export function PromptText({ text, names, className }: { text: string; names?: R
       )}
     </span>
   );
+}
+
+// Slot to character, as PromptText's names and faces.
+export function slotChips(
+  slots: Readonly<Record<string, string>>,
+  characters: readonly Pick<CharacterRecord, "id" | "name">[] | undefined,
+  thumbs: ReadonlyMap<string, string>,
+): { names: Record<string, string>; faces: Record<string, string> } {
+  const names: Record<string, string> = {};
+  const faces: Record<string, string> = {};
+  for (const [slot, id] of Object.entries(slots)) {
+    const name = characters?.find((c) => c.id === id)?.name;
+    if (name) names[slot] = name;
+    const face = thumbs.get(id);
+    if (face) faces[slot] = face;
+  }
+  return { names, faces };
 }

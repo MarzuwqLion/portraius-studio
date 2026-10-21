@@ -112,6 +112,14 @@ export function checkPresets(sources: PresetSource[], thumbnailBytes: (path: str
       const bytes = thumbnailBytes(thumbPath);
       if (bytes === undefined) problems.push(`${path}: thumbnail ${p.thumbnail} is missing`);
       else if (bytes > THUMBNAIL_MAX_BYTES) problems.push(`${path}: thumbnail is ${Math.round(bytes / 1024)} KB; keep it under 200 KB`);
+      // A loop needs its first frame beside it as a poster, for browsers that
+      // can't play it (Decisions, October 21, U5, item 9).
+      if (p.thumbnail.endsWith(".mp4")) {
+        const poster = p.thumbnail.replace(/\.mp4$/, ".webp");
+        const posterBytes = thumbnailBytes(`${path.slice(0, path.lastIndexOf("/"))}/${poster}`);
+        if (posterBytes === undefined) problems.push(`${path}: the loop ${p.thumbnail} needs its first frame beside it as ${poster} (npm run posters)`);
+        else if (posterBytes > THUMBNAIL_MAX_BYTES) problems.push(`${path}: poster ${poster} is ${Math.round(posterBytes / 1024)} KB; keep it under 200 KB`);
+      }
     }
   }
   return problems;

@@ -10,7 +10,9 @@ import type { Band } from "@/lib/identity/score";
 import { exportZip, libraryGenerations, matches, saveFile, storageUse, type LibraryFilter } from "@/lib/library/library";
 import { REGISTRY } from "@/lib/registry/models";
 import { useBlobUrl, useCharacters } from "@/lib/store/hooks";
-import type { Generation } from "@/lib/types/records";
+import { scenePieces } from "@/lib/prompts/slots";
+import { castOfTake } from "@/lib/studio/cast";
+import type { CharacterRecord, Generation } from "@/lib/types/records";
 
 const TYPES: { value: Generation["type"]; label: string }[] = [
   { value: "image", label: "Images" },
@@ -25,15 +27,24 @@ const BANDS: { value: Band | "unscored"; label: string }[] = [
   { value: "unscored", label: "Not scored" },
 ];
 
-function Print({ generation, selecting, selected, onToggle }: { generation: Generation; selecting: boolean; selected: boolean; onToggle: () => void }) {
+// A take's prompt in words, for its alt text: a slot whose cast is known reads
+// as their name, any other as @slot.
+function promptWords(generation: Generation, characters: readonly CharacterRecord[] | undefined): string {
+  const slots = castOfTake(generation.prompt ?? "", generation.characterIds);
+  return scenePieces(generation.prompt ?? "")
+    .map((p) => ("slot" in p ? (characters?.find((c) => c.id === slots[p.slot])?.name ?? `@${p.slot}`) : p.text))
+    .join("");
+}
+
+function Print({ generation, alt, selecting, selected, onToggle }: { generation: Generation; alt: string; selecting: boolean; selected: boolean; onToggle: () => void }) {
   const still = generation.assets.find((a) => a.kind === "image") ?? generation.assets.find((a) => a.kind === "frame");
   const video = generation.assets.find((a) => a.kind === "video");
   const stillUrl = useBlobUrl(still?.blobId);
   const videoUrl = useBlobUrl(still ? undefined : video?.blobId);
   const media = stillUrl ? (
-    <img src={stillUrl} alt={generation.prompt || generation.type} className="develop block w-full" />
+    <img src={stillUrl} alt={alt || generation.type} className="develop block w-full" />
   ) : videoUrl ? (
-    <video src={videoUrl} muted playsInline preload="metadata" className="block w-full" aria-label={generation.prompt || "Video"} />
+    <video src={videoUrl} muted playsInline preload="metadata" className="block w-full" aria-label={alt || "Video"} />
   ) : (
     <span className="block aspect-square w-full" />
   );
@@ -59,7 +70,7 @@ function Print({ generation, selecting, selected, onToggle }: { generation: Gene
       {selecting ? (
         <label className="block cursor-pointer">
           <span className="mb-2 flex items-center gap-2 text-control text-on-seamless">
-            <Checkbox checked={selected} onCheckedChange={onToggle} aria-label={`Select ${generation.prompt || generation.type}`} />
+            <Checkbox checked={selected} onCheckedChange={onToggle} aria-label={`Select ${alt || generation.type}`} />
             Select
           </span>
           {body}
@@ -174,6 +185,7 @@ export function LibraryScreen() {
               <Print
                 key={g.id}
                 generation={g}
+                alt={promptWords(g, characters)}
                 selecting={selecting}
                 selected={selected.has(g.id)}
                 onToggle={() =>

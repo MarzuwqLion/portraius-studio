@@ -1,6 +1,7 @@
 // npm run shots (spec: Build order, UI pass): screenshots of every route at
-// 1440×900 and 1280×800, light and dark, into shots/ (gitignored). Three
-// passes, each in its own fresh browser profile:
+// 1440×900 and 1280×800, light and dark, and at 390×844 (a phone) in dark,
+// into shots/ (gitignored). Three passes, each in its own fresh browser
+// profile:
 //
 //   fresh  nothing stored, no key: what a judge sees first
 //   walt   after "Try this with Walt" on the Tour, which adds him, plus the
@@ -12,7 +13,8 @@
 // No key and no model call: the work pass writes sample files through the
 // app's own Dexie module, which the dev server serves. It also checks that
 // the Generate button and its price sit inside the viewport on Image, Video
-// and Recast, and writes the result to shots/report-<passes>.md.
+// and Recast, runs the checks in CHECKS below, writes the results to
+// shots/report-<passes>.md, and exits with an error if any check fails.
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { chromium, type Page } from "@playwright/test";
@@ -23,11 +25,21 @@ import yearbook from "../presets/image/yearbook-1996.json" with { type: "json" }
 const root = join(import.meta.dirname, "..");
 const out = join(root, "shots");
 const PORT = 5199;
-const VIEWPORTS = [
-  { name: "1440x900", width: 1440, height: 900 },
-  { name: "1280x800", width: 1280, height: 800 },
-] as const;
 const THEMES = ["light", "dark"] as const;
+type Theme = (typeof THEMES)[number];
+interface Viewport {
+  name: string;
+  width: number;
+  height: number;
+  themes: readonly Theme[];
+  phone?: boolean;
+}
+const VIEWPORTS: Viewport[] = [
+  { name: "1440x900", width: 1440, height: 900, themes: THEMES },
+  { name: "1280x800", width: 1280, height: 800, themes: THEMES },
+  // The phone pass (Decisions, October 21, U5, item 4).
+  { name: "390x844", width: 390, height: 844, themes: ["dark"], phone: true },
+];
 // The primary action on each work screen, by its label's first word.
 const FOLD_CHECKS: Record<string, RegExp> = { image: /^Generate/, video: /^(Make draft|Generate)/, recast: /^Recast/, "tour-try-image": /^Generate/, "tour-try-recast": /^Recast/ };
 
@@ -55,12 +67,15 @@ const BASE_ROUTES: Route[] = [
   { name: "settings", hash: "/settings" },
 ];
 
-const server = await createServer({ root, logLevel: "error", server: { port: PORT, strictPort: true } });
+// No reloads mid-run: an edit elsewhere in the repo must not reload the page.
+const server = await createServer({ root, logLevel: "error", server: { port: PORT, strictPort: true, hmr: false, watch: { ignored: ["**/*"] } } });
 await server.listen();
 const base = `http://localhost:${PORT}${server.config.base}`;
 const browser = await chromium.launch();
 const report: string[] = ["# Shots report", "", `Generated ${new Date().toISOString()}.`, "", "| Pass | Size | Theme | Screen | Primary action in view |", "| --- | --- | --- | --- | --- |"];
 const cut: string[] = ["", "## Truncated select values", ""];
+const checked: string[] = [];
+const failures: string[] = [];
 
 // Hash changes only, so the app never reloads and seeded jobs are never resumed.
 async function visit(page: Page, hash: string): Promise<void> {
@@ -68,8 +83,12 @@ async function visit(page: Page, hash: string): Promise<void> {
   await page.waitForTimeout(150);
   await page.evaluate(async () => {
     await document.fonts.ready;
+    // Only images on screen: a lazy image that's hidden (a phone-only preset
+    // tile at desktop width) never loads.
     await Promise.all(
-      [...document.images].filter((img) => !img.complete).map((img) => new Promise((done) => ((img.onload = done), (img.onerror = done)))),
+      [...document.images]
+        .filter((img) => !img.complete && img.offsetParent)
+        .map((img) => new Promise((done) => ((img.onload = done), (img.onerror = done), setTimeout(done, 5000)))),
     );
     // Videos show a frame, not a blank box (a seek may still be decoding).
     const deadline = Date.now() + 3000;
@@ -80,7 +99,7 @@ async function visit(page: Page, hash: string): Promise<void> {
   await page.waitForTimeout(350);
 }
 
-async function setTheme(page: Page, theme: (typeof THEMES)[number]): Promise<void> {
+async function setTheme(page: Page, theme: Theme): Promise<void> {
   await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
   await page.evaluate((t) => document.documentElement.setAttribute("data-theme", t), theme);
 }
@@ -111,14 +130,133 @@ async function truncatedSelects(page: Page): Promise<string[]> {
   });
 }
 
+// The Generate footer's text: its waiting reason, the button, the price and its note.
+async function footerText(page: Page): Promise<string> {
+  const footer = page.locator('section[aria-label="Call sheet"] > .sticky');
+  return (await footer.count()) ? (await footer.innerText()).replace(/\s+/g, " ") : "";
+}
+
+// Is the element inside the part of <main> that the sticky footer leaves?
+async function inView(page: Page, selector: string): Promise<string> {
+  return page.evaluate((selector) => {
+    const el = document.querySelector(selector);
+    if (!el) return "missing";
+    const box = el.getBoundingClientRect();
+    const main = document.querySelector("main")!.getBoundingClientRect();
+    const footer = document.querySelector('section[aria-label="Call sheet"] > .sticky')?.getBoundingClientRect();
+    const bottom = footer?.height ? Math.min(main.bottom, footer.top) : main.bottom;
+    return box.top >= main.top - 1 && box.bottom <= bottom + 1 ? "yes" : `no (${Math.round(box.top)} to ${Math.round(box.bottom)} px; room ${Math.round(main.top)} to ${Math.round(bottom)} px)`;
+  }, selector);
+}
+
+// Checks beyond the fold check (Decisions, October 21, U5): each says which
+// screens it applies to, and returns a problem or undefined.
+interface Check {
+  name: string;
+  applies: (route: string, phase: Phase, viewport: Viewport) => boolean;
+  run: (page: Page) => Promise<string | undefined>;
+}
+
+const CHECKS: Check[] = [
+  {
+    name: "nothing scrolls sideways",
+    applies: (_route, _phase, viewport) => Boolean(viewport.phone),
+    run: (page) =>
+      page.evaluate(() => {
+        const main = document.querySelector("main")!;
+        if (document.documentElement.scrollWidth > innerWidth + 1) return `the page is ${document.documentElement.scrollWidth} px wide`;
+        if (main.scrollWidth > main.clientWidth + 1) return `the main area is ${main.scrollWidth} px wide`;
+        return undefined;
+      }),
+  },
+  {
+    name: "every bottom-bar label fits",
+    applies: (_route, _phase, viewport) => Boolean(viewport.phone),
+    run: async (page) => {
+      const cut = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>('nav[aria-label="Studio"] a span')].flatMap((span) =>
+          span.offsetParent && span.scrollWidth > span.clientWidth + 1 ? [span.textContent ?? ""] : [],
+        ),
+      );
+      return cut.length ? `truncated: ${cut.join(", ")}` : undefined;
+    },
+  },
+  {
+    name: "the picked preset and the prompt are in view",
+    applies: (route, _phase, viewport) => route === "tour-try-image" && Boolean(viewport.phone),
+    run: async (page) => {
+      const tile = await inView(page, '[role="group"][aria-label="Presets"] button[aria-pressed="true"]');
+      const prompt = await inView(page, ".prompt-editor");
+      return tile === "yes" && prompt === "yes" ? undefined : `picked preset ${tile}; prompt ${prompt}`;
+    },
+  },
+  {
+    name: "the empty Image set shows the Film still example",
+    applies: (route, phase) => route === "tour-try-image" && phase === "walt",
+    run: async (page) => {
+      const example = page.locator('section[aria-label="Set"]').getByText("Example: Film still with Walt Harmon, a designed character. Your takes appear here.");
+      return (await example.count()) && (await example.isVisible()) ? undefined : "no example on the set";
+    },
+  },
+  {
+    name: "the first Tab is Skip to content, and it moves focus to the main area",
+    applies: (route, _phase, viewport) => ["first-run", "image", "director", "settings"].includes(route) && !viewport.phone,
+    run: async (page) => {
+      // Start from the top of the document, as a fresh page load does.
+      await page.evaluate(() => {
+        const start = document.createElement("span");
+        start.id = "shots-focus-start";
+        start.tabIndex = -1;
+        document.body.prepend(start);
+        start.focus();
+      });
+      await page.keyboard.press("Tab");
+      await page.evaluate(() => document.getElementById("shots-focus-start")?.remove());
+      const first = await page.evaluate(() => document.activeElement?.textContent?.trim());
+      await page.keyboard.press("Enter");
+      const after = await page.evaluate(() => document.activeElement?.tagName);
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      return first === "Skip to content" && after === "MAIN" ? undefined : `first stop "${first}", then focus on ${after}`;
+    },
+  },
+  {
+    name: "a remix link from a preset shows its example",
+    applies: (route) => route === "remix",
+    run: async (page) => ((await page.getByText("Example with Walt Harmon, a designed character. Your cast fills the slots.").count()) ? undefined : "no example above the recipe"),
+  },
+  {
+    name: "the default Video draft is ≈ $0.74 (5 s)",
+    applies: (route, phase) => route === "video" && phase === "fresh",
+    run: async (page) => {
+      const text = await footerText(page);
+      return /≈ \$0\.74/.test(text) ? undefined : `the footer reads "${text}"`;
+    },
+  },
+  {
+    name: "Recast waits only for the key: no prepare, trim or rights step",
+    applies: (route) => route === "tour-try-recast",
+    run: async (page) => {
+      const text = await footerText(page);
+      return /prepar|trim|rights/i.test(text) || !/Add your Comfy API key/.test(text) ? `the footer reads "${text}"` : undefined;
+    },
+  },
+];
+
 const dbModule = () => `${server.config.base}src/lib/store/db.ts`;
 
 async function tryChapter(page: Page, chapter: string): Promise<void> {
   await visit(page, "/tour");
   await page.locator(`#tour-${chapter}`).getByRole("button", { name: /^Try this with/ }).click();
   await page.waitForURL((url) => !url.hash.startsWith("#/tour"), { timeout: 60_000 });
-  // The studio applies the launch, and Recast loads its sample clip.
-  await page.waitForTimeout(chapter === "recast" ? 2000 : 500);
+  // The studio applies the launch; Recast loads its sample clip and prepares it.
+  await page.waitForTimeout(500);
+  if (chapter === "recast") {
+    await page.waitForFunction(() => {
+      const footer = document.querySelector('section[aria-label="Call sheet"] > .sticky')?.textContent ?? "";
+      return !/Upload a clip|Preparing/.test(footer);
+    }, undefined, { timeout: 120_000 });
+    await page.waitForTimeout(1000);
+  }
 }
 
 async function addWalt(page: Page): Promise<string> {
@@ -216,7 +354,7 @@ try {
     }
     for (const viewport of VIEWPORTS) {
       await page.setViewportSize(viewport);
-      for (const theme of THEMES) {
+      for (const theme of viewport.themes) {
         const dir = join(out, phase, `${viewport.name}-${theme}`);
         mkdirSync(dir, { recursive: true });
         await setTheme(page, theme);
@@ -234,19 +372,39 @@ try {
             await page.waitForTimeout(100);
           }
           await page.screenshot({ path: join(dir, `${route.name}.png`) });
+          const where = `${phase} ${viewport.name} ${theme} ${route.name}`;
           const label = FOLD_CHECKS[route.name];
           const truncated = await truncatedSelects(page);
-          if (truncated.length) cut.push(`- ${phase} ${viewport.name} ${theme} ${route.name}: ${truncated.map((t) => `"${t}"`).join(", ")}`);
-          if (label) report.push(`| ${phase} | ${viewport.name} | ${theme} | ${route.name} | ${await foldCheck(page, label)} |`);
+          if (truncated.length) {
+            cut.push(`- ${where}: ${truncated.map((t) => `"${t}"`).join(", ")}`);
+            failures.push(`${where}: truncated select values: ${truncated.join(", ")}`);
+          }
+          if (label) {
+            const fold = await foldCheck(page, label);
+            report.push(`| ${phase} | ${viewport.name} | ${theme} | ${route.name} | ${fold} |`);
+            if (fold !== "yes") failures.push(`${where}: primary action in view: ${fold}`);
+          }
+          for (const check of CHECKS) {
+            if (!check.applies(route.name, phase, viewport)) continue;
+            const problem = await check.run(page);
+            checked.push(`| ${where} | ${check.name} | ${problem ?? "pass"} |`);
+            if (problem) failures.push(`${where}: ${check.name}: ${problem}`);
+          }
         }
       }
     }
     await context.close();
-    console.log(`✓ ${phase}: ${routes.length} screens × ${VIEWPORTS.length} sizes × ${THEMES.length} themes`);
+    console.log(`✓ ${phase}: ${routes.length} screens at ${VIEWPORTS.map((v) => `${v.name} (${v.themes.join(", ")})`).join(", ")}`);
   }
   if (cut.length === 3) cut.push("None.");
-  writeFileSync(join(out, `report-${phases.join("-")}.md`), `${[...report, ...cut].join("\n")}\n`);
+  const checks = ["", "## Checks", "", "| Where | Check | Result |", "| --- | --- | --- |", ...checked, "", "## Failed", "", ...(failures.length ? failures.map((f) => `- ${f}`) : ["None."])];
+  writeFileSync(join(out, `report-${phases.join("-")}.md`), `${[...report, ...cut, ...checks].join("\n")}\n`);
   console.log(`Shots and report-${phases.join("-")}.md in ${out}`);
+  if (failures.length) {
+    for (const f of failures) console.error(`✗ ${f}`);
+    console.error(`${failures.length} check${failures.length === 1 ? "" : "s"} failed.`);
+    process.exitCode = 1;
+  } else console.log(`✓ Every check passes (${report.length - 6} fold checks, ${checked.length} others).`);
 } finally {
   await browser.close();
   await server.close();

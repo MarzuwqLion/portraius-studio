@@ -2,6 +2,7 @@
 // compiler's cast list and the reference images that go with it.
 import { toInlineImage } from "@/lib/media/image-prep";
 import type { CastMember, ReferenceKind } from "@/lib/prompts/compile";
+import { slotsIn } from "@/lib/prompts/slots";
 import type { InlineImage } from "@/lib/registry/inputs";
 import { isUsable, loadBundle } from "@/lib/store/characters";
 import { db } from "@/lib/store/db";
@@ -73,4 +74,13 @@ export async function describeCast(picks: readonly CastPick[]): Promise<CastMemb
     const references: ReferenceKind[] = record.kind === "person" ? ["sheet", record.file.photos.length ? "photo" : "front"] : ["sheet"];
     return [{ slot: pick.slot, name: record.name, kind: record.kind, description: record.file.description, references }];
   });
+}
+
+// Who played each {slot} of a finished take, for showing its prompt: the
+// request's own cast when the job kept it, or, with one character and one
+// slot, that one. A slot left out stays "@slot" on screen.
+export function castOfTake(prompt: string, characterIds: readonly string[], requestCast?: readonly CastPick[]): Record<string, string> {
+  if (requestCast?.length) return Object.fromEntries(requestCast.filter((c) => characterIds.includes(c.characterId)).map((c) => [c.slot, c.characterId]));
+  const slots = [...new Set(slotsIn(prompt))];
+  return slots.length === 1 && characterIds.length === 1 ? { [slots[0]!]: characterIds[0]! } : {};
 }

@@ -76,25 +76,37 @@ export function fitsLimits(clip: Pick<PreparedClip, "info" | "fps">, limits: Cli
   );
 }
 
+// The part of a clip Recast uses until the visitor trims (spec: Recast,
+// Input): the whole clip, or its first allowed seconds when it's longer.
+export function defaultRange(durationSec: number, limits: ClipLimits): [number, number] {
+  return [0, Math.min(durationSec, limits.maxSec)];
+}
+
+export function tooShort(lengthSec: number, limits: ClipLimits): boolean {
+  return lengthSec < limits.minSec - 0.05;
+}
+
 export interface RecastForm {
   mode: RecastMode;
   hasClip: boolean;
-  lengthOk: boolean;         // the trim fits the mode
-  prepared?: PreparedClip;
+  tooShort: boolean;         // the clip, or its trim, is shorter than the mode allows
+  preparing?: number;        // share done while the clip prepares
+  prepared?: PreparedClip;   // the clip as prepared for the current trim
   needsPerformer: boolean;
   hasPerformer: boolean;
   hasReplacement: boolean;
-  rights: boolean;
+  rights: boolean;           // ticked, or the bundled sample, which needs no check
 }
 
 // The first thing the Recast button is waiting for, in call-sheet order, or
-// undefined when it can run. The screen shows it under the button.
+// undefined when it can run. The screen shows it under the button. The clip
+// prepares on its own, so the only clip step left to the visitor is a length.
 export function recastNeeds(form: RecastForm): string | undefined {
   const limits = LIMITS[form.mode];
   if (!form.hasClip) return "Upload a clip";
-  if (!form.prepared || !fitsLimits(form.prepared, limits)) {
-    if (!form.lengthOk) return `Trim the clip to ${limits.minSec} to ${limits.maxSec} s, then prepare it`;
-    return form.prepared ? `Prepare the clip again for ${MODE_LABEL[form.mode]}` : "Prepare the clip";
+  if (form.tooShort) return `Recast needs a ${limits.minSec} to ${limits.maxSec} s clip`;
+  if (form.preparing !== undefined || !form.prepared || !fitsLimits(form.prepared, limits)) {
+    return form.preparing ? `Preparing the clip, ${Math.round(form.preparing * 100)}%` : "Preparing the clip";
   }
   if (form.needsPerformer && !form.hasPerformer) return "Pick a performer";
   if (form.mode === "swap" && !form.hasReplacement) return "Upload a replacement image";

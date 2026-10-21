@@ -6,7 +6,7 @@ import { SplitView } from "@/components/studio/SplitView";
 import { ScoreBadge, Take } from "@/components/studio/Take";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useKeyStore } from "@/lib/session/key";
-import { loadTour, sampleUrl, tryWithWalt, type Tour, type TourItem } from "@/lib/tour/tour";
+import { loadTour, samplePoster, sampleUrl, tryWithWalt, type Tour, type TourItem } from "@/lib/tour/tour";
 import { cn } from "@/lib/utils";
 
 const aspect = (m: { width: number; height: number }) => `${m.width} / ${m.height}`;
@@ -30,11 +30,11 @@ function Media({ item }: { item: TourItem }): ReactNode {
     case "video":
       return (
         <figure className="relative mx-auto w-full overflow-hidden rounded-media border border-rule bg-seamless" style={{ aspectRatio: aspect(m), maxWidth: fitHeight(m) }}>
-          <video src={sampleUrl(m.src)} controls loop playsInline preload="metadata" className="absolute inset-0 size-full object-contain" aria-label={m.alt} />
+          <video src={sampleUrl(m.src)} poster={samplePoster(m.src)} controls loop playsInline preload="metadata" className="absolute inset-0 size-full object-contain" aria-label={m.alt} />
         </figure>
       );
     case "split":
-      return <SplitView original={sampleUrl(m.original)} recast={sampleUrl(m.recast)} aspect={aspect(m)} />;
+      return <SplitView original={sampleUrl(m.original)} recast={sampleUrl(m.recast)} posters={{ original: samplePoster(m.original), recast: samplePoster(m.recast) }} aspect={aspect(m)} />;
     case "beforeAfter":
       return <BeforeAfter before={sampleUrl(m.before)} after={sampleUrl(m.after)} aspect={aspect(m)} alt={m.alt} />;
   }

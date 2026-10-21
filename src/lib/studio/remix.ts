@@ -2,7 +2,8 @@
 // a recipe runs again with the visitor's own characters in its slots.
 import { onJobDone, type JobInput } from "@/lib/jobs/runner";
 import type { CameraSelection } from "@/lib/prompts/camera";
-import { recipeHash, type RecipeFile } from "@/lib/recipes/share";
+import type { Preset } from "@/lib/presets/schema";
+import { canonicalJson, recipeHash, type RecipeFile } from "@/lib/recipes/share";
 import type { GenerateImageInput, ImageAspectRatio, VideoRatio } from "@/lib/registry/inputs";
 import { MODEL_IDS } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
@@ -119,4 +120,18 @@ async function markRemix(job: Job): Promise<void> {
 
 export function registerRemix(): () => void {
   return onJobDone(markRemix);
+}
+
+// The shipped preset a recipe was made from, if any (Decisions, October 21,
+// U5, item 11): the same model and prompt, and every param the preset sets
+// the same in the recipe. A recipe made from a preset's take carries more
+// params (size, quality, count) than the preset sets, so those don't count.
+// Only the preset's own thumbnail shows; the link still never carries a face.
+export function matchingPreset(recipe: Pick<RecipeFile, "model" | "prompt" | "params">, presets: readonly Preset[]): Preset | undefined {
+  return presets.find(
+    (p) =>
+      p.recipe.model === recipe.model &&
+      p.recipe.prompt.trim() === recipe.prompt.trim() &&
+      Object.entries(p.recipe.params ?? {}).every(([key, value]) => canonicalJson(recipe.params?.[key]) === canonicalJson(value)),
+  );
 }

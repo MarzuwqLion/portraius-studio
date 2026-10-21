@@ -15,7 +15,8 @@ import { BeforeAfter } from "./BeforeAfter";
 import { jobStatusText } from "./JobTake";
 import { ScoreBadge, Take } from "./Take";
 
-// "Make it real" on a still, with its Strength slider.
+// "Make it real" on a still, with its Realism strength slider right beside it,
+// as one group, so the slider reads as the pass's own setting.
 export function RealismAction({ generationId, onStarted, className }: { generationId: string; onStarted?: (job: Job) => void; className?: string }) {
   const id = useId();
   const [strength, setStrength] = useState(DEFAULT_STRENGTH);
@@ -48,15 +49,15 @@ export function RealismAction({ generationId, onStarted, className }: { generati
   }
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-3", className)}>
-      <label htmlFor={id} className="flex items-center gap-2 text-control">
-        Strength
-        <input id={id} type="range" min={20} max={100} step={10} value={strength} onChange={(e) => setStrength(Number(e.target.value))} className="w-24" />
-        <span className="w-6 tabular-nums">{strength}</span>
-      </label>
+    <div role="group" aria-label="Make it real" className={cn("flex flex-wrap items-center gap-3", className)}>
       <Button size="sm" variant="secondary" onClick={() => void run()} disabled={busy}>
         {withPrice("Make it real", price)}
       </Button>
+      <label htmlFor={id} className="flex items-center gap-2 text-control">
+        Realism strength
+        <input id={id} type="range" min={20} max={100} step={10} value={strength} onChange={(e) => setStrength(Number(e.target.value))} className="w-24" />
+        <span className="w-6 tabular-nums">{strength}</span>
+      </label>
       {error && (
         <p className="text-control text-drift" role="alert">
           {error}

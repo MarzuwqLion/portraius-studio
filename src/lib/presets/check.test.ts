@@ -70,6 +70,14 @@ describe("checkPresets", () => {
     expect(checkPresets([camera, clip], () => 1)).toEqual([]);
   });
 
+  it("needs a poster still beside every loop, under the same cap", () => {
+    const clip = preset({ id: "walk", type: "video", thumbnail: "walk.mp4" }, {}, "presets/video/walk.json");
+    const sizes = (poster: number | undefined) => (path: string) => (path === "presets/video/walk.webp" ? poster : 1);
+    expect(checkPresets([camera, clip], sizes(20 * 1024))).toEqual([]);
+    expect(checkPresets([camera, clip], sizes(undefined))[0]).toMatch(/walk\.mp4 needs its first frame beside it as walk\.webp/);
+    expect(checkPresets([camera, clip], sizes(300 * 1024))[0]).toMatch(/poster walk\.webp is 300 KB/);
+  });
+
   it("reports schema errors with the path", () => {
     expect(checkPresets([preset({ version: 2 })], none)[0]).toMatch(/^presets\/image\/headshot.json: version/);
   });
