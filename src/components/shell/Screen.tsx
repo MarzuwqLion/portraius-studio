@@ -18,13 +18,18 @@ export function Screen({ title, actions, children }: { title: ReactNode; actions
   );
 }
 
-// Work screens: the call sheet (controls) on proof, the set (media) on Studio grey.
-export function WorkScreen({ title, callSheet, set }: { title: ReactNode; callSheet: ReactNode; set: ReactNode }) {
+// Work screens: the call sheet (controls) on proof, the set (media) on Studio
+// grey. The footer (the Generate button) stays pinned under the call sheet
+// while the controls scroll above it.
+export function WorkScreen({ title, callSheet, footer, set }: { title: ReactNode; callSheet: ReactNode; footer?: ReactNode; set: ReactNode }) {
   return (
     <div className="flex h-full min-h-0 flex-col md:flex-row">
-      <section aria-label="Call sheet" className="shrink-0 overflow-auto border-rule p-6 md:w-80 md:border-r">
-        <ScreenTitle className="mb-6">{title}</ScreenTitle>
-        {callSheet}
+      <section aria-label="Call sheet" className="flex shrink-0 flex-col border-rule md:min-h-0 md:w-80 md:border-r">
+        <div className="p-6 md:min-h-0 md:flex-1 md:overflow-auto">
+          <ScreenTitle className="mb-6">{title}</ScreenTitle>
+          {callSheet}
+        </div>
+        {footer && <div className="sticky bottom-0 border-t border-rule bg-proof px-6 py-4">{footer}</div>}
       </section>
       <section aria-label="Set" className="flex min-h-64 flex-1 items-center justify-center bg-seamless p-6 text-on-seamless">
         {set}

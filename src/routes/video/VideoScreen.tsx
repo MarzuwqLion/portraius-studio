@@ -4,6 +4,7 @@ import { Shuffle } from "lucide-react";
 import { WorkScreen } from "@/components/shell/Screen";
 import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
+import { GenerateFooter } from "@/components/studio/GenerateFooter";
 import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
 import { PresetPicker } from "@/components/studio/PresetPicker";
@@ -179,7 +180,8 @@ export function VideoScreen() {
 
   const request: VideoRequest = { mode, model: effective, scene, cast, ...(sourceBlobId ? { sourceBlobId } : {}), durationSec, ratio, audio, seed, h3Resolution, camera };
   const needsCast = mode === "still" || mode === "references";
-  const ready = Boolean(scene.trim()) && (!needsCast || cast.length > 0) && (mode !== "image" || Boolean(sourceBlobId));
+  const waitingFor = needsCast && !cast.length ? "Pick a character" : mode === "image" && !sourceBlobId ? "Add a first frame" : !scene.trim() ? "Write a prompt" : undefined;
+  const ready = !waitingFor;
   const estimateInput = async () =>
     effective === MODEL_IDS.minimaxH3
       ? { stage: "generate", prompt: scene, durationSec, ratio, resolution: h3Resolution }
@@ -303,10 +305,6 @@ export function VideoScreen() {
           {error}
         </p>
       )}
-      <Button type="submit" disabled={!ready || busy}>
-        {spec.draft ? "Make draft" : "Generate"} · {price}
-      </Button>
-      {spec.draft && <p className="text-control text-ink-muted">Every clip starts as a 480p draft. Render the final at 1080p once you like it.</p>}
     </form>
   );
 
@@ -336,5 +334,16 @@ export function VideoScreen() {
     </div>
   );
 
-  return <WorkScreen title="Video" callSheet={callSheet} set={set} />;
+  const footer = (
+    <GenerateFooter
+      label={spec.draft ? "Make draft" : "Generate"}
+      price={price}
+      waitingFor={waitingFor}
+      busy={busy}
+      onRun={() => void generate()}
+      note={spec.draft ? "A 480p draft first; render the 1080p final once you like it." : undefined}
+    />
+  );
+
+  return <WorkScreen title="Video" callSheet={callSheet} footer={footer} set={set} />;
 }

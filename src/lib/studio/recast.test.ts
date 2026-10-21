@@ -51,20 +51,20 @@ describe("recastNeeds", () => {
   });
 
   it("names the first missing step, in call-sheet order", () => {
-    expect(recastNeeds({ ...done, hasClip: false, rights: false })).toBe("Upload a clip.");
-    expect(recastNeeds({ ...done, prepared: undefined, hasPerformer: false })).toBe("Prepare the clip.");
-    expect(recastNeeds({ ...done, prepared: undefined, lengthOk: false })).toBe("Trim the clip to 4 to 15 s, then prepare it.");
-    expect(recastNeeds({ ...done, hasPerformer: false, rights: false })).toBe("Pick a performer.");
+    expect(recastNeeds({ ...done, hasClip: false, rights: false })).toBe("Upload a clip");
+    expect(recastNeeds({ ...done, prepared: undefined, hasPerformer: false })).toBe("Prepare the clip");
+    expect(recastNeeds({ ...done, prepared: undefined, lengthOk: false })).toBe("Trim the clip to 4 to 15 s, then prepare it");
+    expect(recastNeeds({ ...done, hasPerformer: false, rights: false })).toBe("Pick a performer");
     expect(recastNeeds({ ...done, rights: false })).toMatch(/rights/);
   });
 
   it("asks for the clip again when a preset in another mode can't take it", () => {
-    expect(recastNeeds({ ...done, mode: "swap", needsPerformer: false })).toBe("Prepare the clip again for Object Swap.");
+    expect(recastNeeds({ ...done, mode: "swap", needsPerformer: false })).toBe("Prepare the clip again for Object Swap");
   });
 
   it("wants a replacement image only for Object Swap", () => {
     const swap: RecastForm = { ...done, mode: "swap", needsPerformer: false, prepared: { blobId: "b", info: { durationSec: 6, width: 1920, height: 1080 }, fps: 30 } };
-    expect(recastNeeds(swap)).toBe("Upload a replacement image.");
+    expect(recastNeeds(swap)).toBe("Upload a replacement image");
     expect(recastNeeds({ ...swap, hasReplacement: true })).toBeUndefined();
   });
 });

@@ -80,14 +80,14 @@ export interface RecastForm {
 // undefined when it can run. The screen shows it under the button.
 export function recastNeeds(form: RecastForm): string | undefined {
   const limits = LIMITS[form.mode];
-  if (!form.hasClip) return "Upload a clip.";
+  if (!form.hasClip) return "Upload a clip";
   if (!form.prepared || !fitsLimits(form.prepared, limits)) {
-    if (!form.lengthOk) return `Trim the clip to ${limits.minSec} to ${limits.maxSec} s, then prepare it.`;
-    return form.prepared ? `Prepare the clip again for ${MODE_LABEL[form.mode]}.` : "Prepare the clip.";
+    if (!form.lengthOk) return `Trim the clip to ${limits.minSec} to ${limits.maxSec} s, then prepare it`;
+    return form.prepared ? `Prepare the clip again for ${MODE_LABEL[form.mode]}` : "Prepare the clip";
   }
-  if (form.needsPerformer && !form.hasPerformer) return "Pick a performer.";
-  if (form.mode === "swap" && !form.hasReplacement) return "Upload a replacement image.";
-  if (!form.rights) return "Confirm you filmed the clip or have the rights to use it.";
+  if (form.needsPerformer && !form.hasPerformer) return "Pick a performer";
+  if (form.mode === "swap" && !form.hasReplacement) return "Upload a replacement image";
+  if (!form.rights) return "Confirm you filmed the clip or have the rights to use it";
   return undefined;
 }
 

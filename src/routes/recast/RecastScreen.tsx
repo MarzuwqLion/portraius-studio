@@ -1,7 +1,8 @@
-import { useId, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { WorkScreen } from "@/components/shell/Screen";
 import { CastPicker } from "@/components/studio/CastPicker";
+import { GenerateFooter } from "@/components/studio/GenerateFooter";
 import { Field, Select, TextArea } from "@/components/studio/fields";
 import { jobStatusText } from "@/components/studio/JobTake";
 import { SocialExport } from "@/components/studio/SocialExport";
@@ -105,7 +106,6 @@ export function RecastScreen() {
   const mode = modeOf(preset);
   const limits = LIMITS[mode];
   const people = mode === "motion" || (mode === "style" && preset.recipe.slots.some((s) => s.kind === "person"));
-  const needsId = useId();
 
   // A new clip starts the trim over.
   async function takeClip(blob: Blob) {
@@ -328,15 +328,6 @@ export function RecastScreen() {
           {error}
         </p>
       )}
-      <Button onClick={() => void recast()} disabled={!ready || busy} aria-describedby={needs ? needsId : undefined}>
-        Recast · {price}
-      </Button>
-      {needs && (
-        <p id={needsId} className="text-control font-semibold">
-          {needs}
-        </p>
-      )}
-      <p className="text-control text-ink-muted">{mode === "swap" ? "Object Swap runs on HappyHorse 1.0 video edit." : "Recasts with people run on H3; Seedance doesn't accept them."}</p>
     </div>
   );
 
@@ -354,5 +345,16 @@ export function RecastScreen() {
     </div>
   );
 
-  return <WorkScreen title="Recast" callSheet={callSheet} set={set} />;
+  const footer = (
+    <GenerateFooter
+      label="Recast"
+      price={price}
+      waitingFor={needs}
+      busy={busy}
+      onRun={() => void recast()}
+      note={mode === "swap" ? "Object Swap runs on HappyHorse 1.0 video edit." : "Recasts with people run on MiniMax H3."}
+    />
+  );
+
+  return <WorkScreen title="Recast" callSheet={callSheet} footer={footer} set={set} />;
 }

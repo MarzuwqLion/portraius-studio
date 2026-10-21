@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { WorkScreen } from "@/components/shell/Screen";
 import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
+import { GenerateFooter } from "@/components/studio/GenerateFooter";
 import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
 import { PresetPicker } from "@/components/studio/PresetPicker";
@@ -102,9 +103,10 @@ export function ImageScreen() {
   const ready = Boolean(scene.trim() || (advanced && override.trim()));
   const price = useEstimateLabel(MODEL_IDS.nanoBanana, ready ? async () => ({ prompt: preview, references: [], aspectRatio, size, quality }) : undefined, `${size}:${quality}:${aspectRatio}:${ready}`);
   const unknownSlots = slotsIn(scene).filter((s) => !cast.some((c) => c.slot === s));
+  const waitingFor = !ready ? "Write a prompt" : unknownSlots.length ? "Pick a character" : undefined;
 
   async function generate() {
-    if (!ready || busy) return;
+    if (waitingFor || busy) return;
     setBusy(true);
     setError(undefined);
     try {
@@ -211,9 +213,6 @@ export function ImageScreen() {
           {error}
         </p>
       )}
-      <Button type="submit" disabled={!ready || busy}>
-        Generate{count > 1 ? ` ${count}` : ""} · {price}
-      </Button>
     </form>
   );
 
@@ -269,5 +268,7 @@ export function ImageScreen() {
     </div>
   );
 
-  return <WorkScreen title="Image" callSheet={callSheet} set={set} />;
+  const footer = <GenerateFooter label={count > 1 ? `Generate ${count}` : "Generate"} price={price} waitingFor={waitingFor} busy={busy} onRun={() => void generate()} />;
+
+  return <WorkScreen title="Image" callSheet={callSheet} footer={footer} set={set} />;
 }
