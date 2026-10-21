@@ -93,17 +93,46 @@ function SceneList() {
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
         {scenes?.map((scene) => (
           <li key={scene.id}>
-            <Link to={`/director/${scene.id}`} className="grid gap-1 rounded-media border border-rule p-4 hover:bg-tint-hover">
-              <span className="font-display text-panel font-extrabold">{scene.title}</span>
-              {scene.logline && <span className="line-clamp-2 text-body">{scene.logline}</span>}
-              <span className="text-control text-ink-muted">
-                {scene.shots.length} {scene.shots.length === 1 ? "shot" : "shots"} · {scene.shots.reduce((t, s) => t + s.durationSec, 0)} s
-              </span>
-            </Link>
+            <SceneCard scene={scene} />
           </li>
         ))}
       </ul>
     </Screen>
+  );
+}
+
+// A scene's card (spec: Decisions, October 21, item 13): its first anchor as
+// the cover, and how many shots have a finished take.
+function SceneCard({ scene }: { scene: Scene }) {
+  const cover = useJobImageUrl(scene.shots.find((s) => s.anchorJobId)?.anchorJobId);
+  const jobs = useJobs(scene.shots.map((s) => exportJobId(s) ?? ""));
+  const ready = (jobs ?? []).filter((j) => j?.status === "done").length;
+  const total = scene.shots.reduce((t, s) => t + s.durationSec, 0);
+  return (
+    <Link to={`/director/${scene.id}`} className="grid overflow-hidden rounded-media border border-rule hover:bg-tint-hover">
+      <span className="relative block aspect-video bg-seamless">
+        {cover ? (
+          <img src={cover} alt="" className="develop size-full object-cover" />
+        ) : (
+          <span className="absolute inset-0 flex items-center justify-center text-control text-on-seamless">No anchor yet</span>
+        )}
+      </span>
+      <span className="grid gap-1 p-4">
+        <span className="font-display text-panel font-extrabold">{scene.title}</span>
+        {scene.logline && <span className="line-clamp-2 text-body">{scene.logline}</span>}
+        <span className="text-control text-ink-muted">
+          {scene.shots.length} {scene.shots.length === 1 ? "shot" : "shots"} · {total} s
+          {scene.shots.length > 0 && (
+            <>
+              {" · "}
+              <span className={cn(ready === scene.shots.length && "font-semibold text-ink")}>
+                {ready} of {scene.shots.length} ready
+              </span>
+            </>
+          )}
+        </span>
+      </span>
+    </Link>
   );
 }
 
