@@ -34,6 +34,7 @@
   --type-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
 
   --size-control: 13px;
+  --size-tab: 11px; /* bottom-bar labels on phones under 400 px wide */
   --size-body: 15px;
   --size-panel: 18px;
   --size-screen: 28px;

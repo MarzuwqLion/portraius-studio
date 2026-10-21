@@ -7,14 +7,15 @@ import { RemixActions } from "@/components/studio/RemixActions";
 import { SaveAsElement } from "@/components/studio/SaveAsElement";
 import { SocialExport } from "@/components/studio/SocialExport";
 import { SpeakAction } from "@/components/studio/Speak";
-import { PromptText } from "@/components/studio/PromptEditor";
+import { PromptText, slotChips } from "@/components/studio/PromptEditor";
 import { ScoreBadge } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { useJob } from "@/lib/jobs/hooks";
 import { deleteGeneration, generationFiles, saveFile } from "@/lib/library/library";
 import { modelLabel } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
-import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
+import { useBlobUrl, useCharacters, useCharacterThumbs, useGeneration } from "@/lib/store/hooks";
+import { castOfTake, type CastPick } from "@/lib/studio/cast";
 
 export function GenerationScreen() {
   const { generationId } = useParams();
@@ -32,6 +33,12 @@ export function GenerationScreen() {
   const job = useJob(generation?.jobId);
   const realism = job?.kind === "enhance" ? job : undefined;
   const [startedRealism, setStartedRealism] = useState<string>();
+  // The prompt shows who played each slot, as chips (Decisions, October 21, U5, item 12).
+  const characters = useCharacters();
+  const thumbs = useCharacterThumbs();
+  const request = (job?.input as { request?: { cast?: CastPick[] } } | undefined)?.request;
+  const slots = generation ? castOfTake(generation.prompt ?? "", generation.characterIds, request?.cast) : {};
+  const promptCast = slotChips(slots, characters, thumbs);
 
   if (missing) {
     return (
@@ -75,7 +82,7 @@ export function GenerationScreen() {
           ) : null}
           {generation.prompt && (
             <p className="max-w-[70ch] text-body">
-              <PromptText text={generation.prompt} />
+              <PromptText text={generation.prompt} names={promptCast.names} faces={promptCast.faces} />
             </p>
           )}
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-control">

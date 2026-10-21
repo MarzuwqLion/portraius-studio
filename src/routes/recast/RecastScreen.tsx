@@ -135,7 +135,7 @@ function DropStage({ full, onClip, onSample, onUpload }: { full: boolean; onClip
       <div className="absolute inset-0 bg-seamless/75" />
       <div className="relative grid content-center justify-items-center gap-4 p-6 text-center">
         <p className="font-display text-screen font-extrabold">Drop a clip, or try the sample</p>
-        <p className="max-w-[52ch] text-body">A clip you filmed or have the rights to use. Behind this: the sample, before and after.</p>
+        <p className="max-w-[52ch] text-body">Use a clip you filmed or have the rights to use. Playing behind this: the sample, and Walt Harmon doing the same moves.</p>
         <div className="flex flex-wrap justify-center gap-3">
           <Button onClick={onSample}>Try the sample</Button>
           <Button variant="secondary" className="border-on-seamless text-on-seamless" onClick={onUpload}>

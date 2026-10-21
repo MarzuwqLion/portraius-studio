@@ -250,7 +250,7 @@ export function VideoScreen() {
       {mode === "references" && <p className="text-control text-ink-muted">Your cast's sheets set who is in the shot and what they wear; the model frames the opening itself.</p>}
 
       <Field label="Prompt" hint="Type @ to put someone from your vault in the shot.">
-        {(id) => <PromptEditor id={id} value={scene} onChange={setScene} cast={cast} onAddCast={(pick) => setCast((c) => [...c, pick])} rows={4} maxLength={2000} placeholder="@ for your cast, then what happens: steps out of the rain into a lit doorway" />}
+        {(id) => <PromptEditor id={id} value={scene} onChange={setScene} cast={cast} onAddCast={(pick) => setCast((c) => [...c, pick])} rows={4} maxLength={2000} placeholder="Type @ to add someone, then what happens: steps out of the rain into a lit doorway" />}
       </Field>
 
       {mode === "image" && (

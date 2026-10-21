@@ -28,7 +28,7 @@ describe("RealismAction", () => {
   it("hands the started job to onStarted, at the chosen strength", async () => {
     const onStarted = vi.fn();
     render(<RealismAction generationId="still-2" onStarted={onStarted} />, { wrapper: MemoryRouter });
-    fireEvent.change(screen.getByLabelText(/Strength/), { target: { value: "40" } });
+    fireEvent.change(screen.getByLabelText("Realism strength"), { target: { value: "40" } });
     fireEvent.click(screen.getByRole("button", { name: /Make it real/ }));
     await waitFor(() => expect(onStarted).toHaveBeenCalledWith({ id: "job-for-still-2-40" }));
   });

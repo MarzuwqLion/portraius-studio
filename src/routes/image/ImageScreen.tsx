@@ -166,7 +166,7 @@ export function ImageScreen() {
       <Field label="Cast">{(id) => <CastPicker id={id} value={cast} onChange={setCast} />}</Field>
 
       <Field label="Prompt" hint="Type @ to put someone from your vault in the shot.">
-        {(id) => <PromptEditor id={id} value={scene} onChange={setScene} cast={cast} onAddCast={(pick) => setCast((c) => [...c, pick])} rows={4} maxLength={2000} placeholder="@ for your cast, then what happens: reading in a corner booth of a late-night diner" />}
+        {(id) => <PromptEditor id={id} value={scene} onChange={setScene} cast={cast} onAddCast={(pick) => setCast((c) => [...c, pick])} rows={4} maxLength={2000} placeholder="Type @ to add someone, then what happens: reading in a corner booth of a late-night diner" />}
       </Field>
       {unknownSlots.length > 0 && <p className="text-control text-drift">Pick someone for {unknownSlots.map((s) => `@${s}`).join(", ")} in Cast, or type @ to choose.</p>}
 

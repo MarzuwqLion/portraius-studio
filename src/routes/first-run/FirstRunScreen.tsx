@@ -43,19 +43,25 @@ export function FirstRunScreen() {
             Add your key
           </Link>
         </div>
-        <ol className="grid gap-4">
-          {STEPS.map((step, index) => (
-            <li key={step.title} className="grid grid-cols-[2rem_1fr] gap-x-3 border-t border-rule pt-4">
-              <span className="font-display text-screen font-extrabold" aria-hidden>
-                {index + 1}
-              </span>
-              <div>
-                <h2 className="text-body font-semibold">{step.title}</h2>
-                <p className="text-control text-ink-muted">{step.body}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
+        {/* An explanation of the two buttons, not a second set of tasks. */}
+        <section aria-labelledby="how-it-works" className="grid gap-3">
+          <h2 id="how-it-works" className="text-control font-semibold text-ink-muted">
+            How it works
+          </h2>
+          <ol className="grid gap-4">
+            {STEPS.map((step, index) => (
+              <li key={step.title} className="grid grid-cols-[2rem_1fr] gap-x-3 border-t border-rule pt-4">
+                <span className="font-display text-screen font-extrabold" aria-hidden>
+                  {index + 1}
+                </span>
+                <div>
+                  <h3 className="text-body font-semibold">{step.title}</h3>
+                  <p className="text-control text-ink-muted">{step.body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
       </section>
       <section aria-label="Sample: a recast" className="flex flex-col justify-center gap-3 bg-seamless p-6 text-on-seamless lg:p-10">
         {media ? (

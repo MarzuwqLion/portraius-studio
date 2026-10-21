@@ -18,7 +18,8 @@ function RailLink({ item, compact = false }: { item: NavItem; compact?: boolean 
       }
     >
       <Icon className="size-5" aria-hidden />
-      <span className="max-w-full truncate px-1">{item.label}</span>
+      {/* Seven labels share a phone's width; under 400 px they take the smaller tab size so all fit. */}
+      <span className={cn("max-w-full truncate", compact ? "px-0.5 max-[399px]:text-tab" : "px-1")}>{item.label}</span>
     </NavLink>
   );
 }

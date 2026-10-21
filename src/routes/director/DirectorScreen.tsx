@@ -5,7 +5,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, Trash2 } from "lucide-react
 import { Note, Screen, ScreenTitle } from "@/components/shell/Screen";
 import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
-import { PromptEditor, PromptText } from "@/components/studio/PromptEditor";
+import { PromptEditor, PromptText, slotChips } from "@/components/studio/PromptEditor";
 import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
 import { SocialExport } from "@/components/studio/SocialExport";
@@ -18,7 +18,7 @@ import { useEstimateLabel, useJob, useJobImageUrl, useJobs } from "@/lib/jobs/ho
 import { withPrice } from "@/lib/jobs/estimate";
 import { MODEL_IDS, registryEntry } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
-import { useBlobUrl, useCharacters, useGeneration, useObjectUrl } from "@/lib/store/hooks";
+import { useBlobUrl, useCharacters, useCharacterThumbs, useGeneration, useObjectUrl } from "@/lib/store/hooks";
 import {
   animateShot,
   chainStale,
@@ -418,12 +418,8 @@ function CollapsedShot({ scene, shot, index, onOpen, onMove, onRemove }: { scene
   const still = chained ? chainFrame : anchor;
   const job = useJob(exportJobId(shot));
   const characters = useCharacters();
-  const names = Object.fromEntries(
-    scene.cast.flatMap((c) => {
-      const name = characters?.find((r) => r.id === c.characterId)?.name;
-      return name ? [[c.slot, name]] : [];
-    }),
-  );
+  const thumbs = useCharacterThumbs();
+  const { names, faces } = slotChips(Object.fromEntries(scene.cast.map((c) => [c.slot, c.characterId])), characters, thumbs);
   const firstLine = shot.action.split("\n")[0]?.trim();
   return (
     <article aria-label={`Shot ${index + 1}`} className="flex items-center gap-2 rounded-media border border-rule bg-proof p-2 text-ink">
@@ -440,7 +436,7 @@ function CollapsedShot({ scene, shot, index, onOpen, onMove, onRemove }: { scene
             <span className="font-display text-panel font-extrabold">Shot {index + 1}</span>
             <span className="text-control text-ink-muted">{shotStatus(shot, job, chained)}</span>
           </span>
-          <span className="truncate text-body">{firstLine ? <PromptText text={firstLine} names={names} /> : <span className="text-ink-muted">No action yet</span>}</span>
+          <span className="truncate text-body">{firstLine ? <PromptText text={firstLine} names={names} faces={faces} /> : <span className="text-ink-muted">No action yet</span>}</span>
           <span className="text-control text-ink-muted">{shotSummary(shot)}</span>
         </span>
       </button>
@@ -555,7 +551,7 @@ function OpenShot({
               onAddCast={(pick) => editor.edit((s) => ({ ...s, cast: [...s.cast, pick] }))}
               rows={3}
               maxLength={600}
-              placeholder="@ for your cast, then what happens: slides the envelope across the table"
+              placeholder="Type @ to add someone, then what happens: slides the envelope across the table"
             />
           )}
         </Field>
