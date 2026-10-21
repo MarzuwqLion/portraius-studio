@@ -4,7 +4,7 @@
 import { z } from "zod";
 import { addImport, readImport } from "@/lib/characters/manage";
 import { posterName } from "@/lib/media/poster";
-import { newScene, newShot, saveScene, type Shot } from "@/lib/studio/director";
+import { listScenes, newScene, newShot, saveScene, type Scene, type Shot } from "@/lib/studio/director";
 import { randomSeed } from "@/lib/studio/image";
 import type { Launch } from "@/lib/studio/launch";
 
@@ -77,7 +77,7 @@ export interface TryTarget {
   to: "/image" | "/video" | "/recast" | "/director";
   presetId?: string;
   sampleClip?: boolean;
-  scene?: boolean; // Director: a new three-shot scene with Walt in it
+  scene?: boolean; // Director: the three-shot sample scene with Walt in it
 }
 
 export const TRY_WITH: Record<string, TryTarget> = {
@@ -97,9 +97,20 @@ const SAMPLE_SHOTS: Pick<Shot, "action" | "size" | "lens" | "movement" | "durati
   { action: "{lead} looks up toward the diner door and almost smiles", size: "CU", lens: "85mm", movement: "static", durationSec: 5 },
 ];
 
+const SAMPLE_TITLE = "The Letter, again";
+
+// The sample scene made before for this character, while none of its shots
+// has a take: pressing "Try this with Walt" again opens it rather than
+// making another (Decisions, October 21, U5, item 13).
+export function untouchedSampleScene(scenes: readonly Scene[], characterId: string): Scene | undefined {
+  return scenes.find((s) => s.title === SAMPLE_TITLE && s.cast.some((c) => c.characterId === characterId) && s.shots.every((shot) => !shot.takeJobId && !shot.finalJobId));
+}
+
 export async function startSampleScene(characterId: string): Promise<string> {
+  const reuse = untouchedSampleScene(await listScenes(), characterId);
+  if (reuse) return reuse.id;
   const scene = newScene(randomSeed());
-  scene.title = "The Letter, again";
+  scene.title = SAMPLE_TITLE;
   scene.logline = "A retired harbour pilot finds a letter he never sent.";
   scene.location = "A late-night diner with red vinyl booths";
   scene.cast = [{ slot: "lead", characterId }];

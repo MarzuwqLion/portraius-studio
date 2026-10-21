@@ -565,7 +565,7 @@ function OpenShot({
           >
             <span className="grid">
               <span className="text-control font-semibold">Camera</span>
-              <span className="text-control text-ink-muted">{shotSummary(shot)}</span>
+              <span className="text-control text-ink-muted">{shotSummary(shot, { length: false })}</span>
             </span>
             <ChevronDown aria-hidden className={cn("size-4 shrink-0", cameraOpen && "rotate-180")} />
           </button>

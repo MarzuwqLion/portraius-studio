@@ -185,6 +185,7 @@ describe("shot and export labels", () => {
     const s = scene();
     const shot: Shot = { ...s.shots[0]!, size: "WS", lens: "35mm", movement: "static", durationSec: 5 };
     expect(shotSummary(shot)).toBe("Wide · 35 mm · Static · 5 s");
+    expect(shotSummary(shot, { length: false })).toBe("Wide · 35 mm · Static");
   });
 
   it("numbers exports oldest first, with length and transitions", () => {
