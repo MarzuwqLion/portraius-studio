@@ -48,6 +48,14 @@ export function thumbnailUrl(p: Preset): string | undefined {
   return p.thumbnail ? (thumbnailModules[`/presets/${p.type}/${p.thumbnail}`] as string | undefined) : undefined;
 }
 
+// A loop's first frame, beside it with the same base name (presets:check
+// requires it): the poster for browsers that can't play the loop. A still
+// thumbnail is its own poster.
+export function posterUrl(p: Preset): string | undefined {
+  if (!p.thumbnail?.endsWith(".mp4")) return thumbnailUrl(p);
+  return thumbnailModules[`/presets/${p.type}/${p.thumbnail.replace(/\.mp4$/, ".webp")}`] as string | undefined;
+}
+
 // Preset IDs are unique across folders (presets:check enforces it).
 export function preset(id: string | undefined): Preset | undefined {
   return id ? [...RECAST_PRESETS, ...IMAGE_PRESETS, ...VIDEO_PRESETS].find((p) => p.id === id) : undefined;

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { describe, expect, it } from "vitest";
 import { importCharacter } from "@/lib/characters/format";
+import { posterName } from "@/lib/media/poster";
 import { parseTour } from "./tour";
 
 const dir = new URL("../../../public/samples/", import.meta.url);
@@ -15,11 +16,12 @@ function filesIn(): string[] {
       if (m.kind === "beforeAfter") names.push(m.before, m.after);
     }
   }
-  return names;
+  // Every clip's first frame rides beside it as its poster (npm run posters).
+  return [...names, ...names.filter((n) => n.endsWith(".mp4")).map(posterName)];
 }
 
 describe("Tour samples", () => {
-  it("names only files that are in public/samples", () => {
+  it("names only files that are in public/samples, and every clip has its poster", () => {
     for (const name of filesIn()) expect(existsSync(new URL(name, dir)), name).toBe(true);
   });
 

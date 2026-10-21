@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { thumbnailUrl } from "@/lib/presets/load";
+import { posterUrl, thumbnailUrl } from "@/lib/presets/load";
 import type { Preset } from "@/lib/presets/schema";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +32,7 @@ function Tile({ preset, picked, onPick, className }: { preset: Preset; picked: b
       className={cn("group grid content-start gap-1 rounded-control p-1 text-left", picked ? "bg-tint-active" : "hover:bg-tint-hover", className)}
     >
       <span className={cn("relative block aspect-square overflow-hidden rounded-media border bg-seamless", picked ? "border-accent outline-2 outline-accent" : "border-rule")}>
-        {url && isVideo && <video ref={video} src={`${url}#t=0.1`} muted loop playsInline preload="metadata" aria-hidden className="size-full object-cover" />}
+        {url && isVideo && <video ref={video} src={`${url}#t=0.1`} poster={posterUrl(preset)} muted loop playsInline preload="metadata" aria-hidden className="size-full object-cover" />}
         {url && !isVideo && <img src={url} alt="" loading="lazy" className="size-full object-cover" />}
         {!url && <span className="absolute inset-0 flex items-center justify-center p-2 text-center text-control font-semibold text-on-seamless">{preset.title}</span>}
       </span>

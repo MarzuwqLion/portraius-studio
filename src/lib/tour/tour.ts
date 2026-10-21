@@ -3,6 +3,7 @@
 // each sample is; it's regenerated when the sample character changes.
 import { z } from "zod";
 import { addImport, readImport } from "@/lib/characters/manage";
+import { posterName } from "@/lib/media/poster";
 import { newScene, newShot, saveScene, type Shot } from "@/lib/studio/director";
 import { randomSeed } from "@/lib/studio/image";
 import type { Launch } from "@/lib/studio/launch";
@@ -50,6 +51,9 @@ export function parseTour(data: unknown): Tour {
 export type TourItem = z.infer<typeof item>;
 
 export const sampleUrl = (name: string) => `${import.meta.env.BASE_URL}samples/${name}`;
+
+// A sample clip's first frame, beside it in public/samples/ (npm run posters).
+export const samplePoster = (clip: string) => sampleUrl(posterName(clip));
 
 export async function loadTour(): Promise<Tour> {
   const res = await fetch(sampleUrl("tour.json"));

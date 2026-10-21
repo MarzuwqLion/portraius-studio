@@ -1,4 +1,4 @@
-import { thumbnailUrl } from "@/lib/presets/load";
+import { posterUrl, thumbnailUrl } from "@/lib/presets/load";
 import type { Preset } from "@/lib/presets/schema";
 
 // Every thumbnail is made with the Tour's designed character (spec: Presets
@@ -8,13 +8,14 @@ export const THUMBNAIL_CAST = "Walt Harmon";
 const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // A preset's thumbnail at full size: a still, or its loop playing muted (its
-// first frame under reduced motion).
+// poster under reduced motion).
 export function PresetExample({ preset, className }: { preset: Preset; className?: string }) {
   const url = thumbnailUrl(preset);
   if (!url) return null;
-  if (!url.endsWith(".mp4")) return <img src={url} alt={`Example of ${preset.title}`} className={className} />;
-  const still = reducedMotion();
-  return <video src={`${url}${still ? "#t=0.1" : ""}`} muted loop playsInline autoPlay={!still} preload="auto" aria-label={`Example of ${preset.title}`} className={className} />;
+  const poster = posterUrl(preset);
+  // Under reduced motion a loop shows as its poster.
+  if (!url.endsWith(".mp4") || (reducedMotion() && poster)) return <img src={url.endsWith(".mp4") ? poster : url} alt={`Example of ${preset.title}`} className={className} />;
+  return <video src={url} poster={poster} muted loop playsInline autoPlay preload="auto" aria-label={`Example of ${preset.title}`} className={className} />;
 }
 
 // The empty set (Decisions, October 21, U5, item 7): the picked preset as an

@@ -58,7 +58,7 @@ import {
   type Shot,
 } from "@/lib/studio/director";
 import { agentInput, collectDraft, draftShots } from "@/lib/studio/agent";
-import { loadTour, sampleUrl, tryWithWalt } from "@/lib/tour/tour";
+import { loadTour, samplePoster, tryWithWalt } from "@/lib/tour/tour";
 import { compileImageRequest, randomSeed } from "@/lib/studio/image";
 import type { Job } from "@/lib/types/jobs";
 import { cn } from "@/lib/utils";
@@ -147,7 +147,7 @@ function SampleSceneCard({ disabled, onStart }: { disabled: boolean; onStart: ()
   return (
     <button type="button" disabled={disabled} onClick={onStart} className="grid w-full overflow-hidden rounded-media border border-rule text-left hover:bg-tint-hover">
       <span className="relative block aspect-video bg-seamless">
-        <video src={`${sampleUrl("the-letter.mp4")}#t=0.1`} muted playsInline preload="metadata" aria-hidden className="size-full object-cover" />
+        <img src={samplePoster("the-letter.mp4")} alt="" className="size-full object-cover" />
       </span>
       <span className="grid gap-1 p-4">
         <span className="font-display text-panel font-extrabold">The Letter</span>

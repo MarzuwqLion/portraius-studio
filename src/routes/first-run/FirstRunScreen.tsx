@@ -5,7 +5,7 @@ import { SplitView } from "@/components/studio/SplitView";
 import { buttonVariants } from "@/components/ui/button";
 import { useKeyStore } from "@/lib/session/key";
 import { useCharacterCount } from "@/lib/store/hooks";
-import { loadTour, sampleUrl, type Tour } from "@/lib/tour/tour";
+import { loadTour, samplePoster, sampleUrl, type Tour } from "@/lib/tour/tour";
 
 const STEPS = [
   { title: "Add your Comfy API key", body: "One with Router access. It stays in this browser." },
@@ -60,7 +60,11 @@ export function FirstRunScreen() {
       <section aria-label="Sample: a recast" className="flex flex-col justify-center gap-3 bg-seamless p-6 text-on-seamless lg:p-10">
         {media ? (
           <>
-            <SplitView original={sampleUrl(media.original)} recast={sampleUrl(media.recast)} aspect={`${media.width} / ${media.height}`} autoPlay startAt={5} />
+            <SplitView
+              original={sampleUrl(media.original)}
+              recast={sampleUrl(media.recast)}
+              posters={{ original: samplePoster(media.original), recast: samplePoster(media.recast) }}
+              aspect={`${media.width} / ${media.height}`} autoPlay startAt={5} />
             <p className="text-control">
               <span className="rounded-control bg-proof px-2 py-0.5 font-semibold text-ink">Pre-made sample</span> A dancer's clip, performed by Walt Harmon:
               same moves, same timing, same camera. Drag the line to compare.

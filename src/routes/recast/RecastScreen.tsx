@@ -17,7 +17,7 @@ import { perSecondLabel } from "@/lib/jobs/estimate";
 import { usePrice, useRecentJobs } from "@/lib/jobs/hooks";
 import { retryJob, type JobInput } from "@/lib/jobs/runner";
 import { clipInfo, trimClip, type ClipInfo } from "@/lib/media/video-prep";
-import { RECAST_PRESETS, thumbnailUrl } from "@/lib/presets/load";
+import { RECAST_PRESETS, posterUrl } from "@/lib/presets/load";
 import type { Preset } from "@/lib/presets/schema";
 import type { H3Input } from "@/lib/registry/inputs";
 import { MODEL_IDS } from "@/lib/registry/models";
@@ -46,7 +46,7 @@ import {
 import { SAMPLE_CLIP } from "@/lib/studio/launch";
 import { storeUpload } from "@/lib/studio/uploads";
 import { H3_RESOLUTIONS } from "@/lib/studio/video";
-import { sampleUrl } from "@/lib/tour/tour";
+import { samplePoster, sampleUrl } from "@/lib/tour/tour";
 import type { Job } from "@/lib/types/jobs";
 import { cn } from "@/lib/utils";
 
@@ -102,6 +102,7 @@ function DropStage({ full, onClip, onSample, onUpload }: { full: boolean; onClip
   const loop = (name: string, label: string) => (
     <video
       src={`${sampleUrl(name)}${still ? "#t=5" : ""}`}
+      poster={samplePoster(name)}
       muted
       loop
       playsInline
@@ -215,8 +216,8 @@ export function RecastScreen() {
   const libraryClips = useLiveQuery(async () => (await db.generations.where("type").anyOf("video", "recast").reverse().sortBy("createdAt")).slice(0, 20), []);
 
   const preset = RECAST_PRESETS.find((p) => p.id === presetId)!;
-  const presetThumb = thumbnailUrl(preset);
-  const presetStill = presetThumb && !presetThumb.endsWith(".mp4") ? { src: presetThumb, alt: preset.title } : undefined;
+  const presetPoster = posterUrl(preset);
+  const presetStill = presetPoster ? { src: presetPoster, alt: preset.title } : undefined;
   const mode = modeOf(preset);
   const limits = LIMITS[mode];
   const limitsNow = useRef(limits);
