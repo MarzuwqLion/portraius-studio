@@ -8,6 +8,8 @@ const recastModules = import.meta.glob("/presets/recast/*.json", { eager: true, 
 const imageModules = import.meta.glob("/presets/image/*.json", { eager: true, import: "default" });
 const videoModules = import.meta.glob("/presets/video/*.json", { eager: true, import: "default" });
 const voiceModules = import.meta.glob("/presets/voices.json", { eager: true, import: "default" });
+// Thumbnails sit next to their preset files and ship as hashed assets.
+const thumbnailModules = import.meta.glob("/presets/{image,video,recast}/*.{webp,jpg,png,mp4}", { eager: true, query: "?url", import: "default" });
 
 function parseAll<T>(modules: Record<string, unknown>, parse: (data: unknown) => T): T[] {
   return Object.entries(modules).map(([path, data]) => {
@@ -40,6 +42,11 @@ const byTitle = (a: Preset, b: Preset) => a.title.localeCompare(b.title);
 export const RECAST_PRESETS: Preset[] = parseAll(recastModules, (d) => presetFile.parse(d));
 export const IMAGE_PRESETS: Preset[] = parseAll(imageModules, (d) => presetFile.parse(d)).sort(byTitle);
 export const VIDEO_PRESETS: Preset[] = parseAll(videoModules, (d) => presetFile.parse(d)).sort(byTitle);
+
+// A preset's thumbnail as a URL, or undefined when it has none.
+export function thumbnailUrl(p: Preset): string | undefined {
+  return p.thumbnail ? (thumbnailModules[`/presets/${p.type}/${p.thumbnail}`] as string | undefined) : undefined;
+}
 
 // Preset IDs are unique across folders (presets:check enforces it).
 export function preset(id: string | undefined): Preset | undefined {

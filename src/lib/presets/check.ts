@@ -103,6 +103,10 @@ export function checkPresets(sources: PresetSource[], thumbnailBytes: (path: str
       }
     }
     for (const name of blockedIn(`${p.title} ${p.recipe.prompt}`)) problems.push(`${path}: mentions "${name}"`);
+    // A still for an image preset; a still or a short loop for video and Recast.
+    if (p.thumbnail && !(p.type === "image" ? /\.(webp|jpg|png)$/ : /\.(webp|jpg|png|mp4)$/).test(p.thumbnail)) {
+      problems.push(`${path}: thumbnail ${p.thumbnail} should be ${p.type === "image" ? "a .webp, .jpg or .png still" : "a .webp, .jpg or .png still, or an .mp4 loop"}`);
+    }
     if (p.thumbnail && !template) {
       const thumbPath = `${path.slice(0, path.lastIndexOf("/"))}/${p.thumbnail}`;
       const bytes = thumbnailBytes(thumbPath);

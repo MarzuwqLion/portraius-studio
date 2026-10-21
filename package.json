@@ -17,6 +17,7 @@
     "e2e": "playwright test",
     "smoke": "tsx scripts/smoke.ts",
     "shots": "tsx scripts/shots.ts",
+    "thumbnails": "tsx scripts/thumbnails.ts",
     "gen:schemas": "tsx scripts/gen-schema-types.ts",
     "proxy:dev": "wrangler dev -c proxy/wrangler.jsonc",
     "proxy:deploy": "wrangler deploy -c proxy/wrangler.jsonc",

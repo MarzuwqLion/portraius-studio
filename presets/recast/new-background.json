@@ -6,6 +6,7 @@
   "title": "New background",
   "author": "portraius-studio",
   "license": "CC0-1.0",
+  "thumbnail": "new-background.webp",
   "recipe": {
     "capability": "video.edit",
     "model": "wan/happyhorse-1.0-video-edit",

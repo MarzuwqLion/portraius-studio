@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { WorkScreen } from "@/components/shell/Screen";
 import { CastPicker } from "@/components/studio/CastPicker";
+import { PresetTiles } from "@/components/studio/PresetTiles";
 import { useLaunch } from "@/components/studio/useLaunch";
 import { GenerateFooter } from "@/components/studio/GenerateFooter";
 import { Field, Select, TextArea } from "@/components/studio/fields";
@@ -327,19 +328,7 @@ export function RecastScreen() {
             {GROUP_ORDER.map((g) => (
               <div key={g} className="grid gap-1">
                 <span className="text-control text-ink-muted">{GROUP_LABEL[g]}</span>
-                <div className="flex flex-wrap gap-1">
-                  {RECAST_PRESETS.filter((p) => groupOf(p) === g).map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      aria-pressed={p.id === presetId}
-                      onClick={() => choosePreset(p)}
-                      className={cn("h-8 rounded-control border px-3 text-control font-semibold", p.id === presetId ? "border-ink bg-ink text-on-ink" : "border-rule hover:bg-tint-hover")}
-                    >
-                      {p.title}
-                    </button>
-                  ))}
-                </div>
+                <PresetTiles presets={RECAST_PRESETS.filter((p) => groupOf(p) === g)} value={presetId} onPick={(p) => p && choosePreset(p)} label={GROUP_LABEL[g]} clearable={false} />
               </div>
             ))}
           </div>

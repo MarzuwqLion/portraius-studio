@@ -6,6 +6,7 @@
   "title": "Claymation",
   "author": "portraius-studio",
   "license": "CC0-1.0",
+  "thumbnail": "claymation.webp",
   "recipe": {
     "capability": "video.generate",
     "model": "minimax/minimax-h3",

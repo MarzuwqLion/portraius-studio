@@ -6,6 +6,7 @@
   "title": "1970s film",
   "author": "portraius-studio",
   "license": "CC0-1.0",
+  "thumbnail": "film-1970s.webp",
   "recipe": {
     "capability": "video.generate",
     "model": "minimax/minimax-h3",

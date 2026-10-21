@@ -6,6 +6,7 @@
   "title": "Film noir",
   "author": "portraius-studio",
   "license": "CC0-1.0",
+  "thumbnail": "noir-office.webp",
   "recipe": {
     "capability": "image.generate",
     "model": "vertexai/gemini-nano-banana-2.1",

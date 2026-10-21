@@ -64,6 +64,12 @@ describe("checkPresets", () => {
     expect(checkPresets([camera, withThumb], none)[0]).toMatch(/missing/);
   });
 
+  it("takes a still for an image preset, and a loop only for video and Recast", () => {
+    expect(checkPresets([camera, preset({ thumbnail: "headshot.mp4" })], () => 1)[0]).toMatch(/should be a \.webp, \.jpg or \.png still$/);
+    const clip = preset({ id: "walk", type: "video", thumbnail: "walk.mp4" }, {}, "presets/video/walk.json");
+    expect(checkPresets([camera, clip], () => 1)).toEqual([]);
+  });
+
   it("reports schema errors with the path", () => {
     expect(checkPresets([preset({ version: 2 })], none)[0]).toMatch(/^presets\/image\/headshot.json: version/);
   });

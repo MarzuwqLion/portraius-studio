@@ -6,6 +6,7 @@
   "title": "Talking to camera",
   "author": "portraius-studio",
   "license": "CC0-1.0",
+  "thumbnail": "talking-to-camera.mp4",
   "recipe": {
     "capability": "video.generate",
     "model": "byteplus/dreamina-seedance-2-5-260628",

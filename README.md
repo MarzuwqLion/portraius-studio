@@ -93,8 +93,9 @@ call sends `fallback_provider=false`), so each model is served by its own provid
 
 ## Costs
 
-Every Generate button shows the price before it runs: an exact figure, a range, or "price unknown" while Router's
-`/estimate` isn't enabled for your key. Video without people starts as a cheap 480p Seedance draft; you pay for
+Every Generate button shows the price before it runs: Router's own figure when `/estimate` is enabled for your key,
+otherwise "≈ $0.08" from a table of Comfy's published rates (each row cited in
+[`docs/notes/u1-notes.md`](docs/notes/u1-notes.md)). A model with no published rate shows no price. Video without people starts as a cheap 480p Seedance draft; you pay for
 the 1080p final only when you like the draft, and the final reuses the draft's ID instead of sending everything
 again. Results download into your browser as soon as they finish, so Router's links expiring never costs a re-run.
 
@@ -174,7 +175,7 @@ FaceNet). Copy the folder into `ComfyUI/custom_nodes/`; an example workflow come
 
 Copy `presets/_template.json` into `presets/image/`, `presets/video/` or `presets/recast/`, fill it in, run
 `npm run presets:check`, and open a pull request. The same check runs on every pull request. Thumbnails use
-designed characters, never photos of real people. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+designed characters, never photos of real people; `npm run thumbnails` makes the built-in ones with Walt Harmon. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## License
 

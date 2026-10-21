@@ -6,6 +6,7 @@
   "title": "1996 yearbook photo",
   "author": "portraius-studio",
   "license": "CC0-1.0",
+  "thumbnail": "yearbook-1996.webp",
   "recipe": {
     "capability": "image.generate",
     "model": "vertexai/gemini-nano-banana-2.1",

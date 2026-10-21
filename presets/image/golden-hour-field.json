@@ -6,6 +6,7 @@
   "title": "Golden hour",
   "author": "portraius-studio",
   "license": "CC0-1.0",
+  "thumbnail": "golden-hour-field.webp",
   "recipe": {
     "capability": "image.generate",
     "model": "vertexai/gemini-nano-banana-2.1",

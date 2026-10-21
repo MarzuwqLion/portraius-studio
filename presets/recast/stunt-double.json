@@ -6,6 +6,7 @@
   "title": "Stunt double",
   "author": "portraius-studio",
   "license": "CC0-1.0",
+  "thumbnail": "stunt-double.webp",
   "recipe": {
     "capability": "video.generate",
     "model": "minimax/minimax-h3",

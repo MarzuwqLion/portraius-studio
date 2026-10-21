@@ -26,8 +26,9 @@ one click. Code changes are welcome too; open an issue first for anything large.
      the option `id`, not its label.
    - `recipe.params`: `aspectRatio` for images; `mode`, `durationSec` and `ratio` for video; see the
      existing files in `presets/recast/` for Recast.
-4. Optional thumbnail: a WebP next to the JSON, named in `"thumbnail"`, under 200 KB. Make it with a
-   designed character from the app (**Design from a description**), never a photo of a real person.
+4. Optional thumbnail, next to the JSON and named in `"thumbnail"`, under 200 KB: a WebP or JPEG still for an
+   image preset; for video and Recast a still, or a muted MP4 loop of about 3 s that plays on hover. Make it with
+   a designed character from the app (**Design from a description**), never a photo of a real person.
 5. Run the check, then open a pull request:
 
    ```sh

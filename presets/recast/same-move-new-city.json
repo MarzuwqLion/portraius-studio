@@ -6,6 +6,7 @@
   "title": "Same move, new city",
   "author": "portraius-studio",
   "license": "CC0-1.0",
+  "thumbnail": "same-move-new-city.webp",
   "recipe": {
     "capability": "video.generate",
     "model": "minimax/minimax-h3",

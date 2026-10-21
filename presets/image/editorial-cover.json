@@ -6,6 +6,7 @@
   "title": "Editorial cover",
   "author": "portraius-studio",
   "license": "CC0-1.0",
+  "thumbnail": "editorial-cover.webp",
   "recipe": {
     "capability": "image.generate",
     "model": "vertexai/gemini-nano-banana-2.1",

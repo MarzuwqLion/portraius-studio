@@ -6,6 +6,7 @@
   "title": "Two on a bench",
   "author": "portraius-studio",
   "license": "CC0-1.0",
+  "thumbnail": "park-bench-duo.webp",
   "recipe": {
     "capability": "image.generate",
     "model": "vertexai/gemini-nano-banana-2.1",
