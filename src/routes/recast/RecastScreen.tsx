@@ -17,12 +17,12 @@ import { perSecondLabel } from "@/lib/jobs/estimate";
 import { usePrice, useRecentJobs } from "@/lib/jobs/hooks";
 import { retryJob, type JobInput } from "@/lib/jobs/runner";
 import { clipInfo, trimClip, type ClipInfo } from "@/lib/media/video-prep";
-import { RECAST_PRESETS } from "@/lib/presets/load";
+import { RECAST_PRESETS, thumbnailUrl } from "@/lib/presets/load";
 import type { Preset } from "@/lib/presets/schema";
 import type { H3Input } from "@/lib/registry/inputs";
 import { MODEL_IDS } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
-import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
+import { useBlobUrl, useCharacter, useGeneration } from "@/lib/store/hooks";
 import type { CastPick } from "@/lib/studio/cast";
 import { randomSeed } from "@/lib/studio/image";
 import {
@@ -149,6 +149,37 @@ function DropStage({ full, onClip, onSample, onUpload }: { full: boolean; onClip
 // A prepared clip, and the part of which raw clip it was made from.
 type Ready = PreparedClip & { source: string };
 
+// The set once a clip is in (Decisions, October 21, U5, item 3): the result
+// view's labels over the clip, looping, and beside it who or what goes in.
+function ClipStage({ clipUrl, info, right, caption }: { clipUrl: string; info: ClipInfo | undefined; right: { src: string; alt: string } | undefined; caption: string }) {
+  const still = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const aspect = info ? `${info.width} / ${info.height}` : "16 / 9";
+  return (
+    <section aria-label="Your clip" className="mx-auto grid w-full max-w-4xl gap-2">
+      <div className="grid grid-cols-2 gap-2">
+        <span className="font-display text-screen font-extrabold text-on-seamless">Original</span>
+        <span className="font-display text-screen font-extrabold text-on-seamless">Recast</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="relative overflow-hidden rounded-media border border-rule bg-seamless" style={{ aspectRatio: aspect }}>
+          <video key={clipUrl} src={`${clipUrl}${still ? "#t=1" : ""}`} muted loop playsInline autoPlay={!still} preload="auto" aria-label="Your clip" className="absolute inset-0 size-full object-contain" />
+        </div>
+        <div className="relative overflow-hidden rounded-media border border-rule bg-seamless" style={{ aspectRatio: aspect }}>
+          {right && <img src={right.src} alt={right.alt} className="develop absolute inset-0 size-full object-contain" />}
+          <p className={cn("absolute inset-x-0 bottom-0 p-3 text-center text-control", right ? "bg-seamless/75" : "top-0 flex items-center justify-center")}>{caption}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// The cast member's front view, for the set before a run.
+function useFrontView(characterId: string | undefined): { src: string; alt: string } | undefined {
+  const record = useCharacter(characterId);
+  const src = useBlobUrl(record ? record.blobIds[record.file.sheet.views.front] : undefined);
+  return record && src ? { src, alt: `Front view of ${record.name}` } : undefined;
+}
+
 export function RecastScreen() {
   const [rawBlobId, setRawBlobId] = useState<string>();
   const [rawInfo, setRawInfo] = useState<ClipInfo>();
@@ -176,6 +207,7 @@ export function RecastScreen() {
   const swapInput = useRef<HTMLInputElement>(null);
   const rawUrl = useBlobUrl(rawBlobId);
   const swapUrl = useBlobUrl(swapImageBlobId);
+  const performer = useFrontView(cast[0]?.characterId);
   const recent = useRecentJobs(40);
   // Only jobs started here (they carry the clip to compare against). A
   // two-step recast shows as one card: the first step until the second starts.
@@ -183,6 +215,8 @@ export function RecastScreen() {
   const libraryClips = useLiveQuery(async () => (await db.generations.where("type").anyOf("video", "recast").reverse().sortBy("createdAt")).slice(0, 20), []);
 
   const preset = RECAST_PRESETS.find((p) => p.id === presetId)!;
+  const presetThumb = thumbnailUrl(preset);
+  const presetStill = presetThumb && !presetThumb.endsWith(".mp4") ? { src: presetThumb, alt: preset.title } : undefined;
   const mode = modeOf(preset);
   const limits = LIMITS[mode];
   const limitsNow = useRef(limits);
@@ -345,18 +379,9 @@ export function RecastScreen() {
       <Field label="Clip" hint="A clip you filmed or have the rights to use.">
         {() => (
           <div className="grid gap-2">
-            {rawUrl && <video src={rawUrl} controls muted playsInline className="w-full rounded-media border border-rule bg-seamless" />}
-            {rawInfo && tooShort(rawInfo.durationSec, limits) ? (
-              <p className="text-control text-drift">Recast needs a clip of at least {limits.minSec} s.</p>
-            ) : (
-              rawInfo &&
-              !trimmed &&
-              rawInfo.durationSec > limits.maxSec + 0.05 && <p className="text-control">Using the first {limits.maxSec} s. Trim to pick a different part.</p>
-            )}
-            {rawInfo && trimmed && short && <p className="text-control text-drift">Trim to {limits.minSec} to {limits.maxSec} s.</p>}
-            {current && <p className="text-control text-ink-muted">Ready: {fmt(current.info.durationSec)} at {current.info.height}p.</p>}
-            {current && others && <p className="text-control text-drift">Other people in the clip will still appear. Make sure they're OK with it.</p>}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* The clip itself plays on the set; here it's a thumbnail. */}
+              {rawUrl && <video src={`${rawUrl}#t=0.1`} muted playsInline preload="metadata" aria-hidden className="aspect-video w-24 rounded-media border border-rule bg-seamless object-cover" />}
               <Button type="button" variant="secondary" size="sm" onClick={() => clipInput.current?.click()}>
                 {rawBlobId ? "Replace clip" : "Upload a clip"}
               </Button>
@@ -375,6 +400,16 @@ export function RecastScreen() {
                 </div>
               )}
             </div>
+            {rawInfo && tooShort(rawInfo.durationSec, limits) ? (
+              <p className="text-control text-drift">Recast needs a clip of at least {limits.minSec} s.</p>
+            ) : (
+              rawInfo &&
+              !trimmed &&
+              rawInfo.durationSec > limits.maxSec + 0.05 && <p className="text-control">Using the first {limits.maxSec} s. Trim to pick a different part.</p>
+            )}
+            {rawInfo && trimmed && short && <p className="text-control text-drift">Trim to {limits.minSec} to {limits.maxSec} s.</p>}
+            {current && <p className="text-control text-ink-muted">Ready: {fmt(current.info.durationSec)} at {current.info.height}p.</p>}
+            {current && others && <p className="text-control text-drift">Other people in the clip will still appear. Make sure they're OK with it.</p>}
             <input
               ref={clipInput}
               type="file"
@@ -493,9 +528,16 @@ export function RecastScreen() {
     </div>
   );
 
+  // Who or what the recast puts in: the performer's front view, or the
+  // replacement for Object swap; a style swap without a person keeps its look.
+  const stageRight = mode === "swap" ? (swapUrl ? { src: swapUrl, alt: "Replacement" } : undefined) : people ? performer : presetStill;
+  const stageCaption =
+    mode === "swap" && !swapUrl ? "Upload a replacement image to see what goes in." : people && !performer ? "Pick a performer to see who plays it." : "Plays here after you run it.";
+
   const set = (
-    <div className={cn("grid h-full w-full gap-10 self-stretch overflow-auto", !rawBlobId && jobs.length === 0 ? "grid-rows-[minmax(28rem,1fr)]" : "content-start")}>
+    <div className={cn("grid h-full w-full gap-10 self-stretch overflow-auto", !rawBlobId && jobs.length === 0 ? "grid-rows-[minmax(28rem,1fr)]" : jobs.length === 0 ? "content-center" : "content-start")}>
       {!rawBlobId && <DropStage full={jobs.length === 0} onClip={(blob) => void takeClip(blob)} onSample={() => void takeSample()} onUpload={() => clipInput.current?.click()} />}
+      {rawUrl && <ClipStage clipUrl={rawUrl} info={rawInfo} right={stageRight} caption={stageCaption} />}
       {jobs.length > 0 && (
         <div className="mx-auto grid w-full max-w-4xl gap-10">
           {jobs.map((job) => (
@@ -503,7 +545,6 @@ export function RecastScreen() {
           ))}
         </div>
       )}
-      {rawBlobId && jobs.length === 0 && <p className="flex h-full items-center justify-center text-body">Original and recast play side by side here.</p>}
     </div>
   );
 
