@@ -75,6 +75,27 @@ Marzuwq decided these after three UI and UX reviews of the October 20 build (sco
 
 Out of scope for the UI pass: a second palette or accent toggle; Library search, favourites and version groups; a full Director layout rebuild (preview, inspector and storyboard) unless U1 to U3 are done by the evening of October 26; and any Dexie version change (if a decision seems to need one, stop and ask Marzuwq).
 
+### Decisions (October 21, U5)
+
+A review of the live site after U0 to U4 scored it 8.5 of 10. These are what kept it from 9, plus one decision Marzuwq made after testing Recast (item 1). Contracts don't change, and none of it needs a Router call. The sections below already reflect these.
+
+| # | Decision | Answer | Why |
+| --- | --- | --- | --- |
+| 1 | Recast takes the whole clip | A clip is prepared as soon as it arrives (upload, library pick, drop, "Try the sample" or the Tour), with no button. One that fits the mode's limits is used whole; a longer one uses its first allowed seconds, with "Using the first 15 s. Trim to pick a different part." under it; a shorter one is kept unprepared, with "Recast needs a clip of at least 4 s." Trim folds under "Trim (optional)", closed, and re-prepares when a slider is released. A preset whose mode the prepared clip doesn't fit re-prepares it the same way. While it prepares, the footer says "Preparing the clip, 40%" and the price comes from the raw length. | Nobody should have to press Prepare or touch a trim they don't need. Marzuwq, October 21. |
+| 2 | The sample needs no rights check | With the bundled sample clip, the rights checkbox is replaced by one line: "The sample ships with Portraius Studio, so there's no rights check." Any other clip brings the checkbox back, unticked. | The checkbox attests to clips people bring; asking it of our own sample adds a click and reads oddly. |
+| 3 | The Recast set shows the clip | Once a clip is in, the set uses the result view's frame and labels: the clip under "Original", muted and looping (held on a frame under reduced motion), and under "Recast" the performer's front view (or the replacement image for Object swap) with "Plays here after you run it", or "Pick a performer to see who plays it". The call sheet keeps a thumbnail with Replace clip. | An empty grey set after loading a clip wasted the best screen in the app. |
+| 4 | Every screen opens at the top | A new navigation (push or replace) scrolls the main area and the call sheet to the top; back and forward may restore. `npm run shots` adds a 390×844 dark phone pass that checks the Image handoff shows the preset tiles and the prompt, no bottom-bar label is truncated, and no screen scrolls sideways. | On a phone the Tour's handoff opened Image 1,000 px down, past everything it had just set. |
+| 5 | Retry on the take | A failed take has a Retry button under its message whenever the error can be retried. | "Retry it?" with the only Retry in the activity row reads as a dead end. |
+| 6 | A character page leads somewhere | Under the name: "Use in an image", "Use in a video" and "Use in a recast", each opening that studio with the character cast through the Launch state (cast only, no preset). A locked import shows its locked note instead. | Putting them in a shot is the obvious next step, and there was no way to take it from there. |
+| 7 | Empty studios show an example | With no takes, Image and Video show the picked preset's thumbnail large, captioned "Example: [preset] with Walt Harmon, a designed character. Your takes appear here.", or with none picked, the first three presets as large tiles that pick on click. Director's empty list adds "Start from the sample scene", which makes The Letter from the Tour's data and opens it, with the Tour's first anchor as its cover. | An empty set is where people decide whether they get it. |
+| 8 | Video drafts default to 5 s | Video opens at 5 s (≈ $0.74 for the default draft); presets that set their own duration keep it. | At 8 s the 480p draft cost more than a 5 s MiniMax H3 clip, and "draft" has to mean cheap. |
+| 9 | Poster stills | Every .mp4 preset thumbnail has a .webp of its first frame beside it, with the same base name, used as its `poster`; so do the sample clips in `public/samples/`. `presets:check` requires it under the same 200 KB cap, and `npm run thumbnails` writes it with every loop. | Browsers without H.264, and iOS Safari in Low Power Mode, showed empty boxes. |
+| 10 | The selected take | The action bar starts with a 40 px thumbnail of the picked take and "Selected take". "✓ Selected" and the Likeness chip share one row under the take. | The actions sat a row away from what they act on, and picking pushed the score below the fold. |
+| 11 | Remix links show an example | A link whose recipe matches a shipped preset (same model, prompt and params) shows that preset's thumbnail above the recipe card, captioned "Example with Walt Harmon, a designed character. Your cast fills the slots." Others show no image. The format and the link don't change, and a link still never carries a face. | A text card gave the person who opened it no picture and no reason to stay. |
+| 12 | Copy | Recast drop zone: "Use a clip you filmed or have the rights to use. Playing behind this: the sample, and Walt Harmon doing the same moves." Prompt placeholders: "Type @ to add someone, then what happens: …". "Strength" becomes "Realism strength", beside Make it real as one group. First run: a small "How it works" heading over the three steps. Library and take page: a known cast member shows as a chip (face and name), "@lead" only when the cast isn't known. Phone bottom bar: every label fits at 360 px. | Each one was misread in the review. |
+| 13 | Director details | The open shot's camera summary drops the length (its own Length select shows it); folded rows keep it. The Tour's Director "Try this with Walt" reopens the scene it made before while that scene has no takes, instead of making another. | Two lengths read as two settings, and two "The Letter, again" cards as a bug. |
+| 14 | Skip link | "Skip to content" is the first focus stop on every screen, visible only on focus, and moves focus to the main area. | Every screen started with eight rail links. |
+
 ### Defaults
 
 - **Stack:** Vite + React + TypeScript, built as a static site. Node 22 or newer for local dev and scripts.
@@ -709,8 +730,10 @@ Comfy lists its own Genjutsu rebuild, "Openjutsu", as coming soon on the competi
 ### Input
 
 - Source clip: upload, record in the browser, or pick from the library. With no clip yet, the whole set is a drop zone, with the sample's before/after loop playing behind "Drop a clip, or try the sample".
-- Trim UI (ffmpeg.wasm) that enforces the chosen engine's limits. Kling's edit input must be 3 to 10 s, 720 to 2160 px, 24 to 60 fps and under 200 MB.
-- A required checkbox: "I filmed this or have the rights to use it." If faces other than the performer are detected, add a note: "Other people in the clip will still appear. Make sure they're OK with it."
+- The clip is prepared (ffmpeg.wasm) to the chosen engine's limits as soon as it arrives, with no button. Kling's edit input must be 3 to 10 s, 720 to 2160 px, 24 to 60 fps and under 200 MB.
+- Trim: the whole clip by default. Trimming is optional and only required when the clip is longer than the engine allows, in which case the first allowed seconds are used until the visitor trims. The trim sits folded under "Trim (optional)" and re-prepares when a slider is released. A clip shorter than the engine allows is kept, unprepared, with "Recast needs a clip of at least 4 s." (the mode's own number).
+- Once a clip is in, the set shows it under "Original", looping, beside the performer's front view (or the replacement image) under "Recast" (Decisions, October 21, U5, item 3).
+- A required checkbox for every clip except the bundled sample: "I filmed this or have the rights to use it." The sample shows one line instead: "The sample ships with Portraius Studio, so there's no rights check." If faces other than the performer are detected, add a note: "Other people in the clip will still appear. Make sure they're OK with it."
 
 ### Modes and engines
 
@@ -852,7 +875,7 @@ Three add-ons that sit on top of results: a one-click realism pass for stills (P
 
 ### Realism pass (P1)
 
-- **Model:** `freepik/ai-skin-enhancer-faithful`. Image as base64; defaults `skin_detail: 80`, `sharpen: 10`, `smart_grain: 4`, exposed as a small "Strength" slider.
+- **Model:** `freepik/ai-skin-enhancer-faithful`. Image as base64; defaults `skin_detail: 80`, `sharpen: 10`, `smart_grain: 4`, exposed as a small "Realism strength" slider beside Make it real.
 - **Where:** a "Make it real" button on any still, and an optional automatic pass on anchor stills before they're animated (a better first frame gives a better video).
 - **Output:** `data.generated[]` holds Freepik's own expiring links, so download immediately.
 - **Check:** re-run the identity score after the pass, and show a before/after slider.
@@ -1220,13 +1243,14 @@ Eight milestones from October 19 to October 29, each with a prompt to paste into
 | U2 UI pass: the judges' path | Oct 24 to Oct 26 |
 | U3 UI pass: Director | Oct 26 to Oct 27 |
 | U4 UI pass: check | Oct 28 |
+| U5 UI pass: review fixes | Oct 21 |
 | M8 Submission | Oct 27 to Oct 29 (code freeze noon Oct 29) |
 | Submit (target) | Oct 29 |
 | Deadline | Oct 30, 9:00am PT |
 
 M4 and M5 overlap on purpose: identity calibration can run while the Recast engines are being compared. M7 only happens if M1 to M6 finish by the evening of October 27.
 
-The UI pass (U0 to U4, Decisions October 21) runs ahead of M8, with its own rules:
+The UI pass (U0 to U5, Decisions October 21 and October 21, U5) runs ahead of M8, with its own rules:
 
 - Work on the `ui-pass` branch. Merge to main only at the end of a milestone, after `npm run typecheck && npm test`, `npm run shots`, and a look at the shots. Main deploys to Pages and judges can visit at any time, so a half-finished re-skin never goes live.
 - One commit per numbered decision.
@@ -1429,6 +1453,20 @@ than one open shot form, and shots show it at 1440x900.
 Run npm run shots and a keyboard-only pass of first run, Tour, Image with Walt, Director
 export; check 200% zoom at 1280x800. Fix only blockers and list the rest in
 docs/notes/u4-notes.md. Then continue with M8 (U2 covers M8's Tour work).
+```
+
+**U5: UI pass, review fixes (Oct 21)**
+
+```
+Read CLAUDE.md, then docs/SPEC.md: Decisions (October 21, U5), Recast (Input, Result view),
+UI and UX, Visual direction (Copy rules), Presets and recipes (Preset file, Remix links),
+Director (Workflow), Identity match score (Bands and actions).
+On branch ui-pass-u5, build items 1 to 14 in order, one commit each. Contracts don't change and
+no Router call is needed. STOP AND ASK if an item seems to need a Dexie version, a Contracts
+change, a change to the recipe or .portraius format, or a Router call.
+Done when typecheck and tests pass (recastNeeds and presets:check included), npm run shots
+passes every check at 1440x900, 1280x800 and 390x844, and docs/notes/u5-notes.md is written.
+Then merge to main.
 ```
 
 **M8: Submission (Oct 27 to 29)**
