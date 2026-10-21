@@ -286,37 +286,41 @@ function SceneEditor({ sceneId }: { sceneId: string }) {
         <ScreenTitle className="mb-6">Director</ScreenTitle>
         {callSheet}
       </section>
-      <section aria-label="Set" className="min-h-64 flex-1 overflow-auto bg-seamless p-6 text-on-seamless">
-        <p className="mb-4 border-b border-rule pb-3 text-control md:hidden">Director works best on a desktop screen.</p>
-        {error && (
-          // Sticky, so a failure from Export or One take at the bottom shows.
-          <p role="alert" className="sticky top-0 z-10 mb-4 rounded-control bg-proof px-3 py-2 text-body text-drift">
-            {error}
-          </p>
-        )}
-        <div className="grid gap-6">
-          {scene.shots.map((shot, i) => (
-            <ShotCard
-              key={shot.id}
-              scene={scene}
-              shot={shot}
-              index={i}
-              editor={editor}
-              open={shot.id === openShot?.id}
-              onOpen={() => setOpenId(shot.id)}
-              onChange={(patch) => setShot(shot.id, patch)}
-              onMove={(to) => move(i, to)}
-              onRemove={() => removeShot(shot.id)}
-            />
-          ))}
-          <div className="flex flex-wrap items-center gap-3">
-            <Button variant="secondary" className="border-on-seamless text-on-seamless" onClick={addShot}>
-              Add shot
-            </Button>
+      {/* The set scrolls; the timeline stays pinned under it (spec: Decisions, October 21, item 13). */}
+      <section aria-label="Set" className="flex min-h-64 min-w-0 flex-1 flex-col bg-seamless text-on-seamless">
+        <div className="min-h-0 flex-1 overflow-auto p-6">
+          <p className="mb-4 border-b border-rule pb-3 text-control md:hidden">Director works best on a desktop screen.</p>
+          {error && (
+            // Sticky, so a failure from Export or One take shows wherever the set is scrolled.
+            <p role="alert" className="sticky top-0 z-10 mb-4 rounded-control bg-proof px-3 py-2 text-body text-drift">
+              {error}
+            </p>
+          )}
+          <div className="grid gap-3">
+            {scene.shots.map((shot, i) => (
+              <ShotCard
+                key={shot.id}
+                scene={scene}
+                shot={shot}
+                index={i}
+                editor={editor}
+                open={shot.id === openShot?.id}
+                onOpen={() => setOpenId(shot.id)}
+                onChange={(patch) => setShot(shot.id, patch)}
+                onMove={(to) => move(i, to)}
+                onRemove={() => removeShot(shot.id)}
+              />
+            ))}
+            <div className="flex flex-wrap items-center gap-3 pt-3">
+              <Button variant="secondary" className="border-on-seamless text-on-seamless" onClick={addShot}>
+                Add shot
+              </Button>
+            </div>
+            <Exports scene={scene} />
+            {scene.shots.length > 1 && <OneTake scene={scene} editor={editor} />}
           </div>
-          {scene.shots.length > 0 && <Timeline scene={scene} editor={editor} onMove={move} />}
-          {scene.shots.length > 1 && <OneTake scene={scene} editor={editor} />}
         </div>
+        {scene.shots.length > 0 && <Timeline scene={scene} editor={editor} onMove={move} openId={openShot?.id} onOpen={setOpenId} />}
       </section>
     </div>
   );
@@ -712,7 +716,20 @@ function useChainFrameUrl(previous: Shot | undefined): string | undefined {
 
 // ---- Timeline and export ----
 
-function Timeline({ scene, editor, onMove }: { scene: Scene; editor: Editor; onMove: (from: number, to: number) => void }) {
+// Pinned under the set: the shots in order, how many are ready, and Export.
+function Timeline({
+  scene,
+  editor,
+  onMove,
+  openId,
+  onOpen,
+}: {
+  scene: Scene;
+  editor: Editor;
+  onMove: (from: number, to: number) => void;
+  openId: string | undefined;
+  onOpen: (shotId: string) => void;
+}) {
   const [crossfade, setCrossfade] = useState(true);
   const [progress, setProgress] = useState<number>();
   const dragFrom = useRef<number | undefined>(undefined);
@@ -723,14 +740,37 @@ function Timeline({ scene, editor, onMove }: { scene: Scene; editor: Editor; onM
   const { run, busy } = editor;
 
   return (
-    <section aria-label="Timeline" className="grid gap-4 border-t border-rule pt-6">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
+    <section aria-label="Timeline" className="grid shrink-0 gap-2 border-t border-rule px-6 py-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <h2 className="font-display text-panel font-extrabold">Timeline</h2>
         <span className="text-control">
           {scene.shots.length} shots · about {total} s · {readyCount} of {scene.shots.length} ready
         </span>
+        <span className="ml-auto flex flex-wrap items-center gap-4">
+          {!allReady && <span className="text-control">Every shot needs a finished take first.</span>}
+          <label className="flex items-center gap-2 text-control">
+            <Checkbox checked={crossfade} onCheckedChange={(v) => setCrossfade(v === true)} className="border-on-seamless" />
+            6-frame crossfades
+          </label>
+          <Button
+            size="sm"
+            disabled={!allReady || busy !== undefined}
+            onClick={() =>
+              void run("export", async () => {
+                setProgress(0);
+                try {
+                  await exportScene(scene.id, crossfade, setProgress);
+                } finally {
+                  setProgress(undefined);
+                }
+              })
+            }
+          >
+            {progress !== undefined ? `Joining ${Math.round(progress * 100)}%` : "Export scene"}
+          </Button>
+        </span>
       </div>
-      <ol className="flex gap-2 overflow-x-auto pb-2" aria-label="Shots in order. Drag to reorder, or use the arrows on each shot.">
+      <ol className="flex gap-2 overflow-x-auto pb-1" aria-label="Shots in order. Drag to reorder, or use the arrows on each shot.">
         {scene.shots.map((shot, i) => (
           <li
             key={shot.id}
@@ -741,41 +781,25 @@ function Timeline({ scene, editor, onMove }: { scene: Scene; editor: Editor; onM
               if (dragFrom.current !== undefined && dragFrom.current !== i) onMove(dragFrom.current, i);
               dragFrom.current = undefined;
             }}
-            className="w-40 shrink-0 cursor-grab"
+            className="w-28 shrink-0 cursor-grab"
           >
-            <StripFrame shot={shot} index={i} chained={continues(scene, shot)} aspect={aspectOf(scene.ratio)} />
+            <button type="button" aria-current={shot.id === openId ? "true" : undefined} onClick={() => onOpen(shot.id)} className="block w-full rounded-media text-left">
+              <StripFrame shot={shot} index={i} chained={continues(scene, shot)} aspect={aspectOf(scene.ratio)} open={shot.id === openId} />
+            </button>
           </li>
         ))}
       </ol>
-      <div className="flex flex-wrap items-center gap-4">
-        <label className="flex items-center gap-3 text-body">
-          <Checkbox checked={crossfade} onCheckedChange={(v) => setCrossfade(v === true)} className="border-on-seamless" />
-          6-frame crossfades
-        </label>
-        <Button
-          disabled={!allReady || busy !== undefined}
-          onClick={() =>
-            void run("export", async () => {
-              setProgress(0);
-              try {
-                await exportScene(scene.id, crossfade, setProgress);
-              } finally {
-                setProgress(undefined);
-              }
-            })
-          }
-        >
-          {progress !== undefined ? `Joining ${Math.round(progress * 100)}%` : "Export scene"}
-        </Button>
-        {!allReady && <span className="text-control">Every shot needs a finished take first.</span>}
-      </div>
-      {scene.exportGenerationIds.length > 0 && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
-          {scene.exportGenerationIds.map((id) => (
-            <ExportTake key={id} generationId={id} title={scene.title} aspect={aspectOf(scene.ratio)} />
-          ))}
-        </div>
-      )}
+    </section>
+  );
+}
+
+function Exports({ scene }: { scene: Scene }) {
+  if (!scene.exportGenerationIds.length) return null;
+  return (
+    <section aria-label="Exports" className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4 border-t border-rule pt-6">
+      {scene.exportGenerationIds.map((id) => (
+        <ExportTake key={id} generationId={id} title={scene.title} aspect={aspectOf(scene.ratio)} />
+      ))}
     </section>
   );
 }
@@ -864,7 +888,7 @@ function shotStatus(shot: Shot, job: Job | undefined, chained: boolean): string 
   return shot.lipSyncJobId ? "With the line" : shot.finalJobId ? "Final" : takeIsDraft(job) ? "Draft" : "Ready";
 }
 
-function StripFrame({ shot, index, chained, aspect }: { shot: Shot; index: number; chained: boolean; aspect: string }) {
+function StripFrame({ shot, index, chained, aspect, open }: { shot: Shot; index: number; chained: boolean; aspect: string; open: boolean }) {
   const anchor = useJobImageUrl(shot.anchorJobId);
   const job = useJob(exportJobId(shot));
   const take = useJob(shot.takeJobId);
@@ -872,15 +896,20 @@ function StripFrame({ shot, index, chained, aspect }: { shot: Shot; index: numbe
   const startFrame = useBlobUrl((take?.input as { request?: { sourceBlobId?: string } } | undefined)?.request?.sourceBlobId);
   const still = chained ? startFrame : anchor;
   const status = shotStatus(shot, job, chained);
+  // Spans, not a figure: the frame sits inside a button.
   return (
-    <figure className="grid gap-1">
-      <Take src={still} alt={`Shot ${index + 1}`} aspect={aspect}>
-        {index + 1}
-      </Take>
-      <figcaption className="text-control">
+    <span className="grid gap-1">
+      <span className={cn("relative block overflow-hidden rounded-media border bg-seamless", open ? "border-on-seamless outline-2 outline-on-seamless" : "border-rule")} style={{ aspectRatio: aspect }}>
+        {still ? (
+          <img src={still} alt={`Shot ${index + 1}`} className="size-full object-cover" />
+        ) : (
+          <span className="absolute inset-0 flex items-center justify-center font-display text-panel font-extrabold">{index + 1}</span>
+        )}
+      </span>
+      <span className="text-control">
         <span className="font-semibold">{index + 1}</span> · {shot.durationSec} s · <span className={cn(job?.status === "done" && "font-semibold")}>{status}</span>
-      </figcaption>
-    </figure>
+      </span>
+    </span>
   );
 }
 
