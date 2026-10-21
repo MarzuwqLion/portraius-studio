@@ -5,7 +5,24 @@ import { Button } from "@/components/ui/button";
 // Recast split view (spec: Visual direction, Recast split view): both clips in
 // one frame, a vertical wipe the user drags, Original on the left and Recast on
 // the right, and one scrubber driving both.
-export function SplitView({ original, recast, aspect, label }: { original: string; recast: string; aspect: string; label?: string }) {
+// autoPlay starts both clips muted and loops them (the first-run screen),
+// unless the visitor asks for reduced motion; startAt picks the frame they
+// open on, so a still frame shows both performers.
+export function SplitView({
+  original,
+  recast,
+  aspect,
+  label,
+  autoPlay = false,
+  startAt = 0,
+}: {
+  original: string;
+  recast: string;
+  aspect: string;
+  label?: string;
+  autoPlay?: boolean;
+  startAt?: number;
+}) {
   const frame = useRef<HTMLDivElement>(null);
   const left = useRef<HTMLVideoElement>(null);
   const right = useRef<HTMLVideoElement>(null);
@@ -23,15 +40,30 @@ export function SplitView({ original, recast, aspect, label }: { original: strin
       setTime(r.currentTime);
       if (Math.abs(l.currentTime - r.currentTime) > 0.08) l.currentTime = Math.min(r.currentTime, l.duration || r.currentTime);
     };
-    const meta = () => setDuration(r.duration || 0);
+    const meta = () => {
+      setDuration(r.duration || 0);
+      if (startAt) seek(Math.min(startAt, r.duration || startAt));
+    };
+    const ended = () => {
+      if (!autoPlay) return setPlaying(false);
+      r.currentTime = 0;
+      l.currentTime = 0;
+      void r.play().catch(() => undefined);
+      void l.play().catch(() => undefined);
+    };
     r.addEventListener("timeupdate", sync);
     r.addEventListener("loadedmetadata", meta);
-    r.addEventListener("ended", () => setPlaying(false));
+    if (r.readyState >= 1) meta();
+    r.addEventListener("ended", ended);
+    if (autoPlay && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      void Promise.all([r.play(), l.play()]).then(() => setPlaying(true), () => undefined);
+    }
     return () => {
       r.removeEventListener("timeupdate", sync);
       r.removeEventListener("loadedmetadata", meta);
+      r.removeEventListener("ended", ended);
     };
-  }, [original, recast]);
+  }, [original, recast, autoPlay, startAt]);
 
   function toggle() {
     const r = right.current;

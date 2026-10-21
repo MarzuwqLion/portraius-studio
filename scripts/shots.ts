@@ -71,6 +71,11 @@ async function visit(page: Page, hash: string): Promise<void> {
     await Promise.all(
       [...document.images].filter((img) => !img.complete).map((img) => new Promise((done) => ((img.onload = done), (img.onerror = done)))),
     );
+    // Videos show a frame, not a blank box (a seek may still be decoding).
+    const deadline = Date.now() + 3000;
+    while ([...document.querySelectorAll("video")].some((v) => v.readyState < 2 || v.seeking) && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
   });
   await page.waitForTimeout(350);
 }
