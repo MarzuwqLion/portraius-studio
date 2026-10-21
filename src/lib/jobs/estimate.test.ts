@@ -5,7 +5,7 @@ import seedanceDraft from "../../../test/fixtures/seedance-2.5.draft.result.json
 import seedanceFinal from "../../../test/fixtures/seedance-2.5.final.result.json";
 import nanoFixture from "../../../test/fixtures/nano-banana-2.1.result.json";
 import { MODEL_IDS } from "@/lib/registry/models";
-import { addEstimates, CREDITS_PER_DOLLAR, estimateLabel, NANO_TOKENS, SEEDANCE_FRAME, seedanceFinalCredits, staticCredits, staticEstimate, withPrice } from "./estimate";
+import { addEstimates, CREDITS_PER_DOLLAR, estimateLabel, NANO_TOKENS, perSecondLabel, SEEDANCE_FRAME, seedanceFinalCredits, staticCredits, staticEstimate, withPrice } from "./estimate";
 
 const dollars = (credits: number | undefined) => (credits === undefined ? undefined : Math.round((credits / CREDITS_PER_DOLLAR) * 100) / 100);
 const seedanceTokens = (seconds: number, [w, h]: readonly [number, number]) => (seconds * w * h * 24) / 1024;
@@ -74,6 +74,13 @@ describe("price labels", () => {
     expect(estimateLabel(addEstimates([still, clip]))).toBe("≈ $0.72");
     expect(estimateLabel(addEstimates([still], 4))).toBe("≈ $0.32");
     expect(estimateLabel(addEstimates([still, { source: "unknown" }]))).toBeUndefined();
+  });
+
+  it("gives a clip-priced model's rate before there's a clip", () => {
+    expect(perSecondLabel(MODEL_IDS.minimaxH3)).toBe("≈ $0.13 a second");
+    expect(perSecondLabel(MODEL_IDS.minimaxH3, "2K")).toBe("≈ $0.19 a second");
+    expect(perSecondLabel(MODEL_IDS.happyHorseEdit)).toBe("≈ $0.14 a second");
+    expect(perSecondLabel(MODEL_IDS.nanoBanana)).toBeUndefined();
   });
 
   it("never says credits, free or local", () => {

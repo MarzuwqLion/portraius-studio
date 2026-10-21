@@ -13,6 +13,7 @@ import { ScoreBadge, Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CHECK_SCORE } from "@/lib/identity/score";
+import { perSecondLabel } from "@/lib/jobs/estimate";
 import { usePrice, useRecentJobs } from "@/lib/jobs/hooks";
 import { retryJob, type JobInput } from "@/lib/jobs/runner";
 import { clipInfo, trimClip, type ClipInfo } from "@/lib/media/video-prep";
@@ -417,10 +418,12 @@ export function RecastScreen() {
     </div>
   );
 
+  const rateLabel = perSecondLabel(mode === "swap" ? MODEL_IDS.happyHorseEdit : MODEL_IDS.minimaxH3, h3Resolution);
   const footer = (
     <GenerateFooter
       label="Recast"
-      price={price}
+      // Before a clip is in, the price is a rate: it follows the clip's length.
+      price={rawBlobId ? price : rateLabel ? { state: "known", label: rateLabel } : price}
       waitingFor={needs}
       busy={busy}
       onRun={() => void recast()}

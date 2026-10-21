@@ -163,6 +163,12 @@ export function estimateLabel(e: JobEstimate | undefined): string | undefined {
   return undefined;
 }
 
+// Before a clip is in, a clip-priced model's rate: "≈ $0.13 a second".
+export function perSecondLabel(modelId: string, resolution: "768P" | "2K" = "768P"): string | undefined {
+  const credits = modelId === MODEL_IDS.minimaxH3 ? RATES.minimaxH3[resolution] : modelId === MODEL_IDS.happyHorseEdit ? RATES.happyHorseEdit["720P"] : undefined;
+  return credits === undefined ? undefined : `≈ ${dollars(Math.round((credits / CREDITS_PER_DOLLAR) * 100))} a second`;
+}
+
 // "Make it real · $0.37", or just "Make it real" when there's no price.
 export const withPrice = (text: string, price: string | undefined) => (price ? `${text} · ${price}` : text);
 
