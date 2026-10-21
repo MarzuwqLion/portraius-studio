@@ -8,7 +8,7 @@ export function Field({ label, hint, children, className }: { label: string; hin
   const id = useId();
   return (
     <div className={cn("grid gap-1.5", className)}>
-      <label htmlFor={id} className="text-control font-semibold">
+      <label id={`${id}-label`} htmlFor={id} className="text-control font-semibold">
         {label}
       </label>
       {children(id)}

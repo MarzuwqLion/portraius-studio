@@ -8,6 +8,7 @@ import { GenerateFooter } from "@/components/studio/GenerateFooter";
 import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
 import { PresetPicker } from "@/components/studio/PresetPicker";
+import { PromptEditor } from "@/components/studio/PromptEditor";
 import { RealismAction, RealismTake } from "@/components/studio/Realism";
 import { SaveAsElement } from "@/components/studio/SaveAsElement";
 import { Take } from "@/components/studio/Take";
@@ -142,12 +143,12 @@ export function ImageScreen() {
     >
       <PresetPicker presets={IMAGE_PRESETS} value={presetId} onPick={applyPreset} />
 
-      <Field label="Prompt" hint={cast.length ? `Name cast members with ${cast.map((c) => `{${c.slot}}`).join(", ")}.` : "Add characters below to put them in the shot."}>
-        {(id) => <TextArea id={id} value={scene} onChange={setScene} rows={4} maxLength={2000} placeholder="{lead} reading in a corner booth of a late-night diner" />}
-      </Field>
-      {unknownSlots.length > 0 && <p className="text-control text-drift">{unknownSlots.map((s) => `{${s}}`).join(", ")} has no character yet.</p>}
-
       <Field label="Cast">{(id) => <CastPicker id={id} value={cast} onChange={setCast} />}</Field>
+
+      <Field label="Prompt" hint="Type @ to put someone from your vault in the shot.">
+        {(id) => <PromptEditor id={id} value={scene} onChange={setScene} cast={cast} onAddCast={(pick) => setCast((c) => [...c, pick])} rows={4} maxLength={2000} placeholder="@ for your cast, then what happens: reading in a corner booth of a late-night diner" />}
+      </Field>
+      {unknownSlots.length > 0 && <p className="text-control text-drift">Pick someone for {unknownSlots.map((s) => `@${s}`).join(", ")} in Cast, or type @ to choose.</p>}
 
       <Field label="Source image" hint={sourceBlobId ? "Edit mode: the prompt describes the change." : "Optional. Add one to edit it."}>
         {() => (

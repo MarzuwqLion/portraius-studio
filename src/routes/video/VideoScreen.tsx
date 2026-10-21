@@ -5,9 +5,10 @@ import { WorkScreen } from "@/components/shell/Screen";
 import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
 import { GenerateFooter } from "@/components/studio/GenerateFooter";
-import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
+import { Field, Segmented, Select } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
 import { PresetPicker } from "@/components/studio/PresetPicker";
+import { PromptEditor } from "@/components/studio/PromptEditor";
 import { Take } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -239,13 +240,14 @@ export function VideoScreen() {
       <div ref={top} />
       <PresetPicker presets={VIDEO_PRESETS} value={presetId} onPick={applyPreset} />
       <Segmented label="Mode" value={mode} onChange={setMode} options={MODES} columns={2} />
-      <Field label="Prompt" hint={cast.length ? `Name cast members with ${cast.map((c) => `{${c.slot}}`).join(", ")}.` : undefined}>
-        {(id) => <TextArea id={id} value={scene} onChange={setScene} rows={4} maxLength={2000} placeholder="{lead} steps out of the rain into a lit doorway and looks back" />}
-      </Field>
-
-      {needsCast && <Field label="Cast">{(id) => <CastPicker id={id} value={cast} onChange={setCast} />}</Field>}
+      {/* Who, then what (Decisions, October 21, item 6). Picking a cast in Text mode moves to Image, then animate. */}
+      {mode !== "image" && <Field label="Cast">{(id) => <CastPicker id={id} value={cast} onChange={setCast} />}</Field>}
       {mode === "still" && <p className="text-control text-ink-muted">Nano Banana 2.1 draws the opening still with your cast, then the clip starts from it.</p>}
       {mode === "references" && <p className="text-control text-ink-muted">Your cast's sheets set who is in the shot and what they wear; the model frames the opening itself.</p>}
+
+      <Field label="Prompt" hint="Type @ to put someone from your vault in the shot.">
+        {(id) => <PromptEditor id={id} value={scene} onChange={setScene} cast={cast} onAddCast={(pick) => setCast((c) => [...c, pick])} rows={4} maxLength={2000} placeholder="@ for your cast, then what happens: steps out of the rain into a lit doorway" />}
+      </Field>
 
       {mode === "image" && (
         <Field label="First frame">

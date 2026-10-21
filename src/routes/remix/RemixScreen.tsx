@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Note, Screen } from "@/components/shell/Screen";
 import { Field, Select } from "@/components/studio/fields";
+import { PromptText } from "@/components/studio/PromptEditor";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useEstimateLabel } from "@/lib/jobs/hooks";
 import { withPrice } from "@/lib/jobs/estimate";
@@ -114,7 +115,7 @@ function RecipeCard({ recipe }: { recipe: RecipeFile }) {
           {image ? "Image" : "Video"} recipe · {registryEntry(recipe.model)?.label ?? recipe.model}
         </p>
         <p className="font-display text-panel font-extrabold">
-          {recipe.prompt.split(/(\{[a-z][a-z0-9_-]*\})/gi).map((part, i) => (/^\{.*\}$/.test(part) ? <mark key={i} className="rounded-control bg-tint-hover px-1 text-ink">{part}</mark> : part))}
+          <PromptText text={recipe.prompt} />
         </p>
         <ul className="flex flex-wrap gap-2 text-control">
           {[...camera, ...settings].filter((l): l is string => typeof l === "string" && l !== "").map((label) => (

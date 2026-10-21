@@ -5,6 +5,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, Trash2 } from "lucide-react";
 import { Note, Screen, ScreenTitle } from "@/components/shell/Screen";
 import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
+import { PromptEditor } from "@/components/studio/PromptEditor";
 import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
 import { SpeakAction } from "@/components/studio/Speak";
@@ -214,7 +215,7 @@ function SceneEditor({ sceneId }: { sceneId: string }) {
       </Link>
       <Field label="Title">{(id) => <Input id={id} value={scene.title} maxLength={80} onChange={(e) => set({ title: e.target.value })} />}</Field>
       <Field label="Logline">{(id) => <TextArea id={id} value={scene.logline} rows={2} maxLength={300} placeholder="A retired harbour pilot finds a letter he never sent." onChange={(logline) => set({ logline })} />}</Field>
-      <Field label="Cast" hint="Name them in a shot's action with their slot, like {lead}.">{(id) => <CastPicker id={id} value={scene.cast} onChange={(cast) => set({ cast })} />}</Field>
+      <Field label="Cast" hint="Then type @ in a shot's action to put them in it.">{(id) => <CastPicker id={id} value={scene.cast} onChange={(cast) => set({ cast })} />}</Field>
       <Field label="Location" hint="Added to every shot, word for word.">
         {(id) => <TextArea id={id} value={scene.location} rows={2} maxLength={300} placeholder="A late-night diner with red vinyl booths" onChange={(location) => set({ location })} />}
       </Field>
@@ -299,7 +300,6 @@ function ShotCard({
   const lineGenerationId = lineSource?.status === "done" ? lineSource.generationIds[0] : undefined;
   const anchors = useAnchorJobs(shot.anchorJobIds);
   const castSlots = shotCast(scene, shot).map((c) => c.slot);
-  const named = scene.cast.length ? scene.cast.map((c) => `{${c.slot}}`).join(", ") : "Add cast in the scene card";
   const aspect = aspectOf(scene.ratio);
   const ready = Boolean(shot.action.trim());
   const chained = continues(scene, shot);
@@ -359,8 +359,19 @@ function ShotCard({
             </Button>
           </span>
         </header>
-        <Field label="Action" hint={`What happens. Cast: ${named}.`}>
-          {(id) => <TextArea id={id} value={shot.action} rows={3} maxLength={600} placeholder="{lead} slides the envelope across the table" onChange={(action) => onChange({ action })} />}
+        <Field label="Action" hint="What happens. Type @ for someone from your vault; they join the scene's cast.">
+          {(id) => (
+            <PromptEditor
+              id={id}
+              value={shot.action}
+              onChange={(action) => onChange({ action })}
+              cast={scene.cast}
+              onAddCast={(pick) => editor.edit((s) => ({ ...s, cast: [...s.cast, pick] }))}
+              rows={3}
+              maxLength={600}
+              placeholder="@ for your cast, then what happens: slides the envelope across the table"
+            />
+          )}
         </Field>
         <CameraPicker
           groups={["size", "angle", "lens", "aperture", "movement", "lighting"]}

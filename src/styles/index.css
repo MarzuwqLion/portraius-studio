@@ -96,6 +96,13 @@
 /* Motion (spec: Visual direction, Motion): a take develops from Studio grey,
    and grease marks draw on. Reduced motion shows both at once. */
 @layer components {
+  /* The prompt editor's placeholder (components/studio/PromptEditor.tsx). */
+  .prompt-editor[data-empty="true"]::before {
+    content: attr(data-placeholder);
+    color: var(--ink-muted);
+    pointer-events: none;
+  }
+
   .develop {
     animation: develop var(--develop-duration) ease-out both;
   }

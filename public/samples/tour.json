@@ -112,7 +112,7 @@
     {
       "id": "elements",
       "title": "Elements",
-      "body": "Outfits, props and locations are saved like characters, from 1 to 6 photos, and ride along in any shot as {outfit}, {prop} or {location}.",
+      "body": "Outfits, props and locations are saved like characters, from 1 to 6 photos, and ride along in any shot: type @ and pick them, like a person.",
       "items": [
         {
           "media": { "kind": "image", "src": "satchel-sheet.jpg", "width": 1376, "height": 768, "alt": "Reference sheet of a worn tan leather satchel: front, three-quarter, side and a close-up of a brass buckle" },

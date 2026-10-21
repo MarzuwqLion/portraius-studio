@@ -7,6 +7,7 @@ import { RemixActions } from "@/components/studio/RemixActions";
 import { SaveAsElement } from "@/components/studio/SaveAsElement";
 import { SocialExport } from "@/components/studio/SocialExport";
 import { SpeakAction } from "@/components/studio/Speak";
+import { PromptText } from "@/components/studio/PromptEditor";
 import { ScoreBadge } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { useJob } from "@/lib/jobs/hooks";
@@ -72,7 +73,11 @@ export function GenerationScreen() {
               <ScoreBadge score={generation.identityScore} {...(generation.worstScore !== undefined ? { lowest: generation.worstScore } : {})} />
             </div>
           ) : null}
-          {generation.prompt && <p className="max-w-[70ch] text-body">{generation.prompt}</p>}
+          {generation.prompt && (
+            <p className="max-w-[70ch] text-body">
+              <PromptText text={generation.prompt} />
+            </p>
+          )}
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-control">
             <dt className="text-ink-muted">Model</dt>
             <dd>{modelLabel(generation.modelId)}</dd>

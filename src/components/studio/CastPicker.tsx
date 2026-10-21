@@ -3,13 +3,15 @@ import { X } from "lucide-react";
 import { Select } from "@/components/studio/fields";
 import { Button } from "@/components/ui/button";
 import { isUsable } from "@/lib/store/characters";
-import { useCharacters } from "@/lib/store/hooks";
+import { useCharacters, useCharacterThumbs } from "@/lib/store/hooks";
 import { MAX_ELEMENTS, MAX_PEOPLE, nextSlot, type CastPick } from "@/lib/studio/cast";
 
-// Characters for a generation, each on a {slot} the prompt can name. Locked
-// imports never appear (spec: Import and export).
+// Characters for a generation, each on a slot the prompt names with an @
+// mention (stored as {slot}). Locked imports never appear (spec: Import and
+// export).
 export function CastPicker({ id, value, onChange }: { id?: string; value: CastPick[]; onChange: (picks: CastPick[]) => void }) {
   const characters = useCharacters();
+  const faces = useCharacterThumbs();
   const usable = (characters ?? []).filter(isUsable);
   const byId = new Map(usable.map((c) => [c.id, c]));
   const picked = value.filter((p) => byId.has(p.characterId));
@@ -38,8 +40,10 @@ export function CastPicker({ id, value, onChange }: { id?: string; value: CastPi
         <ul className="grid gap-1">
           {picked.map((pick) => (
             <li key={pick.characterId} className="flex items-center justify-between gap-2 rounded-control border border-rule px-3 py-1.5">
-              <span className="min-w-0 truncate text-control">
-                <span className="font-semibold">{`{${pick.slot}}`}</span> {byId.get(pick.characterId)?.name}
+              <span className="flex min-w-0 items-center gap-2 text-control">
+                {faces.get(pick.characterId) ? <img src={faces.get(pick.characterId)} alt="" className="size-6 shrink-0 rounded-full object-cover" /> : <span className="size-6 shrink-0 rounded-full bg-seamless" />}
+                <span className="truncate font-semibold">{byId.get(pick.characterId)?.name}</span>
+                <span className="shrink-0 text-ink-muted">as {pick.slot}</span>
               </span>
               <Button variant="ghost" size="icon" className="size-7" aria-label={`Remove ${byId.get(pick.characterId)?.name}`} onClick={() => onChange(value.filter((p) => p !== pick))}>
                 <X />
