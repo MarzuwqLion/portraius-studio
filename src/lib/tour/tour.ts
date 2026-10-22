@@ -106,10 +106,10 @@ export function untouchedSampleScene(scenes: readonly Scene[], characterId: stri
   return scenes.find((s) => s.title === SAMPLE_TITLE && s.cast.some((c) => c.characterId === characterId) && s.shots.every((shot) => !shot.takeJobId && !shot.finalJobId));
 }
 
-export async function startSampleScene(characterId: string): Promise<string> {
-  const reuse = untouchedSampleScene(await listScenes(), characterId);
-  if (reuse) return reuse.id;
-  const scene = newScene(randomSeed());
+// The Letter with one character as its lead. The ComfyUI Director workflows
+// are built from it too (lib/workflows/studio.ts).
+export function sampleScene(characterId: string, seed: number): Scene {
+  const scene = newScene(seed);
   scene.title = SAMPLE_TITLE;
   scene.logline = "A retired harbour pilot finds a letter he never sent.";
   scene.location = "A late-night diner with red vinyl booths";
@@ -118,7 +118,13 @@ export async function startSampleScene(characterId: string): Promise<string> {
     scene.shots.push({ ...newShot(scene, scene.shots.at(-1)), ...s });
     scene.nextShot += 1;
   }
-  return (await saveScene(scene)).id;
+  return scene;
+}
+
+export async function startSampleScene(characterId: string): Promise<string> {
+  const reuse = untouchedSampleScene(await listScenes(), characterId);
+  if (reuse) return reuse.id;
+  return (await saveScene(sampleScene(characterId, randomSeed()))).id;
 }
 
 // Walt into the vault if he isn't there, then where to go and what to open with.
