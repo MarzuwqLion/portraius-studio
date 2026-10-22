@@ -27,6 +27,7 @@
     "workflows:check": "tsx scripts/workflows-check.ts",
     "local:check": "tsx scripts/local-check.ts",
     "local:smoke": "tsx scripts/local-smoke.ts",
+    "local:models": "tsx scripts/local-models.ts",
     "nodepack": "vitest run src/lib/nodepack --mode nodepack",
     "posters": "tsx scripts/posters.ts"
   },

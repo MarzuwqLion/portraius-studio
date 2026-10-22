@@ -91,6 +91,15 @@ call sends `fallback_provider=false`), so each model is served by its own provid
 | Claude Sonnet 5.5 | `anthropic/claude-sonnet-5-5` | Director's "Draft shots with AI" |
 | Wan 2.7, BFL video edit | `wan/wan2.7-videoedit`, `bfl/video-edit-v1` | Object swap alternatives, compared with Kling in [`docs/notes/recast-ab.md`](docs/notes/recast-ab.md) |
 
+### On your own GPU, free
+
+Portraius Studio can also run on a ComfyUI you start yourself, with open-weight models under Apache 2.0, all
+native ComfyUI nodes: Qwen-Image-Edit 2511 for characters and images, Wan 2.2 (14B, and 5B for fast drafts) for
+video, Wan Animate 2 for Recast's motion transfer, Wan 2.2 S2V for speaking clips, SeedVR2 for Make it real and
+Gemma 4 for the Director's shot plans. Turn it on in Settings, with or without a key; each picker then lists what runs
+on your GPU and what runs on Comfy credits. [`docs/local-setup.md`](docs/local-setup.md) covers the ComfyUI flags
+and the model files (`npm run local:models` downloads them).
+
 ## Costs
 
 Every Generate button shows the price before it runs: Router's own figure when `/estimate` is enabled for your key,
