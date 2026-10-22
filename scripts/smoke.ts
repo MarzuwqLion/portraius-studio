@@ -34,13 +34,15 @@ async function check(name: string, fn: () => Promise<string>) {
 
 console.log(`Router ${config.routerBaseUrl}, Worker ${config.workerUrl || "(none)"}, media host ${config.mediaHost}\n`);
 
-await check("catalog has every registry model", async () => {
+// Router's models only: local/ models run on the visitor's ComfyUI (npm run local:smoke).
+const ROUTER_MODELS = REGISTRY.filter((entry) => entry.backend === "router");
+await check("catalog has every Router model", async () => {
   const missing: string[] = [];
-  for (const entry of REGISTRY) {
+  for (const entry of ROUTER_MODELS) {
     await router.catalogModel(entry.id).catch(() => missing.push(entry.id));
   }
   if (missing.length) throw new Error(`not in the catalog: ${missing.join(", ")}`);
-  return `${REGISTRY.length} models`;
+  return `${ROUTER_MODELS.length} models`;
 });
 
 const image: GenerateImageInput = {
