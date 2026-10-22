@@ -198,20 +198,20 @@ export function SpeakAction({
               </Button>
             )}
             {comfy && (
-            <Button
-              size="sm"
-              variant={defaults || local ? "secondary" : "primary"}
-              disabled={busy !== undefined}
-              onClick={() =>
-                void step("sync", async () => {
-                  const job = await startLipSync(generationId, line);
-                  if (onStarted) onStarted(job);
-                  else setStarted((s) => [{ id: job.id, label: "Lip sync" }, ...s]);
-                })
-              }
-            >
-              {withPrice("Lip sync this clip", syncPrice)}
-            </Button>
+              <Button
+                size="sm"
+                variant={defaults || local ? "secondary" : "primary"}
+                disabled={busy !== undefined}
+                onClick={() =>
+                  void step("sync", async () => {
+                    const job = await startLipSync(generationId, line);
+                    if (onStarted) onStarted(job);
+                    else setStarted((s) => [{ id: job.id, label: "Lip sync" }, ...s]);
+                  })
+                }
+              >
+                {withPrice("Lip sync this clip", syncPrice)}
+              </Button>
             )}
           </div>
           <p className="text-control text-ink-muted">

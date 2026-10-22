@@ -41,5 +41,6 @@ describe("where things run", () => {
     const missing = featureOptions("enhance", reach({ localEnabled: true, localInstalled: { vae: ["seedvr2_ema_vae_fp16.safetensors"] } }))[0]!;
     expect(missing.blocked).toBe("Missing on your ComfyUI: seedvr2_7b_int8_convrot.safetensors");
     expect(featureOptions("enhance", reach({ localEnabled: true }))[0]!.blocked).toMatch(/isn't reachable/);
+    expect(featureOptions("image", reach({ localEnabled: true, localInstalled: {} }))[0]!.blocked).toBe("5 model files are missing on your ComfyUI. Settings lists them.");
   });
 });

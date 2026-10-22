@@ -61,7 +61,8 @@ export function routerListed(reach: Reach): boolean {
 function localBlock(id: string, reach: Reach): string | undefined {
   if (!reach.localInstalled) return "Your ComfyUI isn't reachable. Check it in Settings.";
   const missing = missingFiles(id, reach.localInstalled);
-  return missing.length ? `Missing on your ComfyUI: ${missing.map((f) => f.name).join(", ")}` : undefined;
+  if (!missing.length) return undefined;
+  return missing.length === 1 ? `Missing on your ComfyUI: ${missing[0]!.name}` : `${missing.length} model files are missing on your ComfyUI. Settings lists them.`;
 }
 
 export function featureOptions(feature: Feature, reach: Reach): ModelOption[] {

@@ -298,7 +298,7 @@ export function VideoScreen() {
       )}
 
       {/* The picker and the takes agree: people always render on H3 (Decisions, October 21, item 9), unless the clip runs on the visitor's GPU. */}
-      <Field label="Model" hint={local ? "Runs on your GPU, free." : "People in the shot render on MiniMax H3."}>
+      <Field label="Model" hint={videoModels.option?.blocked ?? (local ? "Runs on your GPU, free." : "People in the shot render on MiniMax H3.")}>
         {(id) =>
           routedForPeople ? (
             <Select id={id} value={effective} onChange={() => undefined} options={VIDEO_MODELS.filter((m) => m.id === effective).map((m) => ({ value: m.id, label: m.label }))} />

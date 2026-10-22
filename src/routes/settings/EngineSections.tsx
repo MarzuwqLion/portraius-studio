@@ -34,26 +34,28 @@ function ModelFiles() {
         const gb = localModelFiles(model.id).reduce((sum, f) => sum + f.gb, 0);
         return (
           <li key={model.id} className="grid gap-1">
-            <p className="text-body">
-              <strong>{model.label}</strong>{" "}
-              {missing.length ? (
-                <span className="text-drift">missing {missing.length} of {localModelFiles(model.id).length} files</span>
-              ) : (
-                <span className="text-match">ready</span>
-              )}
-              <span className="text-ink-muted"> · about {Math.round(gb)} GB</span>
-            </p>
-            {missing.length > 0 && (
-              <ul className="grid gap-0.5 pl-4 text-control">
-                {missing.map((f) => (
-                  <li key={`${f.folder}/${f.name}`}>
-                    <code>models/{f.folder}/</code>{" "}
-                    <a href={f.url} target="_blank" rel="noreferrer" className="text-accent-text underline underline-offset-4">
-                      {f.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+            {missing.length === 0 ? (
+              <p className="text-body">
+                <strong>{model.label}</strong> <span className="text-match">ready</span>
+                <span className="text-ink-muted"> · about {Math.round(gb)} GB</span>
+              </p>
+            ) : (
+              <details className="grid gap-1">
+                <summary className="cursor-pointer text-body">
+                  <strong>{model.label}</strong> <span className="text-drift">missing {missing.length} of {localModelFiles(model.id).length} files</span>
+                  <span className="text-ink-muted"> · about {Math.round(gb)} GB</span>
+                </summary>
+                <ul className="grid gap-0.5 pt-1 pl-4 text-control">
+                  {missing.map((f) => (
+                    <li key={`${f.folder}/${f.name}`}>
+                      <code>models/{f.folder}/</code>{" "}
+                      <a href={f.url} target="_blank" rel="noreferrer" className="text-accent-text underline underline-offset-4">
+                        {f.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
             )}
           </li>
         );
