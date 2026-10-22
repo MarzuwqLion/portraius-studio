@@ -45,7 +45,13 @@ scene with `sampleScene()`, so the Tour and the workflows can't drift apart.
 - New tests: no Seedance node has a person anywhere upstream, every image node is Nano Banana 2.1 with no system
   prompt, Kling's storyboards add up to its duration and fit 512 characters, Recast's chain and audio source, the
   skin settings, and the Director's anchor setting and cut order.
-- Comfy Cloud's `/api/prompt` still answers `403 FREE_TIER_NOT_ALLOWED` for this key.
+- Comfy Cloud's `/api/prompt` still answers `403 FREE_TIER_NOT_ALLOWED` for this key, but a local ComfyUI
+  runs partner nodes with the same key passed as `extra_data.api_key_comfy_org` on `/prompt`, no sign-in needed.
+  A shallow clone of ComfyUI master (0.42.0) in a scratch venv with CPU torch ran all eleven graphs that don't
+  need real photos, at 1K MINIMAL images, 4 s clips and a 3 × 1 s one-take. Every one succeeded; the results are
+  in the workflows README. The recast and object-swap outputs carry an audio track, the lip sync came back at the
+  line's 3.6 s (Sync-3's `cut_off`), and the joined scene is 13.4 s from three takes. Not checked: opening the UI
+  graphs in the ComfyUI frontend by hand.
 
 ## Found along the way
 

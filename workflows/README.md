@@ -120,3 +120,27 @@ input name is one the node takes (including the dotted names of dynamic inputs l
 those inside a model's own options. All twelve ran clean on October 21, 2026. Nothing executes, so it costs nothing.
 `OBJECT_INFO_URL=http://127.0.0.1:8188/object_info` checks against a local ComfyUI instead, no key needed; where that
 ComfyUI has the node pack, its example graph is checked too.
+
+### Run end to end
+
+On October 21, 2026, every graph except character-sheet ran to completion on a local ComfyUI (0.42.0, CPU), with
+the partner nodes billed to a Comfy API key passed as `extra_data.api_key_comfy_org` on `/prompt`. To keep it
+cheap, images ran at 1K with MINIMAL thinking, clips at 4 s, and the one-take as three 1 s storyboards. Stand-ins:
+the satchel's sheet as element-sheet's photo, and `walt-looks-up.mp4` as the object swap's clip. character-sheet
+wasn't run because it needs real photos of a person; design-from-text runs the same sheet nodes.
+
+| Graph | Result |
+| --- | --- |
+| design-from-text | Four candidate faces, then a consistent sheet and four views from the first |
+| element-sheet | The prop's sheet and its front, three-quarter, side and detail views |
+| image-studio | Walt in the Film still preset at 21:9; the satchel added beside him in the edit, the rest unchanged |
+| still-first-video | The character still animated on H3; the empty shot as a Seedance draft, with its `draft_task_id` |
+| video-studio | A Seedance text draft and its ID, an H3 clip from the satchel's sheet, an H3 clip from Walt's still |
+| recast | Motion transfer, the new setting and the original audio; the claymation style swap; the object swap with its audio back on |
+| make-it-real | The still with skin texture and grain |
+| add-a-line | The line as an MP3, lip-synced onto a clip (cut to the line's 3.6 s) and spoken in a new H3 clip |
+| kling-one-take | One 3 s clip from three storyboards |
+| director-scene | Three anchors, three H3 takes, joined into one 13.4 s scene |
+| draft-shots | Five shots as JSON, every camera pick one of the app's preset IDs |
+
+Comfy Cloud's own `/api/prompt` refuses API keys from free-tier accounts, so the graphs weren't run there.
