@@ -1,0 +1,659 @@
+{
+  "id": "7d1b6c2e-4a7e-4f0e-9a51-5c3d2b1a0010",
+  "revision": 0,
+  "last_node_id": 11,
+  "last_link_id": 9,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "title": "Note",
+      "pos": [
+        -560,
+        0
+      ],
+      "size": [
+        460,
+        520
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "MarkdownNote"
+      },
+      "widgets_values": [
+        "## Portraius Studio: add a line\n\nA stock voice speaks the line (ElevenLabs v4), then it goes into a clip one of two ways, as in the app's Finishing panel.\n\n**Lip sync (middle row).** sync.so's Sync-3 moves the mouth of a finished clip to the line. The longer of the two is cut to the shorter, the app's setting. Put the clip in as `walt-looks-up.mp4` (in `public/samples/`).\n\n**A new speaking clip (bottom row).** MiniMax H3 takes the cast's references plus the line as reference audio, and the prompt asks the speaker's lips to follow it. Put a character's sheet and front view in `ComfyUI/input/` as `walt-sheet.jpg` and `walt-front.jpg`: unzip any `.portraius` file, they're `sheet/turnaround.png` and `sheet/front.png`. The samples are in this repo's `public/samples/`. Set H3's duration to the line's length plus a second (4 to 15 s).\n\nThe app sends the line to ElevenLabs' dialogue endpoint; the node uses text to speech with the same model and voice. Needs a Comfy account with credits: these are partner nodes."
+      ],
+      "widgets_values_named": {
+        "text": "## Portraius Studio: add a line\n\nA stock voice speaks the line (ElevenLabs v4), then it goes into a clip one of two ways, as in the app's Finishing panel.\n\n**Lip sync (middle row).** sync.so's Sync-3 moves the mouth of a finished clip to the line. The longer of the two is cut to the shorter, the app's setting. Put the clip in as `walt-looks-up.mp4` (in `public/samples/`).\n\n**A new speaking clip (bottom row).** MiniMax H3 takes the cast's references plus the line as reference audio, and the prompt asks the speaker's lips to follow it. Put a character's sheet and front view in `ComfyUI/input/` as `walt-sheet.jpg` and `walt-front.jpg`: unzip any `.portraius` file, they're `sheet/turnaround.png` and `sheet/front.png`. The samples are in this repo's `public/samples/`. Set H3's duration to the line's length plus a second (4 to 15 s).\n\nThe app sends the line to ElevenLabs' dialogue endpoint; the node uses text to speech with the same model and voice. Needs a Comfy account with credits: these are partner nodes."
+      }
+    },
+    {
+      "id": 2,
+      "type": "ElevenLabsVoiceSelector",
+      "title": "Voice",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        320,
+        80
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "voice",
+          "type": "ELEVENLABS_VOICE",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ElevenLabsVoiceSelector"
+      },
+      "widgets_values": [
+        "George (male, british)"
+      ],
+      "widgets_values_named": {
+        "voice": "George (male, british)"
+      }
+    },
+    {
+      "id": 3,
+      "type": "ElevenLabsTextToSpeech",
+      "title": "The line (ElevenLabs v4)",
+      "pos": [
+        380,
+        0
+      ],
+      "size": [
+        380,
+        320
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "voice",
+          "type": "ELEVENLABS_VOICE",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            2,
+            4,
+            8
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ElevenLabsTextToSpeech"
+      },
+      "widgets_values": [
+        "I wrote this forty years ago, and I never sent it.",
+        0.5,
+        "auto",
+        "eleven_v4",
+        0.75,
+        "",
+        1,
+        "randomize",
+        "mp3_44100_192"
+      ],
+      "widgets_values_named": {
+        "text": "I wrote this forty years ago, and I never sent it.",
+        "stability": 0.5,
+        "apply_text_normalization": "auto",
+        "model": "eleven_v4",
+        "model.similarity_boost": 0.75,
+        "language_code": "",
+        "seed": 1,
+        "control_after_generate": "randomize",
+        "output_format": "mp3_44100_192"
+      }
+    },
+    {
+      "id": 4,
+      "type": "SaveAudioAdvanced",
+      "title": "Save audio",
+      "pos": [
+        820,
+        0
+      ],
+      "size": [
+        300,
+        160
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveAudioAdvanced"
+      },
+      "widgets_values": [
+        "audio/portraius-line",
+        "mp3",
+        "V0"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "audio/portraius-line",
+        "format": "mp3",
+        "format.quality": "V0"
+      }
+    },
+    {
+      "id": 5,
+      "type": "LoadVideo",
+      "title": "Clip to lip-sync",
+      "pos": [
+        0,
+        460
+      ],
+      "size": [
+        320,
+        360
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadVideo"
+      },
+      "widgets_values": [
+        "walt-looks-up.mp4",
+        "image"
+      ],
+      "widgets_values_named": {
+        "file": "walt-looks-up.mp4",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 6,
+      "type": "SyncLipSyncNode",
+      "title": "Sync-3 lip sync",
+      "pos": [
+        400,
+        460
+      ],
+      "size": [
+        360,
+        280
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 3
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SyncLipSyncNode"
+      },
+      "widgets_values": [
+        42,
+        "randomize",
+        "sync-3",
+        "cut_off",
+        "default",
+        0,
+        0,
+        0
+      ],
+      "widgets_values_named": {
+        "seed": 42,
+        "control_after_generate": "randomize",
+        "model": "sync-3",
+        "model.sync_mode": "cut_off",
+        "model.speaker_selection": "default",
+        "model.speaker_frame": 0,
+        "model.speaker_x": 0,
+        "model.speaker_y": 0
+      }
+    },
+    {
+      "id": 7,
+      "type": "SaveVideo",
+      "title": "Save video",
+      "pos": [
+        820,
+        460
+      ],
+      "size": [
+        420,
+        380
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo"
+      },
+      "widgets_values": [
+        "video/portraius-lip-sync",
+        "auto",
+        "auto",
+        "auto"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "video/portraius-lip-sync",
+        "format": "auto",
+        "format.codec": "auto",
+        "codec": "auto"
+      }
+    },
+    {
+      "id": 8,
+      "type": "LoadImage",
+      "title": "Character sheet",
+      "pos": [
+        0,
+        1060
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            6
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "walt-sheet.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "walt-sheet.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 9,
+      "type": "LoadImage",
+      "title": "Character front view",
+      "pos": [
+        0,
+        1480
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            7
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "walt-front.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "walt-front.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 10,
+      "type": "MinimaxHailuo03ReferenceNode",
+      "title": "MiniMax H3 (speaking clip)",
+      "pos": [
+        400,
+        1060
+      ],
+      "size": [
+        420,
+        420
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.reference_images.image_1",
+          "type": "IMAGE",
+          "link": 6,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.reference_images.image_2",
+          "type": "IMAGE",
+          "link": 7,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.reference_images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.reference_videos.video_1",
+          "type": "VIDEO",
+          "link": null,
+          "shape": 7,
+          "label": "video_1"
+        },
+        {
+          "name": "model.reference_audios.audio_1",
+          "type": "AUDIO",
+          "link": 8,
+          "shape": 7,
+          "label": "audio_1"
+        },
+        {
+          "name": "model.reference_audios.audio_2",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7,
+          "label": "audio_2"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            9
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MinimaxHailuo03ReferenceNode"
+      },
+      "widgets_values": [
+        "MiniMax H3",
+        "Reference image 1 is the reference sheet for LEAD (Walt Harmon). Reference image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD sits in the corner booth of a late-night diner and looks across the table. LEAD speaks the words in the reference audio, lips moving in sync with it.\nMedium close-up from the chest up, 50mm lens with a natural perspective.",
+        "768P",
+        "16:9",
+        4,
+        51,
+        "randomize",
+        false
+      ],
+      "widgets_values_named": {
+        "model": "MiniMax H3",
+        "model.prompt": "Reference image 1 is the reference sheet for LEAD (Walt Harmon). Reference image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD sits in the corner booth of a late-night diner and looks across the table. LEAD speaks the words in the reference audio, lips moving in sync with it.\nMedium close-up from the chest up, 50mm lens with a natural perspective.",
+        "model.resolution": "768P",
+        "model.ratio": "16:9",
+        "model.duration": 4,
+        "seed": 51,
+        "control_after_generate": "randomize",
+        "watermark": false
+      }
+    },
+    {
+      "id": 11,
+      "type": "SaveVideo",
+      "title": "Save video",
+      "pos": [
+        880,
+        1060
+      ],
+      "size": [
+        420,
+        380
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo"
+      },
+      "widgets_values": [
+        "video/portraius-speaking",
+        "auto",
+        "auto",
+        "auto"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "video/portraius-speaking",
+        "format": "auto",
+        "format.codec": "auto",
+        "codec": "auto"
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      3,
+      0,
+      "ELEVENLABS_VOICE"
+    ],
+    [
+      2,
+      3,
+      0,
+      4,
+      0,
+      "AUDIO"
+    ],
+    [
+      3,
+      5,
+      0,
+      6,
+      0,
+      "VIDEO"
+    ],
+    [
+      4,
+      3,
+      0,
+      6,
+      1,
+      "AUDIO"
+    ],
+    [
+      5,
+      6,
+      0,
+      7,
+      0,
+      "VIDEO"
+    ],
+    [
+      6,
+      8,
+      0,
+      10,
+      0,
+      "IMAGE"
+    ],
+    [
+      7,
+      9,
+      0,
+      10,
+      1,
+      "IMAGE"
+    ],
+    [
+      8,
+      3,
+      0,
+      10,
+      4,
+      "AUDIO"
+    ],
+    [
+      9,
+      10,
+      0,
+      11,
+      0,
+      "VIDEO"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "The line",
+      "bounding": [
+        -20,
+        -60,
+        1160,
+        420
+      ],
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Lip sync a finished clip",
+      "bounding": [
+        -20,
+        400,
+        1280,
+        500
+      ],
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "A new speaking clip",
+      "bounding": [
+        -20,
+        1000,
+        1340,
+        920
+      ],
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6,
+      "offset": [
+        0,
+        0
+      ]
+    },
+    "frontendVersion": "1.53.6"
+  },
+  "version": 0.4
+}

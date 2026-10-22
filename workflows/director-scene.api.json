@@ -1,0 +1,227 @@
+{
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-sheet.jpg"
+    },
+    "_meta": {
+      "title": "Character sheet"
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-front.jpg"
+    },
+    "_meta": {
+      "title": "Character front view"
+    }
+  },
+  "4": {
+    "class_type": "GeminiNanoBanana2V2",
+    "inputs": {
+      "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD sits alone in a corner booth of a late-night diner, rain on the window Location: A late-night diner with red vinyl booths.\nWide shot showing the full figure in the setting, eye-level camera, 35mm lens, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+      "model": "Gemini Nano Banana 2.1",
+      "model.aspect_ratio": "16:9",
+      "model.resolution": "2K",
+      "model.thinking_level": "MINIMAL",
+      "seed": 1000,
+      "response_modalities": "IMAGE",
+      "system_prompt": "",
+      "temperature": 1,
+      "top_p": 0.95,
+      "model.images.image_1": [
+        "2",
+        0
+      ],
+      "model.images.image_2": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Shot 1 anchor"
+    }
+  },
+  "5": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "portraius/director/shot-1-anchor",
+      "images": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save image"
+    }
+  },
+  "6": {
+    "class_type": "MinimaxHailuo03FirstLastFrameNode",
+    "inputs": {
+      "model": "MiniMax H3",
+      "model.prompt": "Walt Harmon sits alone in a corner booth of a late-night diner, rain on the window Location: A late-night diner with red vinyl booths.\nWide shot showing the full figure in the setting, eye-level camera, 35mm lens, locked-off static camera, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
+      "model.resolution": "768P",
+      "model.duration": 5,
+      "seed": 1000,
+      "watermark": false,
+      "first_frame": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Shot 1 take (MiniMax H3)"
+    }
+  },
+  "7": {
+    "class_type": "GeminiNanoBanana2V2",
+    "inputs": {
+      "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD slides an old envelope out of his coat and turns it over in his hands Location: A late-night diner with red vinyl booths.\nMedium close-up from the chest up, eye-level camera, 50mm lens with a natural perspective, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+      "model": "Gemini Nano Banana 2.1",
+      "model.aspect_ratio": "16:9",
+      "model.resolution": "2K",
+      "model.thinking_level": "MINIMAL",
+      "seed": 1001,
+      "response_modalities": "IMAGE",
+      "system_prompt": "",
+      "temperature": 1,
+      "top_p": 0.95,
+      "model.images.image_1": [
+        "2",
+        0
+      ],
+      "model.images.image_2": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Shot 2 anchor"
+    }
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "portraius/director/shot-2-anchor",
+      "images": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save image"
+    }
+  },
+  "9": {
+    "class_type": "MinimaxHailuo03FirstLastFrameNode",
+    "inputs": {
+      "model": "MiniMax H3",
+      "model.prompt": "Walt Harmon slides an old envelope out of his coat and turns it over in his hands Location: A late-night diner with red vinyl booths.\nMedium close-up from the chest up, eye-level camera, 50mm lens with a natural perspective, the camera slowly pushes in toward the subject, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
+      "model.resolution": "768P",
+      "model.duration": 5,
+      "seed": 1001,
+      "watermark": false,
+      "first_frame": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Shot 2 take (MiniMax H3)"
+    }
+  },
+  "10": {
+    "class_type": "GeminiNanoBanana2V2",
+    "inputs": {
+      "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD looks up toward the diner door and almost smiles Location: A late-night diner with red vinyl booths.\nClose-up of the face, eye-level camera, 85mm portrait lens with a compressed background, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+      "model": "Gemini Nano Banana 2.1",
+      "model.aspect_ratio": "16:9",
+      "model.resolution": "2K",
+      "model.thinking_level": "MINIMAL",
+      "seed": 1002,
+      "response_modalities": "IMAGE",
+      "system_prompt": "",
+      "temperature": 1,
+      "top_p": 0.95,
+      "model.images.image_1": [
+        "2",
+        0
+      ],
+      "model.images.image_2": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Shot 3 anchor"
+    }
+  },
+  "11": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "portraius/director/shot-3-anchor",
+      "images": [
+        "10",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save image"
+    }
+  },
+  "12": {
+    "class_type": "MinimaxHailuo03FirstLastFrameNode",
+    "inputs": {
+      "model": "MiniMax H3",
+      "model.prompt": "Walt Harmon looks up toward the diner door and almost smiles Location: A late-night diner with red vinyl booths.\nClose-up of the face, eye-level camera, 85mm portrait lens with a compressed background, locked-off static camera, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
+      "model.resolution": "768P",
+      "model.duration": 5,
+      "seed": 1002,
+      "watermark": false,
+      "first_frame": [
+        "10",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Shot 3 take (MiniMax H3)"
+    }
+  },
+  "13": {
+    "class_type": "ConcatenateVideo",
+    "inputs": {
+      "codec": "auto",
+      "videos.video0": [
+        "6",
+        0
+      ],
+      "videos.video1": [
+        "9",
+        0
+      ],
+      "videos.video2": [
+        "12",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Join the takes (straight cuts)"
+    }
+  },
+  "14": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "video/portraius-scene",
+      "format": "auto",
+      "format.codec": "auto",
+      "video": [
+        "13",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save video"
+    }
+  }
+}

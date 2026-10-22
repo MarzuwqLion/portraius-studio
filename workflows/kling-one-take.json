@@ -1,0 +1,385 @@
+{
+  "id": "7d1b6c2e-4a7e-4f0e-9a51-5c3d2b1a0011",
+  "revision": 0,
+  "last_node_id": 7,
+  "last_link_id": 5,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "title": "Note",
+      "pos": [
+        -560,
+        0
+      ],
+      "size": [
+        460,
+        520
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "MarkdownNote"
+      },
+      "widgets_values": [
+        "## Portraius Studio: Kling one-take\n\nThe Director's one-take: Kling 3.0 Omni shoots the whole scene as one clip, one storyboard per shot, from the Tour's sample scene \"The Letter, again\". Each shot's prompt names its references with Kling's `<<<image_n>>>` tokens, then adds the location and camera while it fits in 512 characters, as the app does.\n\nPut a character's sheet and front view in `ComfyUI/input/` as `walt-sheet.jpg` and `walt-front.jpg`: unzip any `.portraius` file, they're `sheet/turnaround.png` and `sheet/front.png`. The samples are in this repo's `public/samples/`.\n\nThe app sends the references as separate images. ComfyUI's node takes one batch, and Batch Images makes every image the first one's size, so the front view is padded to the sheet's shape first rather than cropped. The storyboards' lengths must add up to the node's duration (15 s at most). 720p is the app's setting (Kling's \"std\"). Needs a Comfy account with credits: these are partner nodes."
+      ],
+      "widgets_values_named": {
+        "text": "## Portraius Studio: Kling one-take\n\nThe Director's one-take: Kling 3.0 Omni shoots the whole scene as one clip, one storyboard per shot, from the Tour's sample scene \"The Letter, again\". Each shot's prompt names its references with Kling's `<<<image_n>>>` tokens, then adds the location and camera while it fits in 512 characters, as the app does.\n\nPut a character's sheet and front view in `ComfyUI/input/` as `walt-sheet.jpg` and `walt-front.jpg`: unzip any `.portraius` file, they're `sheet/turnaround.png` and `sheet/front.png`. The samples are in this repo's `public/samples/`.\n\nThe app sends the references as separate images. ComfyUI's node takes one batch, and Batch Images makes every image the first one's size, so the front view is padded to the sheet's shape first rather than cropped. The storyboards' lengths must add up to the node's duration (15 s at most). 720p is the app's setting (Kling's \"std\"). Needs a Comfy account with credits: these are partner nodes."
+      }
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "title": "Character sheet",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "walt-sheet.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "walt-sheet.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "title": "Character front view",
+      "pos": [
+        0,
+        420
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "walt-front.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "walt-front.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 4,
+      "type": "ResizeAndPadImage",
+      "title": "Pad the front view to 16:9",
+      "pos": [
+        360,
+        420
+      ],
+      "size": [
+        300,
+        200
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ResizeAndPadImage"
+      },
+      "widgets_values": [
+        1920,
+        1080,
+        "white",
+        "lanczos"
+      ],
+      "widgets_values_named": {
+        "target_width": 1920,
+        "target_height": 1080,
+        "padding_color": "white",
+        "interpolation": "lanczos"
+      }
+    },
+    {
+      "id": 5,
+      "type": "BatchImagesNode",
+      "title": "Batch Images",
+      "pos": [
+        720,
+        0
+      ],
+      "size": [
+        240,
+        140
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images.image0",
+          "type": "IMAGE",
+          "link": 2,
+          "label": "image0"
+        },
+        {
+          "name": "images.image1",
+          "type": "IMAGE",
+          "link": 3,
+          "label": "image1"
+        },
+        {
+          "name": "images.image2",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image2"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            4
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BatchImagesNode"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 6,
+      "type": "KlingOmniProImageToVideoNode",
+      "title": "Kling 3.0 Omni one-take",
+      "pos": [
+        1020,
+        0
+      ],
+      "size": [
+        440,
+        760
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "reference_images",
+          "type": "IMAGE",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KlingOmniProImageToVideoNode"
+      },
+      "widgets_values": [
+        "kling-v3-omni",
+        "The Letter, again",
+        "16:9",
+        15,
+        "720p",
+        "3 storyboards",
+        "LEAD is the person in <<<image_1>>> and <<<image_2>>>, with the same face and hair. LEAD sits alone in a corner booth of a late-night diner, rain on the window. Location: A late-night diner with red vinyl booths. Wide shot showing the full figure in the setting. Eye-level camera. 35mm lens. Locked-off static camera. Shot on a digital cinema camera, clean and detailed. Set in the present day. A grounded, dramatic tone.",
+        5,
+        "LEAD is the person in <<<image_1>>> and <<<image_2>>>, with the same face and hair. LEAD slides an old envelope out of his coat and turns it over in his hands. Location: A late-night diner with red vinyl booths. Medium close-up from the chest up. Eye-level camera. 50mm lens with a natural perspective. Slow dolly-in, steady. Shot on a digital cinema camera, clean and detailed. Set in the present day. A grounded, dramatic tone.",
+        5,
+        "LEAD is the person in <<<image_1>>> and <<<image_2>>>, with the same face and hair. LEAD looks up toward the diner door and almost smiles. Location: A late-night diner with red vinyl booths. Close-up of the face. Eye-level camera. 85mm portrait lens with a compressed background. Locked-off static camera. Shot on a digital cinema camera, clean and detailed. Set in the present day. A grounded, dramatic tone.",
+        5,
+        true,
+        1000,
+        "randomize"
+      ],
+      "widgets_values_named": {
+        "model_name": "kling-v3-omni",
+        "prompt": "The Letter, again",
+        "aspect_ratio": "16:9",
+        "duration": 15,
+        "resolution": "720p",
+        "storyboards": "3 storyboards",
+        "storyboards.storyboard_1_prompt": "LEAD is the person in <<<image_1>>> and <<<image_2>>>, with the same face and hair. LEAD sits alone in a corner booth of a late-night diner, rain on the window. Location: A late-night diner with red vinyl booths. Wide shot showing the full figure in the setting. Eye-level camera. 35mm lens. Locked-off static camera. Shot on a digital cinema camera, clean and detailed. Set in the present day. A grounded, dramatic tone.",
+        "storyboards.storyboard_1_duration": 5,
+        "storyboards.storyboard_2_prompt": "LEAD is the person in <<<image_1>>> and <<<image_2>>>, with the same face and hair. LEAD slides an old envelope out of his coat and turns it over in his hands. Location: A late-night diner with red vinyl booths. Medium close-up from the chest up. Eye-level camera. 50mm lens with a natural perspective. Slow dolly-in, steady. Shot on a digital cinema camera, clean and detailed. Set in the present day. A grounded, dramatic tone.",
+        "storyboards.storyboard_2_duration": 5,
+        "storyboards.storyboard_3_prompt": "LEAD is the person in <<<image_1>>> and <<<image_2>>>, with the same face and hair. LEAD looks up toward the diner door and almost smiles. Location: A late-night diner with red vinyl booths. Close-up of the face. Eye-level camera. 85mm portrait lens with a compressed background. Locked-off static camera. Shot on a digital cinema camera, clean and detailed. Set in the present day. A grounded, dramatic tone.",
+        "storyboards.storyboard_3_duration": 5,
+        "generate_audio": true,
+        "seed": 1000,
+        "control_after_generate": "randomize"
+      }
+    },
+    {
+      "id": 7,
+      "type": "SaveVideo",
+      "title": "Save video",
+      "pos": [
+        1520,
+        0
+      ],
+      "size": [
+        420,
+        380
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo"
+      },
+      "widgets_values": [
+        "video/portraius-one-take",
+        "auto",
+        "auto",
+        "auto"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "video/portraius-one-take",
+        "format": "auto",
+        "format.codec": "auto",
+        "codec": "auto"
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      3,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      2,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      3,
+      4,
+      0,
+      5,
+      1,
+      "IMAGE"
+    ],
+    [
+      4,
+      5,
+      0,
+      6,
+      0,
+      "IMAGE"
+    ],
+    [
+      5,
+      6,
+      0,
+      7,
+      0,
+      "VIDEO"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6,
+      "offset": [
+        0,
+        0
+      ]
+    },
+    "frontendVersion": "1.53.6"
+  },
+  "version": 0.4
+}

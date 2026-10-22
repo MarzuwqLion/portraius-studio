@@ -1,0 +1,936 @@
+{
+  "id": "7d1b6c2e-4a7e-4f0e-9a51-5c3d2b1a0012",
+  "revision": 0,
+  "last_node_id": 14,
+  "last_link_id": 16,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "title": "Note",
+      "pos": [
+        -560,
+        0
+      ],
+      "size": [
+        460,
+        520
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "MarkdownNote"
+      },
+      "widgets_values": [
+        "## Portraius Studio: a Director scene\n\nThe Tour's sample scene \"The Letter, again\", shot the way the Director does it: an anchor still per shot (Nano Banana 2.1 at 2K, Fast, the Director's setting), each animated from its anchor, then the takes joined in order. Put a character's sheet and front view in `ComfyUI/input/` as `walt-sheet.jpg` and `walt-front.jpg`: unzip any `.portraius` file, they're `sheet/turnaround.png` and `sheet/front.png`. The samples are in this repo's `public/samples/`.\n\nEvery shot here has Walt in its first frame, so each renders on MiniMax H3; a shot without people would take Seedance 2.5's draft and final (see still-first-video). The app draws 2 to 4 anchors per shot for you to pick from; the graph draws one.\n\nConcatenate Video makes straight cuts only: the app's export can also crossfade. A \"continue\" shot, which starts on the previous shot's last frame, isn't in this scene. Needs a Comfy account with credits: these are partner nodes."
+      ],
+      "widgets_values_named": {
+        "text": "## Portraius Studio: a Director scene\n\nThe Tour's sample scene \"The Letter, again\", shot the way the Director does it: an anchor still per shot (Nano Banana 2.1 at 2K, Fast, the Director's setting), each animated from its anchor, then the takes joined in order. Put a character's sheet and front view in `ComfyUI/input/` as `walt-sheet.jpg` and `walt-front.jpg`: unzip any `.portraius` file, they're `sheet/turnaround.png` and `sheet/front.png`. The samples are in this repo's `public/samples/`.\n\nEvery shot here has Walt in its first frame, so each renders on MiniMax H3; a shot without people would take Seedance 2.5's draft and final (see still-first-video). The app draws 2 to 4 anchors per shot for you to pick from; the graph draws one.\n\nConcatenate Video makes straight cuts only: the app's export can also crossfade. A \"continue\" shot, which starts on the previous shot's last frame, isn't in this scene. Needs a Comfy account with credits: these are partner nodes."
+      }
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "title": "Character sheet",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1,
+            5,
+            9
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "walt-sheet.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "walt-sheet.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "title": "Character front view",
+      "pos": [
+        0,
+        420
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            2,
+            6,
+            10
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "walt-front.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "walt-front.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 4,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Shot 1 anchor",
+      "pos": [
+        400,
+        0
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 1,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 2,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD sits alone in a corner booth of a late-night diner, rain on the window Location: A late-night diner with red vinyl booths.\nWide shot showing the full figure in the setting, eye-level camera, 35mm lens, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+        "Gemini Nano Banana 2.1",
+        "16:9",
+        "2K",
+        "MINIMAL",
+        1000,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD sits alone in a corner booth of a late-night diner, rain on the window Location: A late-night diner with red vinyl booths.\nWide shot showing the full figure in the setting, eye-level camera, 35mm lens, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "16:9",
+        "model.resolution": "2K",
+        "model.thinking_level": "MINIMAL",
+        "seed": 1000,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 5,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        880,
+        0
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 3
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/director/shot-1-anchor"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/director/shot-1-anchor"
+      }
+    },
+    {
+      "id": 6,
+      "type": "MinimaxHailuo03FirstLastFrameNode",
+      "title": "Shot 1 take (MiniMax H3)",
+      "pos": [
+        1260,
+        0
+      ],
+      "size": [
+        420,
+        340
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "first_frame",
+          "type": "IMAGE",
+          "link": 4
+        },
+        {
+          "name": "last_frame",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            13
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MinimaxHailuo03FirstLastFrameNode"
+      },
+      "widgets_values": [
+        "MiniMax H3",
+        "Walt Harmon sits alone in a corner booth of a late-night diner, rain on the window Location: A late-night diner with red vinyl booths.\nWide shot showing the full figure in the setting, eye-level camera, 35mm lens, locked-off static camera, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
+        "768P",
+        5,
+        1000,
+        "randomize",
+        false
+      ],
+      "widgets_values_named": {
+        "model": "MiniMax H3",
+        "model.prompt": "Walt Harmon sits alone in a corner booth of a late-night diner, rain on the window Location: A late-night diner with red vinyl booths.\nWide shot showing the full figure in the setting, eye-level camera, 35mm lens, locked-off static camera, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
+        "model.resolution": "768P",
+        "model.duration": 5,
+        "seed": 1000,
+        "control_after_generate": "randomize",
+        "watermark": false
+      }
+    },
+    {
+      "id": 7,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Shot 2 anchor",
+      "pos": [
+        400,
+        820
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 5,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 6,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            7,
+            8
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD slides an old envelope out of his coat and turns it over in his hands Location: A late-night diner with red vinyl booths.\nMedium close-up from the chest up, eye-level camera, 50mm lens with a natural perspective, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+        "Gemini Nano Banana 2.1",
+        "16:9",
+        "2K",
+        "MINIMAL",
+        1001,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD slides an old envelope out of his coat and turns it over in his hands Location: A late-night diner with red vinyl booths.\nMedium close-up from the chest up, eye-level camera, 50mm lens with a natural perspective, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "16:9",
+        "model.resolution": "2K",
+        "model.thinking_level": "MINIMAL",
+        "seed": 1001,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 8,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        880,
+        820
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 7
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/director/shot-2-anchor"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/director/shot-2-anchor"
+      }
+    },
+    {
+      "id": 9,
+      "type": "MinimaxHailuo03FirstLastFrameNode",
+      "title": "Shot 2 take (MiniMax H3)",
+      "pos": [
+        1260,
+        820
+      ],
+      "size": [
+        420,
+        340
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "first_frame",
+          "type": "IMAGE",
+          "link": 8
+        },
+        {
+          "name": "last_frame",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            14
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MinimaxHailuo03FirstLastFrameNode"
+      },
+      "widgets_values": [
+        "MiniMax H3",
+        "Walt Harmon slides an old envelope out of his coat and turns it over in his hands Location: A late-night diner with red vinyl booths.\nMedium close-up from the chest up, eye-level camera, 50mm lens with a natural perspective, the camera slowly pushes in toward the subject, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
+        "768P",
+        5,
+        1001,
+        "randomize",
+        false
+      ],
+      "widgets_values_named": {
+        "model": "MiniMax H3",
+        "model.prompt": "Walt Harmon slides an old envelope out of his coat and turns it over in his hands Location: A late-night diner with red vinyl booths.\nMedium close-up from the chest up, eye-level camera, 50mm lens with a natural perspective, the camera slowly pushes in toward the subject, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
+        "model.resolution": "768P",
+        "model.duration": 5,
+        "seed": 1001,
+        "control_after_generate": "randomize",
+        "watermark": false
+      }
+    },
+    {
+      "id": 10,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Shot 3 anchor",
+      "pos": [
+        400,
+        1640
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 9,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 10,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            11,
+            12
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD looks up toward the diner door and almost smiles Location: A late-night diner with red vinyl booths.\nClose-up of the face, eye-level camera, 85mm portrait lens with a compressed background, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+        "Gemini Nano Banana 2.1",
+        "16:9",
+        "2K",
+        "MINIMAL",
+        1002,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD looks up toward the diner door and almost smiles Location: A late-night diner with red vinyl booths.\nClose-up of the face, eye-level camera, 85mm portrait lens with a compressed background, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "16:9",
+        "model.resolution": "2K",
+        "model.thinking_level": "MINIMAL",
+        "seed": 1002,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 11,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        880,
+        1640
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 11
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/director/shot-3-anchor"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/director/shot-3-anchor"
+      }
+    },
+    {
+      "id": 12,
+      "type": "MinimaxHailuo03FirstLastFrameNode",
+      "title": "Shot 3 take (MiniMax H3)",
+      "pos": [
+        1260,
+        1640
+      ],
+      "size": [
+        420,
+        340
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "first_frame",
+          "type": "IMAGE",
+          "link": 12
+        },
+        {
+          "name": "last_frame",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            15
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MinimaxHailuo03FirstLastFrameNode"
+      },
+      "widgets_values": [
+        "MiniMax H3",
+        "Walt Harmon looks up toward the diner door and almost smiles Location: A late-night diner with red vinyl booths.\nClose-up of the face, eye-level camera, 85mm portrait lens with a compressed background, locked-off static camera, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
+        "768P",
+        5,
+        1002,
+        "randomize",
+        false
+      ],
+      "widgets_values_named": {
+        "model": "MiniMax H3",
+        "model.prompt": "Walt Harmon looks up toward the diner door and almost smiles Location: A late-night diner with red vinyl booths.\nClose-up of the face, eye-level camera, 85mm portrait lens with a compressed background, locked-off static camera, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
+        "model.resolution": "768P",
+        "model.duration": 5,
+        "seed": 1002,
+        "control_after_generate": "randomize",
+        "watermark": false
+      }
+    },
+    {
+      "id": 13,
+      "type": "ConcatenateVideo",
+      "title": "Join the takes (straight cuts)",
+      "pos": [
+        1740,
+        0
+      ],
+      "size": [
+        320,
+        200
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "videos.video0",
+          "type": "VIDEO",
+          "link": 13,
+          "label": "video0"
+        },
+        {
+          "name": "videos.video1",
+          "type": "VIDEO",
+          "link": 14,
+          "label": "video1"
+        },
+        {
+          "name": "videos.video2",
+          "type": "VIDEO",
+          "link": 15,
+          "label": "video2"
+        },
+        {
+          "name": "videos.video3",
+          "type": "VIDEO",
+          "link": null,
+          "shape": 7,
+          "label": "video3"
+        },
+        {
+          "name": "complete_audio",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            16
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ConcatenateVideo"
+      },
+      "widgets_values": [
+        "auto"
+      ],
+      "widgets_values_named": {
+        "codec": "auto"
+      }
+    },
+    {
+      "id": 14,
+      "type": "SaveVideo",
+      "title": "Save video",
+      "pos": [
+        2120,
+        0
+      ],
+      "size": [
+        420,
+        380
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo"
+      },
+      "widgets_values": [
+        "video/portraius-scene",
+        "auto",
+        "auto",
+        "auto"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "video/portraius-scene",
+        "format": "auto",
+        "format.codec": "auto",
+        "codec": "auto"
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      3,
+      0,
+      4,
+      1,
+      "IMAGE"
+    ],
+    [
+      3,
+      4,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      4,
+      4,
+      0,
+      6,
+      0,
+      "IMAGE"
+    ],
+    [
+      5,
+      2,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ],
+    [
+      6,
+      3,
+      0,
+      7,
+      1,
+      "IMAGE"
+    ],
+    [
+      7,
+      7,
+      0,
+      8,
+      0,
+      "IMAGE"
+    ],
+    [
+      8,
+      7,
+      0,
+      9,
+      0,
+      "IMAGE"
+    ],
+    [
+      9,
+      2,
+      0,
+      10,
+      0,
+      "IMAGE"
+    ],
+    [
+      10,
+      3,
+      0,
+      10,
+      1,
+      "IMAGE"
+    ],
+    [
+      11,
+      10,
+      0,
+      11,
+      0,
+      "IMAGE"
+    ],
+    [
+      12,
+      10,
+      0,
+      12,
+      0,
+      "IMAGE"
+    ],
+    [
+      13,
+      6,
+      0,
+      13,
+      0,
+      "VIDEO"
+    ],
+    [
+      14,
+      9,
+      0,
+      13,
+      1,
+      "VIDEO"
+    ],
+    [
+      15,
+      12,
+      0,
+      13,
+      2,
+      "VIDEO"
+    ],
+    [
+      16,
+      13,
+      0,
+      14,
+      0,
+      "VIDEO"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6,
+      "offset": [
+        0,
+        0
+      ]
+    },
+    "frontendVersion": "1.53.6"
+  },
+  "version": 0.4
+}

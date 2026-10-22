@@ -1,0 +1,93 @@
+{
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-sheet.jpg"
+    },
+    "_meta": {
+      "title": "Character sheet"
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-front.jpg"
+    },
+    "_meta": {
+      "title": "Character front view"
+    }
+  },
+  "4": {
+    "class_type": "ResizeAndPadImage",
+    "inputs": {
+      "target_width": 1920,
+      "target_height": 1080,
+      "padding_color": "white",
+      "interpolation": "lanczos",
+      "image": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Pad the front view to 16:9"
+    }
+  },
+  "5": {
+    "class_type": "BatchImagesNode",
+    "inputs": {
+      "images.image0": [
+        "2",
+        0
+      ],
+      "images.image1": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Batch Images"
+    }
+  },
+  "6": {
+    "class_type": "KlingOmniProImageToVideoNode",
+    "inputs": {
+      "model_name": "kling-v3-omni",
+      "prompt": "The Letter, again",
+      "aspect_ratio": "16:9",
+      "duration": 15,
+      "resolution": "720p",
+      "storyboards": "3 storyboards",
+      "storyboards.storyboard_1_prompt": "LEAD is the person in <<<image_1>>> and <<<image_2>>>, with the same face and hair. LEAD sits alone in a corner booth of a late-night diner, rain on the window. Location: A late-night diner with red vinyl booths. Wide shot showing the full figure in the setting. Eye-level camera. 35mm lens. Locked-off static camera. Shot on a digital cinema camera, clean and detailed. Set in the present day. A grounded, dramatic tone.",
+      "storyboards.storyboard_1_duration": 5,
+      "storyboards.storyboard_2_prompt": "LEAD is the person in <<<image_1>>> and <<<image_2>>>, with the same face and hair. LEAD slides an old envelope out of his coat and turns it over in his hands. Location: A late-night diner with red vinyl booths. Medium close-up from the chest up. Eye-level camera. 50mm lens with a natural perspective. Slow dolly-in, steady. Shot on a digital cinema camera, clean and detailed. Set in the present day. A grounded, dramatic tone.",
+      "storyboards.storyboard_2_duration": 5,
+      "storyboards.storyboard_3_prompt": "LEAD is the person in <<<image_1>>> and <<<image_2>>>, with the same face and hair. LEAD looks up toward the diner door and almost smiles. Location: A late-night diner with red vinyl booths. Close-up of the face. Eye-level camera. 85mm portrait lens with a compressed background. Locked-off static camera. Shot on a digital cinema camera, clean and detailed. Set in the present day. A grounded, dramatic tone.",
+      "storyboards.storyboard_3_duration": 5,
+      "generate_audio": true,
+      "seed": 1000,
+      "reference_images": [
+        "5",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Kling 3.0 Omni one-take"
+    }
+  },
+  "7": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "video/portraius-one-take",
+      "format": "auto",
+      "format.codec": "auto",
+      "video": [
+        "6",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save video"
+    }
+  }
+}

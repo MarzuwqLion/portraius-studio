@@ -1,0 +1,191 @@
+{
+  "id": "7d1b6c2e-4a7e-4f0e-9a51-5c3d2b1a0013",
+  "revision": 0,
+  "last_node_id": 4,
+  "last_link_id": 2,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "title": "Note",
+      "pos": [
+        -560,
+        0
+      ],
+      "size": [
+        460,
+        420
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "MarkdownNote"
+      },
+      "widgets_values": [
+        "## Portraius Studio: draft shots with AI\n\nThe Director's \"Draft with AI\": Claude Sonnet 5.5 reads the scene card and plans 3 to 6 shots. The system prompt and the scene card are the app's own, for the Tour's sample scene with its shots cleared. Edit the card in the prompt for your scene.\n\nThe app asks for structured output against a JSON schema and checks every shot before it lands in the shot list. The node can't take a schema, so the schema is written into the prompt, and the plan comes back as text, saved as JSON. It can't drive the rest of the graph: copy the shots into director-scene by hand.\n\nNeeds a Comfy account with credits: these are partner nodes."
+      ],
+      "widgets_values_named": {
+        "text": "## Portraius Studio: draft shots with AI\n\nThe Director's \"Draft with AI\": Claude Sonnet 5.5 reads the scene card and plans 3 to 6 shots. The system prompt and the scene card are the app's own, for the Tour's sample scene with its shots cleared. Edit the card in the prompt for your scene.\n\nThe app asks for structured output against a JSON schema and checks every shot before it lands in the shot list. The node can't take a schema, so the schema is written into the prompt, and the plan comes back as text, saved as JSON. It can't drive the rest of the graph: copy the shots into director-scene by hand.\n\nNeeds a Comfy account with credits: these are partner nodes."
+      }
+    },
+    {
+      "id": 2,
+      "type": "ClaudeNode",
+      "title": "Claude Sonnet 5.5 (shot list)",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        460,
+        560
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images.image_1",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_1"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            1,
+            2
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ClaudeNode"
+      },
+      "widgets_values": [
+        "Title: The Letter, again\nLogline: A retired harbour pilot finds a letter he never sent.\nLocation: A late-night diner with red vinyl booths\nFrame: 16:9\nFilm: Genre Drama, Camera Digital cinema, Era Present day, Pacing Standard\nCast (write each as its {slot} in the action):\n- {lead}: Walt Harmon, a person. Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\n\nReply with only a JSON object that fits this JSON schema, and no other text:\n{\"type\":\"object\",\"properties\":{\"shots\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"action\":{\"type\":\"string\",\"description\":\"What happens, naming cast members only by their {slot}.\"},\"size\":{\"type\":\"string\",\"enum\":[\"ECU\",\"CU\",\"MCU\",\"MS\",\"WS\",\"EWS\"]},\"angle\":{\"type\":\"string\",\"enum\":[\"eye\",\"low\",\"high\",\"overhead\",\"dutch\"]},\"lens\":{\"type\":\"string\",\"enum\":[\"24mm\",\"35mm\",\"50mm\",\"85mm\",\"135mm\",\"anamorphic\"]},\"aperture\":{\"type\":\"string\",\"enum\":[\"\",\"f1.4\",\"f2\",\"f2.8\",\"f4\",\"f5.6\",\"f8\",\"f11\"]},\"movement\":{\"type\":\"string\",\"enum\":[\"static\",\"slow-push-in\",\"pull-back\",\"dolly-left\",\"dolly-right\",\"orbit\",\"crane-up\",\"handheld-follow\",\"whip-pan\"]},\"lighting\":{\"type\":\"string\",\"enum\":[\"\",\"soft-key\",\"noon-sun\",\"golden-hour\",\"neon\",\"practicals\",\"moonlight\"]},\"durationSec\":{\"type\":\"integer\",\"enum\":[4,5,6,8,10,12,15]},\"continuity\":{\"type\":\"string\",\"enum\":[\"cut\",\"continue\"]}},\"required\":[\"action\",\"size\",\"angle\",\"lens\",\"aperture\",\"movement\",\"lighting\",\"durationSec\",\"continuity\"],\"additionalProperties\":false}}},\"required\":[\"shots\"],\"additionalProperties\":false}",
+        "Sonnet 5.5",
+        16000,
+        "medium",
+        0,
+        "randomize",
+        "You plan shot lists for short film scenes in Portraius Studio's Director.\nEach shot becomes one still and then a 4 to 15 second generated video clip, so describe one clear, visible moment per shot: what the camera sees and what moves. No dialogue, sound or inner thoughts.\nPlan 3 to 6 shots that tell the logline with a beginning, middle and end, varying shot size and angle like an editor would.\nName cast members only by their {slot} exactly as given, never by name, and only cast members listed. Don't add other named people, brands, logos or real places.\nUse the scene's location for every shot. Pick each camera field from the allowed values; leave aperture or lighting empty when the shot doesn't need one.\nSet continuity to \"continue\" only when a shot picks up the exact moment the previous shot ends on, from a similar angle; otherwise \"cut\". The first shot is always \"cut\".\nMatch lengths to the pacing: calm scenes hold longer, fast ones cut quicker."
+      ],
+      "widgets_values_named": {
+        "prompt": "Title: The Letter, again\nLogline: A retired harbour pilot finds a letter he never sent.\nLocation: A late-night diner with red vinyl booths\nFrame: 16:9\nFilm: Genre Drama, Camera Digital cinema, Era Present day, Pacing Standard\nCast (write each as its {slot} in the action):\n- {lead}: Walt Harmon, a person. Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\n\nReply with only a JSON object that fits this JSON schema, and no other text:\n{\"type\":\"object\",\"properties\":{\"shots\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"action\":{\"type\":\"string\",\"description\":\"What happens, naming cast members only by their {slot}.\"},\"size\":{\"type\":\"string\",\"enum\":[\"ECU\",\"CU\",\"MCU\",\"MS\",\"WS\",\"EWS\"]},\"angle\":{\"type\":\"string\",\"enum\":[\"eye\",\"low\",\"high\",\"overhead\",\"dutch\"]},\"lens\":{\"type\":\"string\",\"enum\":[\"24mm\",\"35mm\",\"50mm\",\"85mm\",\"135mm\",\"anamorphic\"]},\"aperture\":{\"type\":\"string\",\"enum\":[\"\",\"f1.4\",\"f2\",\"f2.8\",\"f4\",\"f5.6\",\"f8\",\"f11\"]},\"movement\":{\"type\":\"string\",\"enum\":[\"static\",\"slow-push-in\",\"pull-back\",\"dolly-left\",\"dolly-right\",\"orbit\",\"crane-up\",\"handheld-follow\",\"whip-pan\"]},\"lighting\":{\"type\":\"string\",\"enum\":[\"\",\"soft-key\",\"noon-sun\",\"golden-hour\",\"neon\",\"practicals\",\"moonlight\"]},\"durationSec\":{\"type\":\"integer\",\"enum\":[4,5,6,8,10,12,15]},\"continuity\":{\"type\":\"string\",\"enum\":[\"cut\",\"continue\"]}},\"required\":[\"action\",\"size\",\"angle\",\"lens\",\"aperture\",\"movement\",\"lighting\",\"durationSec\",\"continuity\"],\"additionalProperties\":false}}},\"required\":[\"shots\"],\"additionalProperties\":false}",
+        "model": "Sonnet 5.5",
+        "model.max_tokens": 16000,
+        "model.reasoning_effort": "medium",
+        "seed": 0,
+        "control_after_generate": "randomize",
+        "system_prompt": "You plan shot lists for short film scenes in Portraius Studio's Director.\nEach shot becomes one still and then a 4 to 15 second generated video clip, so describe one clear, visible moment per shot: what the camera sees and what moves. No dialogue, sound or inner thoughts.\nPlan 3 to 6 shots that tell the logline with a beginning, middle and end, varying shot size and angle like an editor would.\nName cast members only by their {slot} exactly as given, never by name, and only cast members listed. Don't add other named people, brands, logos or real places.\nUse the scene's location for every shot. Pick each camera field from the allowed values; leave aperture or lighting empty when the shot doesn't need one.\nSet continuity to \"continue\" only when a shot picks up the exact moment the previous shot ends on, from a similar angle; otherwise \"cut\". The first shot is always \"cut\".\nMatch lengths to the pacing: calm scenes hold longer, fast ones cut quicker."
+      }
+    },
+    {
+      "id": 3,
+      "type": "PreviewAny",
+      "title": "Preview as Text",
+      "pos": [
+        520,
+        0
+      ],
+      "size": [
+        420,
+        160
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "source",
+          "type": "*",
+          "link": 1
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewAny"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 4,
+      "type": "SaveText",
+      "title": "Save the shot list",
+      "pos": [
+        520,
+        220
+      ],
+      "size": [
+        360,
+        140
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveText"
+      },
+      "widgets_values": [
+        "portraius/shot-list",
+        "json"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/shot-list",
+        "format": "json"
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      3,
+      0,
+      "STRING"
+    ],
+    [
+      2,
+      2,
+      0,
+      4,
+      0,
+      "STRING"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6,
+      "offset": [
+        0,
+        0
+      ]
+    },
+    "frontendVersion": "1.53.6"
+  },
+  "version": 0.4
+}

@@ -1,0 +1,1321 @@
+{
+  "id": "7d1b6c2e-4a7e-4f0e-9a51-5c3d2b1a0004",
+  "revision": 0,
+  "last_node_id": 18,
+  "last_link_id": 20,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "title": "Note",
+      "pos": [
+        -560,
+        0
+      ],
+      "size": [
+        460,
+        460
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "MarkdownNote"
+      },
+      "widgets_values": [
+        "## Portraius Studio: design a character from text\n\nThe Characters screen's \"Design from text\": 4 candidate faces from a description, one pick, then the same turnaround sheet and views as a character made from photos (spec: Design from text).\n\n1. Write the person in each **Candidate face** prompt, after \"an original, fictional adult person:\". The app puts your description in the same place.\n2. Run. Nano Banana 2.1 draws the 4 faces at 1K, Fast, then the sheet from the first one.\n3. To use another face, set **Picked face**'s batch_index (0 to 3) and run again. The candidates' seeds are fixed, so ComfyUI keeps them and only the sheet is drawn again.\n\nNeeds a Comfy account with credits: these are partner nodes."
+      ],
+      "widgets_values_named": {
+        "text": "## Portraius Studio: design a character from text\n\nThe Characters screen's \"Design from text\": 4 candidate faces from a description, one pick, then the same turnaround sheet and views as a character made from photos (spec: Design from text).\n\n1. Write the person in each **Candidate face** prompt, after \"an original, fictional adult person:\". The app puts your description in the same place.\n2. Run. Nano Banana 2.1 draws the 4 faces at 1K, Fast, then the sheet from the first one.\n3. To use another face, set **Picked face**'s batch_index (0 to 3) and run again. The candidates' seeds are fixed, so ComfyUI keeps them and only the sheet is drawn again.\n\nNeeds a Comfy account with credits: these are partner nodes."
+      }
+    },
+    {
+      "id": 2,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Candidate face 1",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "A photograph of an original, fictional adult person: a marine biologist in her early forties with short dark curly hair, a scatter of freckles and a warm, direct gaze\nFront-facing head-and-shoulders portrait, neutral expression, looking into the camera.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nNot a real or famous person. No text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "4:5",
+        "1K",
+        "MINIMAL",
+        1,
+        "fixed",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "A photograph of an original, fictional adult person: a marine biologist in her early forties with short dark curly hair, a scatter of freckles and a warm, direct gaze\nFront-facing head-and-shoulders portrait, neutral expression, looking into the camera.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nNot a real or famous person. No text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "4:5",
+        "model.resolution": "1K",
+        "model.thinking_level": "MINIMAL",
+        "seed": 1,
+        "control_after_generate": "fixed",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 3,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Candidate face 2",
+      "pos": [
+        0,
+        700
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "A photograph of an original, fictional adult person: a marine biologist in her early forties with short dark curly hair, a scatter of freckles and a warm, direct gaze\nFront-facing head-and-shoulders portrait, neutral expression, looking into the camera.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nNot a real or famous person. No text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "4:5",
+        "1K",
+        "MINIMAL",
+        2,
+        "fixed",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "A photograph of an original, fictional adult person: a marine biologist in her early forties with short dark curly hair, a scatter of freckles and a warm, direct gaze\nFront-facing head-and-shoulders portrait, neutral expression, looking into the camera.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nNot a real or famous person. No text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "4:5",
+        "model.resolution": "1K",
+        "model.thinking_level": "MINIMAL",
+        "seed": 2,
+        "control_after_generate": "fixed",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 4,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Candidate face 3",
+      "pos": [
+        0,
+        1400
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            3
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "A photograph of an original, fictional adult person: a marine biologist in her early forties with short dark curly hair, a scatter of freckles and a warm, direct gaze\nFront-facing head-and-shoulders portrait, neutral expression, looking into the camera.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nNot a real or famous person. No text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "4:5",
+        "1K",
+        "MINIMAL",
+        3,
+        "fixed",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "A photograph of an original, fictional adult person: a marine biologist in her early forties with short dark curly hair, a scatter of freckles and a warm, direct gaze\nFront-facing head-and-shoulders portrait, neutral expression, looking into the camera.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nNot a real or famous person. No text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "4:5",
+        "model.resolution": "1K",
+        "model.thinking_level": "MINIMAL",
+        "seed": 3,
+        "control_after_generate": "fixed",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 5,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Candidate face 4",
+      "pos": [
+        0,
+        2100
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "A photograph of an original, fictional adult person: a marine biologist in her early forties with short dark curly hair, a scatter of freckles and a warm, direct gaze\nFront-facing head-and-shoulders portrait, neutral expression, looking into the camera.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nNot a real or famous person. No text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "4:5",
+        "1K",
+        "MINIMAL",
+        4,
+        "fixed",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "A photograph of an original, fictional adult person: a marine biologist in her early forties with short dark curly hair, a scatter of freckles and a warm, direct gaze\nFront-facing head-and-shoulders portrait, neutral expression, looking into the camera.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nNot a real or famous person. No text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "4:5",
+        "model.resolution": "1K",
+        "model.thinking_level": "MINIMAL",
+        "seed": 4,
+        "control_after_generate": "fixed",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 6,
+      "type": "BatchImagesNode",
+      "title": "Batch Images",
+      "pos": [
+        480,
+        0
+      ],
+      "size": [
+        240,
+        180
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images.image0",
+          "type": "IMAGE",
+          "link": 1,
+          "label": "image0"
+        },
+        {
+          "name": "images.image1",
+          "type": "IMAGE",
+          "link": 2,
+          "label": "image1"
+        },
+        {
+          "name": "images.image2",
+          "type": "IMAGE",
+          "link": 3,
+          "label": "image2"
+        },
+        {
+          "name": "images.image3",
+          "type": "IMAGE",
+          "link": 4,
+          "label": "image3"
+        },
+        {
+          "name": "images.image4",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            5,
+            6
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BatchImagesNode"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 7,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        480,
+        240
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 5
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/design/candidate"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/design/candidate"
+      }
+    },
+    {
+      "id": 8,
+      "type": "ImageFromBatch",
+      "title": "Picked face",
+      "pos": [
+        480,
+        680
+      ],
+      "size": [
+        240,
+        120
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 6
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            7,
+            9,
+            12,
+            15,
+            18
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageFromBatch"
+      },
+      "widgets_values": [
+        0,
+        1
+      ],
+      "widgets_values_named": {
+        "batch_index": 0,
+        "length": 1
+      }
+    },
+    {
+      "id": 9,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Turnaround sheet",
+      "pos": [
+        800,
+        0
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 7,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            8,
+            10,
+            13,
+            16,
+            19
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Create a character reference sheet of the same person shown in the attached photos.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nLayout: one 16:9 image, plain mid-grey studio background, soft even front lighting, natural\nskin texture with visible pores.\nPanels left to right: front head-and-shoulders, three-quarter left, left profile, full body\nstanding front-facing in simple neutral clothing, and a strip of four expressions (neutral,\nsmile, surprised, serious).\nNo text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "16:9",
+        "2K",
+        "HIGH",
+        1,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Create a character reference sheet of the same person shown in the attached photos.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nLayout: one 16:9 image, plain mid-grey studio background, soft even front lighting, natural\nskin texture with visible pores.\nPanels left to right: front head-and-shoulders, three-quarter left, left profile, full body\nstanding front-facing in simple neutral clothing, and a strip of four expressions (neutral,\nsmile, surprised, serious).\nNo text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "16:9",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 1,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 10,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        1280,
+        0
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 8
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/design/turnaround"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/design/turnaround"
+      }
+    },
+    {
+      "id": 11,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Front view",
+      "pos": [
+        1280,
+        700
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 9,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 10,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            11
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw a front-facing head-and-shoulders portrait, looking straight into the camera, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "4:5",
+        "2K",
+        "HIGH",
+        2,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a front-facing head-and-shoulders portrait, looking straight into the camera, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "4:5",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 2,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 12,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        1760,
+        700
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 11
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/design/front"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/design/front"
+      }
+    },
+    {
+      "id": 13,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Three-quarter view",
+      "pos": [
+        1280,
+        1400
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 12,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 13,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            14
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw a three-quarter head-and-shoulders portrait, head turned to their left, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "4:5",
+        "2K",
+        "HIGH",
+        3,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a three-quarter head-and-shoulders portrait, head turned to their left, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "4:5",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 3,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 14,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        1760,
+        1400
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 14
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/design/three-quarter"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/design/three-quarter"
+      }
+    },
+    {
+      "id": 15,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Profile view",
+      "pos": [
+        1280,
+        2100
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 15,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 16,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            17
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw a left profile head-and-shoulders portrait, facing fully to their left, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "4:5",
+        "2K",
+        "HIGH",
+        4,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a left profile head-and-shoulders portrait, facing fully to their left, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "4:5",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 4,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 16,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        1760,
+        2100
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 17
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/design/profile"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/design/profile"
+      }
+    },
+    {
+      "id": 17,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Full body view",
+      "pos": [
+        1280,
+        2800
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 18,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 19,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            20
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw a full-body portrait, standing front-facing in simple neutral clothing, head to feet in frame, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "9:16",
+        "2K",
+        "HIGH",
+        5,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a full-body portrait, standing front-facing in simple neutral clothing, head to feet in frame, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "9:16",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 5,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 18,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        1760,
+        2800
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 20
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/design/full-body"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/design/full-body"
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      6,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      3,
+      0,
+      6,
+      1,
+      "IMAGE"
+    ],
+    [
+      3,
+      4,
+      0,
+      6,
+      2,
+      "IMAGE"
+    ],
+    [
+      4,
+      5,
+      0,
+      6,
+      3,
+      "IMAGE"
+    ],
+    [
+      5,
+      6,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ],
+    [
+      6,
+      6,
+      0,
+      8,
+      0,
+      "IMAGE"
+    ],
+    [
+      7,
+      8,
+      0,
+      9,
+      0,
+      "IMAGE"
+    ],
+    [
+      8,
+      9,
+      0,
+      10,
+      0,
+      "IMAGE"
+    ],
+    [
+      9,
+      8,
+      0,
+      11,
+      0,
+      "IMAGE"
+    ],
+    [
+      10,
+      9,
+      0,
+      11,
+      1,
+      "IMAGE"
+    ],
+    [
+      11,
+      11,
+      0,
+      12,
+      0,
+      "IMAGE"
+    ],
+    [
+      12,
+      8,
+      0,
+      13,
+      0,
+      "IMAGE"
+    ],
+    [
+      13,
+      9,
+      0,
+      13,
+      1,
+      "IMAGE"
+    ],
+    [
+      14,
+      13,
+      0,
+      14,
+      0,
+      "IMAGE"
+    ],
+    [
+      15,
+      8,
+      0,
+      15,
+      0,
+      "IMAGE"
+    ],
+    [
+      16,
+      9,
+      0,
+      15,
+      1,
+      "IMAGE"
+    ],
+    [
+      17,
+      15,
+      0,
+      16,
+      0,
+      "IMAGE"
+    ],
+    [
+      18,
+      8,
+      0,
+      17,
+      0,
+      "IMAGE"
+    ],
+    [
+      19,
+      9,
+      0,
+      17,
+      1,
+      "IMAGE"
+    ],
+    [
+      20,
+      17,
+      0,
+      18,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "4 candidate faces, then the pick",
+      "bounding": [
+        -20,
+        -60,
+        800,
+        2820
+      ],
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "The sheet and views, from the picked face",
+      "bounding": [
+        780,
+        -60,
+        1340,
+        3560
+      ],
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6,
+      "offset": [
+        0,
+        0
+      ]
+    },
+    "frontendVersion": "1.53.6"
+  },
+  "version": 0.4
+}

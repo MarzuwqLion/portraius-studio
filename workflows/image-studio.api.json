@@ -1,0 +1,116 @@
+{
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-sheet.jpg"
+    },
+    "_meta": {
+      "title": "Character sheet"
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-front.jpg"
+    },
+    "_meta": {
+      "title": "Character front view"
+    }
+  },
+  "4": {
+    "class_type": "GeminiNanoBanana2V2",
+    "inputs": {
+      "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nA cinematic film still: LEAD at a rain-streaked window at night, lit by passing car lights, lost in thought.\nMedium shot from the waist up, anamorphic lens with oval bokeh and horizontal flares, lit only by practical lamps in the scene, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+      "model": "Gemini Nano Banana 2.1",
+      "model.aspect_ratio": "21:9",
+      "model.resolution": "2K",
+      "model.thinking_level": "HIGH",
+      "seed": 21,
+      "response_modalities": "IMAGE",
+      "system_prompt": "",
+      "temperature": 1,
+      "top_p": 0.95,
+      "model.images.image_1": [
+        "2",
+        0
+      ],
+      "model.images.image_2": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Film still (with a cast)"
+    }
+  },
+  "5": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "portraius/image/still",
+      "images": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save image"
+    }
+  },
+  "6": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-diner.jpg"
+    },
+    "_meta": {
+      "title": "Image to edit"
+    }
+  },
+  "7": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "satchel-sheet.jpg"
+    },
+    "_meta": {
+      "title": "Element sheet"
+    }
+  },
+  "8": {
+    "class_type": "GeminiNanoBanana2V2",
+    "inputs": {
+      "prompt": "Image 1 is the image to edit. Image 2 is the PROP.\nPut the PROP on the booth seat beside him. Keep everything else in the image exactly as it is.\nNatural skin texture with visible pores, real lens imperfections.",
+      "model": "Gemini Nano Banana 2.1",
+      "model.aspect_ratio": "4:5",
+      "model.resolution": "2K",
+      "model.thinking_level": "HIGH",
+      "seed": 22,
+      "response_modalities": "IMAGE",
+      "system_prompt": "",
+      "temperature": 1,
+      "top_p": 0.95,
+      "model.images.image_1": [
+        "6",
+        0
+      ],
+      "model.images.image_2": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Edit the image"
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "portraius/image/edit",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save image"
+    }
+  }
+}

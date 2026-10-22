@@ -1,241 +1,17 @@
 // The ComfyUI workflows in workflows/ (spec: ComfyUI workflows): the app's two
 // core flows as graphs of partner nodes, in the UI format and the Workflow
 // (API) format. They're built here from the app's own prompt code, so a graph
-// sends what the app sends; a test keeps the committed files in step.
+// sends what the app sends; a test keeps the committed files in step. The
+// rest of the studio's features are in studio.ts, the builder in graph.ts.
 //
-// Node IDs and inputs follow current ComfyUI (October 2026): Nano Banana 2.1
-// is GeminiNanoBanana2V2, Seedance 2.5 is ByteDance2FirstLastFrameNode plus
-// ByteDance2DraftToFinalVideoNode, and MiniMax H3 is
-// MinimaxHailuo03FirstLastFrameNode. Their per-model inputs are dynamic, so
-// they're named with dots ("model.resolution", "model.images.image_1").
-import { SHEET_PROMPT, SHEET_VIEWS, VIEW_LABEL, compositeInput, viewInput, type SheetView } from "@/lib/characters/sheet";
-import { compileImagePrompt, compileVideoPrompt, type CastMember } from "@/lib/prompts/compile";
+// Nano Banana 2.1 is GeminiNanoBanana2V2, Seedance 2.5 is
+// ByteDance2FirstLastFrameNode plus ByteDance2DraftToFinalVideoNode, and
+// MiniMax H3 is MinimaxHailuo03FirstLastFrameNode.
+import { compileImagePrompt, compileVideoPrompt } from "@/lib/prompts/compile";
 import type { CameraSelection } from "@/lib/prompts/camera";
 import { MODEL_IDS } from "@/lib/registry/models";
-
-type Value = string | number | boolean;
-type Link = [string, number];
-
-interface Slot {
-  name: string;
-  type: string;
-  optional?: boolean;
-  label?: string;
-  widget?: boolean; // a widget that takes a link instead (another node's output)
-}
-
-interface NodeSpec {
-  type: string;
-  title?: string;
-  pos: [number, number];
-  size: [number, number];
-  inputs?: Slot[];
-  outputs?: Slot[];
-  // Widgets in the node's own order. Names with "ui:" are interface-only (the
-  // seed's control_after_generate) and stay out of the API format.
-  widgets?: [string, Value][];
-  mode?: 0 | 4;  // 4: bypassed until the user turns it on
-  api?: boolean; // notes have no place in the API format
-}
-
-interface UiNode {
-  id: number;
-  type: string;
-  title?: string;
-  pos: [number, number];
-  size: [number, number];
-  flags: Record<string, never>;
-  order: number;
-  mode: number;
-  inputs: { name: string; type: string; link: number | null; shape?: number; label?: string; widget?: { name: string } }[];
-  outputs: { name: string; type: string; links: number[] | null }[];
-  properties: { "Node name for S&R": string };
-  widgets_values: Value[];
-  widgets_values_named?: Record<string, Value>;
-}
-
-export interface UiWorkflow {
-  id: string;
-  revision: number;
-  last_node_id: number;
-  last_link_id: number;
-  nodes: UiNode[];
-  links: [number, number, number, number, number, string][];
-  groups: { id: number; title: string; bounding: [number, number, number, number]; font_size: number; flags: Record<string, never> }[];
-  config: Record<string, never>;
-  extra: { ds: { scale: number; offset: [number, number] }; frontendVersion: string };
-  version: number;
-}
-
-export type ApiWorkflow = Record<string, { class_type: string; inputs: Record<string, Value | Link>; _meta: { title: string } }>;
-
-class Graph {
-  private nodes: UiNode[] = [];
-  private links: UiWorkflow["links"] = [];
-  private groups: UiWorkflow["groups"] = [];
-  private api: ApiWorkflow = {};
-  private specs = new Map<number, NodeSpec>();
-
-  constructor(private readonly id: string) {}
-
-  add(spec: NodeSpec): number {
-    const id = this.nodes.length + 1;
-    const widgets = spec.widgets ?? [];
-    this.nodes.push({
-      id,
-      type: spec.type,
-      ...(spec.title ? { title: spec.title } : {}),
-      pos: spec.pos,
-      size: spec.size,
-      flags: {},
-      order: this.nodes.length,
-      mode: spec.mode ?? 0,
-      inputs: (spec.inputs ?? []).map((s) => ({
-        name: s.name,
-        type: s.type,
-        link: null,
-        ...(s.optional ? { shape: 7 } : {}),
-        ...(s.label ? { label: s.label } : {}),
-        ...(s.widget ? { widget: { name: s.name } } : {}),
-      })),
-      outputs: (spec.outputs ?? []).map((s) => ({ name: s.name, type: s.type, links: null })),
-      properties: { "Node name for S&R": spec.type },
-      widgets_values: widgets.map(([, v]) => v),
-      ...(widgets.length ? { widgets_values_named: Object.fromEntries(widgets.map(([k, v]) => [k.replace(/^ui:/, ""), v])) } : {}),
-    });
-    this.specs.set(id, spec);
-    // Like ComfyUI's own "Export (API)", bypassed nodes are left out.
-    if (spec.api !== false && spec.mode !== 4) {
-      this.api[String(id)] = {
-        class_type: spec.type,
-        inputs: Object.fromEntries(widgets.filter(([k]) => !k.startsWith("ui:"))),
-        _meta: { title: spec.title ?? spec.type },
-      };
-    }
-    return id;
-  }
-
-  link(from: number, output: number, to: number, input: string): void {
-    const id = this.links.length + 1;
-    const source = this.nodes[from - 1]!;
-    const target = this.nodes[to - 1]!;
-    const slot = target.inputs.findIndex((i) => i.name === input);
-    if (slot === -1) throw new Error(`${target.type} has no input ${input}`);
-    const type = source.outputs[output]!.type;
-    this.links.push([id, from, output, to, slot, type]);
-    (source.outputs[output]!.links ??= []).push(id);
-    target.inputs[slot]!.link = id;
-    if (this.api[String(to)]) this.api[String(to)]!.inputs[input] = [String(from), output];
-  }
-
-  group(title: string, bounding: [number, number, number, number]): void {
-    this.groups.push({ id: this.groups.length + 1, title, bounding, font_size: 24, flags: {} });
-  }
-
-  build(): { ui: UiWorkflow; api: ApiWorkflow } {
-    return {
-      ui: {
-        id: this.id,
-        revision: 0,
-        last_node_id: this.nodes.length,
-        last_link_id: this.links.length,
-        nodes: this.nodes,
-        links: this.links,
-        groups: this.groups,
-        config: {},
-        extra: { ds: { scale: 0.6, offset: [0, 0] }, frontendVersion: "1.53.6" },
-        version: 0.4,
-      },
-      api: this.api,
-    };
-  }
-}
-
-// ---- Nodes ----
-
-const note = (text: string, pos: [number, number], size: [number, number] = [420, 360]): NodeSpec => ({
-  type: "MarkdownNote",
-  title: "Note",
-  pos,
-  size,
-  widgets: [["ui:text", text]],
-  api: false,
-});
-
-const loadImage = (file: string, title: string, pos: [number, number]): NodeSpec => ({
-  type: "LoadImage",
-  title,
-  pos,
-  size: [300, 360],
-  outputs: [
-    { name: "IMAGE", type: "IMAGE" },
-    { name: "MASK", type: "MASK" },
-  ],
-  widgets: [
-    ["image", file],
-    ["ui:upload", "image"],
-  ],
-});
-
-// Nano Banana 2.1 the way the app calls it: no system prompt, image output,
-// "Best" quality (HIGH thinking) unless asked otherwise.
-function nanoBanana(o: { title: string; prompt: string; aspect: string; images: number; pos: [number, number]; seed: number; promptInput?: boolean }): NodeSpec {
-  const slots = o.images + 1; // the node always offers one more image slot
-  return {
-    type: "GeminiNanoBanana2V2",
-    title: o.title,
-    pos: o.pos,
-    size: [420, 620],
-    inputs: [
-      ...(o.promptInput ? [{ name: "prompt", type: "STRING", widget: true }] : []),
-      ...Array.from({ length: slots }, (_, i) => ({ name: `model.images.image_${i + 1}`, type: "IMAGE", optional: true, label: `image_${i + 1}` })),
-      { name: "model.files", type: "GEMINI_INPUT_FILES", optional: true },
-    ],
-    outputs: [
-      { name: "IMAGE", type: "IMAGE" },
-      { name: "STRING", type: "STRING" },
-      { name: "thought_image", type: "IMAGE" },
-    ],
-    widgets: [
-      ["prompt", o.prompt],
-      ["model", "Gemini Nano Banana 2.1"],
-      ["model.aspect_ratio", o.aspect],
-      ["model.resolution", "2K"],
-      ["model.thinking_level", "HIGH"],
-      ["seed", o.seed],
-      ["ui:control_after_generate", "randomize"],
-      ["response_modalities", "IMAGE"],
-      ["system_prompt", ""],
-      ["temperature", 1],
-      ["top_p", 0.95],
-    ],
-  };
-}
-
-const saveImage = (prefix: string, pos: [number, number]): NodeSpec => ({
-  type: "SaveImage",
-  title: "Save image",
-  pos,
-  size: [320, 380],
-  inputs: [{ name: "images", type: "IMAGE" }],
-  widgets: [["filename_prefix", prefix]],
-});
-
-const saveVideo = (prefix: string, pos: [number, number], mode: 0 | 4 = 0): NodeSpec => ({
-  type: "SaveVideo",
-  title: "Save video",
-  pos,
-  size: [420, 380],
-  mode,
-  inputs: [{ name: "video", type: "VIDEO" }],
-  outputs: [{ name: "video", type: "VIDEO" }],
-  widgets: [
-    ["filename_prefix", prefix],
-    ["format", "auto"],
-    ["format.codec", "auto"],
-    ["ui:codec", "auto"],
-  ],
-});
+import { Graph, LEAD, WALT_FILES, h3FirstLast, loadImage, nanoBanana, note, previewText, saveImage, saveVideo, seedanceFinal, sheetNodes, type Workflow } from "./graph";
+import * as studio from "./studio";
 
 // ---- Character sheet: photos to turnaround sheet ----
 
@@ -253,42 +29,18 @@ Only use photos of yourself, or of someone who made their own character and agre
 
 Needs a Comfy account with credits: these are partner nodes.`;
 
-export function characterSheetWorkflow(): { ui: UiWorkflow; api: ApiWorkflow } {
+export function characterSheetWorkflow(): Workflow {
   const g = new Graph("7d1b6c2e-4a7e-4f0e-9a51-5c3d2b1a0001");
-  const dummy = { mime: "image/jpeg" as const, base64: "" };
   g.add(note(NOTE_SHEET, [-560, 0]));
   const photos = SHEET_PHOTOS.map((file, i) => g.add(loadImage(file, `Photo ${i + 1}`, [0, i * 420])));
-
-  const composite = g.add(nanoBanana({ title: "Turnaround sheet", prompt: SHEET_PROMPT, aspect: compositeInput([dummy]).aspectRatio, images: photos.length, pos: [400, 0], seed: 1 }));
-  photos.forEach((p, i) => g.link(p, 0, composite, `model.images.image_${i + 1}`));
-  const saveComposite = g.add(saveImage("portraius/sheet/turnaround", [880, 0]));
-  g.link(composite, 0, saveComposite, "images");
-
-  SHEET_VIEWS.forEach((view: SheetView, i) => {
-    const input = viewInput(view, [], dummy);
-    const y = 700 + i * 700;
-    const node = g.add(nanoBanana({ title: `${VIEW_LABEL[view]} view`, prompt: input.prompt, aspect: input.aspectRatio, images: photos.length + 1, pos: [880, y], seed: 2 + i }));
-    photos.forEach((p, j) => g.link(p, 0, node, `model.images.image_${j + 1}`));
-    g.link(composite, 0, node, `model.images.image_${photos.length + 1}`);
-    const save = g.add(saveImage(`portraius/sheet/${view.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}`, [1360, y]));
-    g.link(node, 0, save, "images");
-  });
+  sheetNodes(g, photos, "portraius/sheet");
   return g.build();
 }
 
 // ---- Still first video: a character still, then an animated clip ----
 
-// The sample character's files, as shipped in public/samples/.
-export const STILL_FIRST_FILES = { sheet: "walt-sheet.jpg", front: "walt-front.jpg" };
+export const STILL_FIRST_FILES = WALT_FILES;
 
-const LEAD: CastMember = {
-  slot: "lead",
-  name: "Walt Harmon",
-  kind: "person",
-  description: "Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.",
-  // A designed character has no photos: his front view stands in for one.
-  references: ["sheet", "front"],
-};
 const SCENE = "{lead} looks up from a sealed envelope toward the diner door, and almost smiles";
 const STILL_CAMERA: CameraSelection = { size: "CU", lens: "35mm", lighting: "practicals" };
 const EMPTY_SCENE = "Rain streaks the diner window at night. Inside, an empty booth and a cup of coffee going cold under a hanging lamp";
@@ -307,7 +59,7 @@ file: they're \`sheet/turnaround.png\` and \`sheet/front.png\`. The samples are 
 draft_task_id from "Preview as Text" into "Seedance 2.5 final", turn that node and its Save Video back on
 (they start bypassed), and run again for the 1080p final. Nothing is re-sent.`;
 
-export function stillFirstVideoWorkflow(): { ui: UiWorkflow; api: ApiWorkflow } {
+export function stillFirstVideoWorkflow(): Workflow {
   const g = new Graph("3c9e0f1a-8b2d-4c6e-9f70-5c3d2b1a0002");
   g.add(note(NOTE_VIDEO, [-560, 0], [460, 520]));
 
@@ -322,26 +74,15 @@ export function stillFirstVideoWorkflow(): { ui: UiWorkflow; api: ApiWorkflow } 
   g.link(still, 0, saveStill, "images");
 
   const motion: CameraSelection = { ...STILL_CAMERA, movement: "slow-push-in" };
-  const h3 = g.add({
-    type: "MinimaxHailuo03FirstLastFrameNode",
-    title: "MiniMax H3 (clips with people)",
-    pos: [880, 420],
-    size: [420, 340],
-    inputs: [
-      { name: "first_frame", type: "IMAGE" },
-      { name: "last_frame", type: "IMAGE", optional: true },
-    ],
-    outputs: [{ name: "VIDEO", type: "VIDEO" }],
-    widgets: [
-      ["model", "MiniMax H3"],
-      ["model.prompt", compileVideoPrompt({ scene: SCENE, cast: [LEAD], camera: motion, modelId: MODEL_IDS.minimaxH3, withReferences: false })],
-      ["model.resolution", "768P"],
-      ["model.duration", 5],
-      ["seed", 7],
-      ["ui:control_after_generate", "randomize"],
-      ["watermark", false],
-    ],
-  });
+  const h3 = g.add(
+    h3FirstLast({
+      title: "MiniMax H3 (clips with people)",
+      prompt: compileVideoPrompt({ scene: SCENE, cast: [LEAD], camera: motion, modelId: MODEL_IDS.minimaxH3, withReferences: false }),
+      pos: [880, 420],
+      duration: 5,
+      seed: 7,
+    }),
+  );
   g.link(still, 0, h3, "first_frame");
   const saveH3 = g.add(saveVideo("video/portraius-still-first", [1360, 420]));
   g.link(h3, 0, saveH3, "video");
@@ -383,20 +124,9 @@ export function stillFirstVideoWorkflow(): { ui: UiWorkflow; api: ApiWorkflow } 
   g.link(emptyStill, 0, draft, "first_frame");
   const saveDraft = g.add(saveVideo("video/portraius-draft", [1360, y]));
   g.link(draft, 0, saveDraft, "video");
-  const taskId = g.add({ type: "PreviewAny", title: "Preview as Text", pos: [1360, y + 420], size: [420, 160], inputs: [{ name: "source", type: "*" }] });
+  const taskId = g.add(previewText([1360, y + 420]));
   g.link(draft, 1, taskId, "source");
-  const final = g.add({
-    type: "ByteDance2DraftToFinalVideoNode",
-    title: "Seedance 2.5 final (1080p)",
-    pos: [1820, y],
-    size: [420, 160],
-    mode: 4,
-    outputs: [{ name: "VIDEO", type: "VIDEO" }],
-    widgets: [
-      ["draft_task_id", ""],
-      ["watermark", false],
-    ],
-  });
+  const final = g.add(seedanceFinal([1820, y]));
   const saveFinal = g.add(saveVideo("video/portraius-final", [1820, y + 220], 4));
   g.link(final, 0, saveFinal, "video");
   g.group("Without people: Seedance 2.5 draft, then the final from its ID", [-20, y - 60, 2300, 820]);
@@ -419,7 +149,7 @@ A character you made in Portraius Studio is one \`.portraius\` file. This graph 
 
 A person made from photos needs their consent record, as in the app. Nano Banana 2.1 is a partner node: it needs a Comfy account with credits.`;
 
-export function portraiusStillWorkflow(): { ui: UiWorkflow; api: ApiWorkflow } {
+export function portraiusStillWorkflow(): Workflow {
   const g = new Graph("7d1b6c2e-4a7e-4f0e-9a51-5c3d2b1a0003");
   g.add(note(NOTE_PACK, [-560, 0]));
   const character = g.add({
@@ -488,6 +218,20 @@ export function portraiusStillWorkflow(): { ui: UiWorkflow; api: ApiWorkflow } {
   return g.build();
 }
 
-export function allWorkflows(): Record<string, { ui: UiWorkflow; api: ApiWorkflow }> {
-  return { "character-sheet": characterSheetWorkflow(), "still-first-video": stillFirstVideoWorkflow() };
+// Every graph in workflows/, by file name.
+export function allWorkflows(): Record<string, Workflow> {
+  return {
+    "character-sheet": characterSheetWorkflow(),
+    "still-first-video": stillFirstVideoWorkflow(),
+    "design-from-text": studio.designFromTextWorkflow(),
+    "element-sheet": studio.elementSheetWorkflow(),
+    "image-studio": studio.imageStudioWorkflow(),
+    "video-studio": studio.videoStudioWorkflow(),
+    recast: studio.recastWorkflow(),
+    "make-it-real": studio.makeItRealWorkflow(),
+    "add-a-line": studio.addALineWorkflow(),
+    "kling-one-take": studio.klingOneTakeWorkflow(),
+    "director-scene": studio.directorSceneWorkflow(),
+    "draft-shots": studio.draftShotsWorkflow(),
+  };
 }

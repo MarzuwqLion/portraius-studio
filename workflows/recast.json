@@ -1,0 +1,1286 @@
+{
+  "id": "7d1b6c2e-4a7e-4f0e-9a51-5c3d2b1a0008",
+  "revision": 0,
+  "last_node_id": 20,
+  "last_link_id": 21,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "title": "Note",
+      "pos": [
+        -560,
+        0
+      ],
+      "size": [
+        460,
+        720
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "MarkdownNote"
+      },
+      "widgets_values": [
+        "## Portraius Studio: Recast\n\nA clip keeps its motion and camera while a character takes over, the look changes or one thing is swapped. Only use clips you filmed or have the rights to.\n\n**Motion transfer with a new setting (top row).** The \"Concert stage\" preset: MiniMax H3 performs the clip as Walt, HappyHorse moves him to a concert stage (H3 keeps the clip's setting, so the app runs this as a second step), and the clip's own audio goes back on, as the music-video presets do. Put a character's sheet and front view in `ComfyUI/input/` as `walt-sheet.jpg` and `walt-front.jpg`: unzip any `.portraius` file, they're `sheet/turnaround.png` and `sheet/front.png`. The samples are in this repo's `public/samples/`. The clip is `concert-original.mp4` from `public/samples/`.\n\n**Style swap (middle row).** The \"Claymation\" preset on the same clip, with no cast.\n\n**Object swap (bottom row).** The \"Product swap\" preset on HappyHorse: put a clip of someone holding a product in as `my-product-clip.mp4` and the replacement's sheet as `satchel-sheet.jpg`. Set the edit's ratio to your clip's shape. HappyHorse's node has no setting to keep the original audio, so the graph puts it back.\n\nH3 runs 4 to 15 s: set each H3 node's duration to your clip's length. Needs a Comfy account with credits: these are partner nodes."
+      ],
+      "widgets_values_named": {
+        "text": "## Portraius Studio: Recast\n\nA clip keeps its motion and camera while a character takes over, the look changes or one thing is swapped. Only use clips you filmed or have the rights to.\n\n**Motion transfer with a new setting (top row).** The \"Concert stage\" preset: MiniMax H3 performs the clip as Walt, HappyHorse moves him to a concert stage (H3 keeps the clip's setting, so the app runs this as a second step), and the clip's own audio goes back on, as the music-video presets do. Put a character's sheet and front view in `ComfyUI/input/` as `walt-sheet.jpg` and `walt-front.jpg`: unzip any `.portraius` file, they're `sheet/turnaround.png` and `sheet/front.png`. The samples are in this repo's `public/samples/`. The clip is `concert-original.mp4` from `public/samples/`.\n\n**Style swap (middle row).** The \"Claymation\" preset on the same clip, with no cast.\n\n**Object swap (bottom row).** The \"Product swap\" preset on HappyHorse: put a clip of someone holding a product in as `my-product-clip.mp4` and the replacement's sheet as `satchel-sheet.jpg`. Set the edit's ratio to your clip's shape. HappyHorse's node has no setting to keep the original audio, so the graph puts it back.\n\nH3 runs 4 to 15 s: set each H3 node's duration to your clip's length. Needs a Comfy account with credits: these are partner nodes."
+      }
+    },
+    {
+      "id": 2,
+      "type": "LoadVideo",
+      "title": "Clip to recast",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        320,
+        360
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            3,
+            7,
+            12
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadVideo"
+      },
+      "widgets_values": [
+        "concert-original.mp4",
+        "image"
+      ],
+      "widgets_values_named": {
+        "file": "concert-original.mp4",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "title": "Character sheet",
+      "pos": [
+        0,
+        400
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "walt-sheet.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "walt-sheet.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 4,
+      "type": "LoadImage",
+      "title": "Character front view",
+      "pos": [
+        0,
+        820
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "walt-front.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "walt-front.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 5,
+      "type": "MinimaxHailuo03ReferenceNode",
+      "title": "MiniMax H3 (motion transfer)",
+      "pos": [
+        400,
+        0
+      ],
+      "size": [
+        420,
+        420
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.reference_images.image_1",
+          "type": "IMAGE",
+          "link": 1,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.reference_images.image_2",
+          "type": "IMAGE",
+          "link": 2,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.reference_images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.reference_videos.video_1",
+          "type": "VIDEO",
+          "link": 3,
+          "shape": 7,
+          "label": "video_1"
+        },
+        {
+          "name": "model.reference_videos.video_2",
+          "type": "VIDEO",
+          "link": null,
+          "shape": 7,
+          "label": "video_2"
+        },
+        {
+          "name": "model.reference_audios.audio_1",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7,
+          "label": "audio_1"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            4,
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MinimaxHailuo03ReferenceNode"
+      },
+      "widgets_values": [
+        "MiniMax H3",
+        "Reference image 1 is the reference sheet for LEAD (Walt Harmon). Reference image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD performs exactly the movement, timing and camera of the reference video.",
+        "768P",
+        "16:9",
+        8,
+        41,
+        "randomize",
+        false
+      ],
+      "widgets_values_named": {
+        "model": "MiniMax H3",
+        "model.prompt": "Reference image 1 is the reference sheet for LEAD (Walt Harmon). Reference image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD performs exactly the movement, timing and camera of the reference video.",
+        "model.resolution": "768P",
+        "model.ratio": "16:9",
+        "model.duration": 8,
+        "seed": 41,
+        "control_after_generate": "randomize",
+        "watermark": false
+      }
+    },
+    {
+      "id": 6,
+      "type": "SaveVideo",
+      "title": "Save video",
+      "pos": [
+        400,
+        500
+      ],
+      "size": [
+        420,
+        380
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo"
+      },
+      "widgets_values": [
+        "video/portraius-recast-performer",
+        "auto",
+        "auto",
+        "auto"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "video/portraius-recast-performer",
+        "format": "auto",
+        "format.codec": "auto",
+        "codec": "auto"
+      }
+    },
+    {
+      "id": 7,
+      "type": "HappyHorseVideoEditApi",
+      "title": "HappyHorse (new setting)",
+      "pos": [
+        880,
+        0
+      ],
+      "size": [
+        420,
+        420
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 5
+        },
+        {
+          "name": "model.reference_images.image1",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image1"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            6
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HappyHorseVideoEditApi"
+      },
+      "widgets_values": [
+        "happyhorse-1.0-video-edit",
+        "Move the person to a new location: a large concert stage with crowd lights and haze behind. Replace everything around them, including walls, windows, furniture and props, with that location. Keep the person, their face, their hair, their clothes and their motion exactly as they are.",
+        "720P",
+        "16:9",
+        42,
+        "randomize",
+        false
+      ],
+      "widgets_values_named": {
+        "model": "happyhorse-1.0-video-edit",
+        "model.prompt": "Move the person to a new location: a large concert stage with crowd lights and haze behind. Replace everything around them, including walls, windows, furniture and props, with that location. Keep the person, their face, their hair, their clothes and their motion exactly as they are.",
+        "model.resolution": "720P",
+        "model.ratio": "16:9",
+        "seed": 42,
+        "control_after_generate": "randomize",
+        "watermark": false
+      }
+    },
+    {
+      "id": 8,
+      "type": "GetVideoComponents",
+      "title": "Edited frames",
+      "pos": [
+        1360,
+        0
+      ],
+      "size": [
+        300,
+        160
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 6
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            8
+          ]
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "name": "fps",
+          "type": "FLOAT",
+          "links": [
+            9
+          ]
+        },
+        {
+          "name": "bit_depth",
+          "type": "COMBO",
+          "links": null
+        },
+        {
+          "name": "color_space",
+          "type": "COMBO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GetVideoComponents"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 9,
+      "type": "GetVideoComponents",
+      "title": "Original audio",
+      "pos": [
+        1360,
+        220
+      ],
+      "size": [
+        300,
+        160
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            10
+          ]
+        },
+        {
+          "name": "fps",
+          "type": "FLOAT",
+          "links": null
+        },
+        {
+          "name": "bit_depth",
+          "type": "COMBO",
+          "links": null
+        },
+        {
+          "name": "color_space",
+          "type": "COMBO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GetVideoComponents"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 10,
+      "type": "CreateVideo",
+      "title": "Edit with the original audio",
+      "pos": [
+        1720,
+        0
+      ],
+      "size": [
+        300,
+        200
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 8
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 10,
+          "shape": 7
+        },
+        {
+          "name": "fps",
+          "type": "FLOAT",
+          "link": 9,
+          "widget": {
+            "name": "fps"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            11
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CreateVideo"
+      },
+      "widgets_values": [
+        30,
+        "auto",
+        "sRGB",
+        "none"
+      ],
+      "widgets_values_named": {
+        "fps": 30,
+        "bit_depth": "auto",
+        "color_space": "sRGB",
+        "codec": "none"
+      }
+    },
+    {
+      "id": 11,
+      "type": "SaveVideo",
+      "title": "Save video",
+      "pos": [
+        2080,
+        0
+      ],
+      "size": [
+        420,
+        380
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo"
+      },
+      "widgets_values": [
+        "video/portraius-recast",
+        "auto",
+        "auto",
+        "auto"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "video/portraius-recast",
+        "format": "auto",
+        "format.codec": "auto",
+        "codec": "auto"
+      }
+    },
+    {
+      "id": 12,
+      "type": "MinimaxHailuo03ReferenceNode",
+      "title": "MiniMax H3 (claymation)",
+      "pos": [
+        400,
+        1400
+      ],
+      "size": [
+        420,
+        420
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.reference_images.image_1",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.reference_videos.video_1",
+          "type": "VIDEO",
+          "link": 12,
+          "shape": 7,
+          "label": "video_1"
+        },
+        {
+          "name": "model.reference_videos.video_2",
+          "type": "VIDEO",
+          "link": null,
+          "shape": 7,
+          "label": "video_2"
+        },
+        {
+          "name": "model.reference_audios.audio_1",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7,
+          "label": "audio_1"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            13
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MinimaxHailuo03ReferenceNode"
+      },
+      "widgets_values": [
+        "MiniMax H3",
+        "Recreate the reference video exactly, with the same motion, timing and camera, as claymation: handmade clay figures and miniature sets.",
+        "768P",
+        "16:9",
+        8,
+        43,
+        "randomize",
+        false
+      ],
+      "widgets_values_named": {
+        "model": "MiniMax H3",
+        "model.prompt": "Recreate the reference video exactly, with the same motion, timing and camera, as claymation: handmade clay figures and miniature sets.",
+        "model.resolution": "768P",
+        "model.ratio": "16:9",
+        "model.duration": 8,
+        "seed": 43,
+        "control_after_generate": "randomize",
+        "watermark": false
+      }
+    },
+    {
+      "id": 13,
+      "type": "SaveVideo",
+      "title": "Save video",
+      "pos": [
+        880,
+        1400
+      ],
+      "size": [
+        420,
+        380
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo"
+      },
+      "widgets_values": [
+        "video/portraius-recast-style",
+        "auto",
+        "auto",
+        "auto"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "video/portraius-recast-style",
+        "format": "auto",
+        "format.codec": "auto",
+        "codec": "auto"
+      }
+    },
+    {
+      "id": 14,
+      "type": "LoadVideo",
+      "title": "Clip with the product",
+      "pos": [
+        0,
+        2000
+      ],
+      "size": [
+        320,
+        360
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            14,
+            17
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadVideo"
+      },
+      "widgets_values": [
+        "my-product-clip.mp4",
+        "image"
+      ],
+      "widgets_values_named": {
+        "file": "my-product-clip.mp4",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 15,
+      "type": "LoadImage",
+      "title": "Replacement sheet",
+      "pos": [
+        0,
+        2400
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            15
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "satchel-sheet.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "satchel-sheet.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 16,
+      "type": "HappyHorseVideoEditApi",
+      "title": "HappyHorse (object swap)",
+      "pos": [
+        400,
+        2000
+      ],
+      "size": [
+        420,
+        420
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 14
+        },
+        {
+          "name": "model.reference_images.image1",
+          "type": "IMAGE",
+          "link": 15,
+          "shape": 7,
+          "label": "image1"
+        },
+        {
+          "name": "model.reference_images.image2",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image2"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            16
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HappyHorseVideoEditApi"
+      },
+      "widgets_values": [
+        "happyhorse-1.0-video-edit",
+        "Replace the product held in the video with the prop from the reference image. Keep the hands, the motion and everything else unchanged.",
+        "720P",
+        "16:9",
+        44,
+        "randomize",
+        false
+      ],
+      "widgets_values_named": {
+        "model": "happyhorse-1.0-video-edit",
+        "model.prompt": "Replace the product held in the video with the prop from the reference image. Keep the hands, the motion and everything else unchanged.",
+        "model.resolution": "720P",
+        "model.ratio": "16:9",
+        "seed": 44,
+        "control_after_generate": "randomize",
+        "watermark": false
+      }
+    },
+    {
+      "id": 17,
+      "type": "GetVideoComponents",
+      "title": "Edited frames",
+      "pos": [
+        880,
+        2000
+      ],
+      "size": [
+        300,
+        160
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            18
+          ]
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "name": "fps",
+          "type": "FLOAT",
+          "links": [
+            19
+          ]
+        },
+        {
+          "name": "bit_depth",
+          "type": "COMBO",
+          "links": null
+        },
+        {
+          "name": "color_space",
+          "type": "COMBO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GetVideoComponents"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 18,
+      "type": "GetVideoComponents",
+      "title": "Original audio",
+      "pos": [
+        880,
+        2220
+      ],
+      "size": [
+        300,
+        160
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 17
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            20
+          ]
+        },
+        {
+          "name": "fps",
+          "type": "FLOAT",
+          "links": null
+        },
+        {
+          "name": "bit_depth",
+          "type": "COMBO",
+          "links": null
+        },
+        {
+          "name": "color_space",
+          "type": "COMBO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GetVideoComponents"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 19,
+      "type": "CreateVideo",
+      "title": "Edit with the original audio",
+      "pos": [
+        1240,
+        2000
+      ],
+      "size": [
+        300,
+        200
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 18
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 20,
+          "shape": 7
+        },
+        {
+          "name": "fps",
+          "type": "FLOAT",
+          "link": 19,
+          "widget": {
+            "name": "fps"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            21
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CreateVideo"
+      },
+      "widgets_values": [
+        30,
+        "auto",
+        "sRGB",
+        "none"
+      ],
+      "widgets_values_named": {
+        "fps": 30,
+        "bit_depth": "auto",
+        "color_space": "sRGB",
+        "codec": "none"
+      }
+    },
+    {
+      "id": 20,
+      "type": "SaveVideo",
+      "title": "Save video",
+      "pos": [
+        1600,
+        2000
+      ],
+      "size": [
+        420,
+        380
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 21
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo"
+      },
+      "widgets_values": [
+        "video/portraius-recast-swap",
+        "auto",
+        "auto",
+        "auto"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "video/portraius-recast-swap",
+        "format": "auto",
+        "format.codec": "auto",
+        "codec": "auto"
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      3,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      4,
+      0,
+      5,
+      1,
+      "IMAGE"
+    ],
+    [
+      3,
+      2,
+      0,
+      5,
+      3,
+      "VIDEO"
+    ],
+    [
+      4,
+      5,
+      0,
+      6,
+      0,
+      "VIDEO"
+    ],
+    [
+      5,
+      5,
+      0,
+      7,
+      0,
+      "VIDEO"
+    ],
+    [
+      6,
+      7,
+      0,
+      8,
+      0,
+      "VIDEO"
+    ],
+    [
+      7,
+      2,
+      0,
+      9,
+      0,
+      "VIDEO"
+    ],
+    [
+      8,
+      8,
+      0,
+      10,
+      0,
+      "IMAGE"
+    ],
+    [
+      9,
+      8,
+      2,
+      10,
+      2,
+      "FLOAT"
+    ],
+    [
+      10,
+      9,
+      1,
+      10,
+      1,
+      "AUDIO"
+    ],
+    [
+      11,
+      10,
+      0,
+      11,
+      0,
+      "VIDEO"
+    ],
+    [
+      12,
+      2,
+      0,
+      12,
+      1,
+      "VIDEO"
+    ],
+    [
+      13,
+      12,
+      0,
+      13,
+      0,
+      "VIDEO"
+    ],
+    [
+      14,
+      14,
+      0,
+      16,
+      0,
+      "VIDEO"
+    ],
+    [
+      15,
+      15,
+      0,
+      16,
+      1,
+      "IMAGE"
+    ],
+    [
+      16,
+      16,
+      0,
+      17,
+      0,
+      "VIDEO"
+    ],
+    [
+      17,
+      14,
+      0,
+      18,
+      0,
+      "VIDEO"
+    ],
+    [
+      18,
+      17,
+      0,
+      19,
+      0,
+      "IMAGE"
+    ],
+    [
+      19,
+      17,
+      2,
+      19,
+      2,
+      "FLOAT"
+    ],
+    [
+      20,
+      18,
+      1,
+      19,
+      1,
+      "AUDIO"
+    ],
+    [
+      21,
+      19,
+      0,
+      20,
+      0,
+      "VIDEO"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Motion transfer, a new setting and the original audio: Concert stage",
+      "bounding": [
+        -20,
+        -60,
+        2540,
+        1300
+      ],
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Style swap: Claymation",
+      "bounding": [
+        360,
+        1340,
+        960,
+        520
+      ],
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "Object swap: Product swap",
+      "bounding": [
+        -20,
+        1940,
+        2080,
+        880
+      ],
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6,
+      "offset": [
+        0,
+        0
+      ]
+    },
+    "frontendVersion": "1.53.6"
+  },
+  "version": 0.4
+}

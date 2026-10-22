@@ -1,0 +1,153 @@
+{
+  "2": {
+    "class_type": "ElevenLabsVoiceSelector",
+    "inputs": {
+      "voice": "George (male, british)"
+    },
+    "_meta": {
+      "title": "Voice"
+    }
+  },
+  "3": {
+    "class_type": "ElevenLabsTextToSpeech",
+    "inputs": {
+      "text": "I wrote this forty years ago, and I never sent it.",
+      "stability": 0.5,
+      "apply_text_normalization": "auto",
+      "model": "eleven_v4",
+      "model.similarity_boost": 0.75,
+      "language_code": "",
+      "seed": 1,
+      "output_format": "mp3_44100_192",
+      "voice": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "The line (ElevenLabs v4)"
+    }
+  },
+  "4": {
+    "class_type": "SaveAudioAdvanced",
+    "inputs": {
+      "filename_prefix": "audio/portraius-line",
+      "format": "mp3",
+      "format.quality": "V0",
+      "audio": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save audio"
+    }
+  },
+  "5": {
+    "class_type": "LoadVideo",
+    "inputs": {
+      "file": "walt-looks-up.mp4"
+    },
+    "_meta": {
+      "title": "Clip to lip-sync"
+    }
+  },
+  "6": {
+    "class_type": "SyncLipSyncNode",
+    "inputs": {
+      "seed": 42,
+      "model": "sync-3",
+      "model.sync_mode": "cut_off",
+      "model.speaker_selection": "default",
+      "model.speaker_frame": 0,
+      "model.speaker_x": 0,
+      "model.speaker_y": 0,
+      "video": [
+        "5",
+        0
+      ],
+      "audio": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Sync-3 lip sync"
+    }
+  },
+  "7": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "video/portraius-lip-sync",
+      "format": "auto",
+      "format.codec": "auto",
+      "video": [
+        "6",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save video"
+    }
+  },
+  "8": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-sheet.jpg"
+    },
+    "_meta": {
+      "title": "Character sheet"
+    }
+  },
+  "9": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-front.jpg"
+    },
+    "_meta": {
+      "title": "Character front view"
+    }
+  },
+  "10": {
+    "class_type": "MinimaxHailuo03ReferenceNode",
+    "inputs": {
+      "model": "MiniMax H3",
+      "model.prompt": "Reference image 1 is the reference sheet for LEAD (Walt Harmon). Reference image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD sits in the corner booth of a late-night diner and looks across the table. LEAD speaks the words in the reference audio, lips moving in sync with it.\nMedium close-up from the chest up, 50mm lens with a natural perspective.",
+      "model.resolution": "768P",
+      "model.ratio": "16:9",
+      "model.duration": 4,
+      "seed": 51,
+      "watermark": false,
+      "model.reference_images.image_1": [
+        "8",
+        0
+      ],
+      "model.reference_images.image_2": [
+        "9",
+        0
+      ],
+      "model.reference_audios.audio_1": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "MiniMax H3 (speaking clip)"
+    }
+  },
+  "11": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "video/portraius-speaking",
+      "format": "auto",
+      "format.codec": "auto",
+      "video": [
+        "10",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save video"
+    }
+  }
+}

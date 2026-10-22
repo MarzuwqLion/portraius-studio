@@ -1,0 +1,40 @@
+{
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-diner.jpg"
+    },
+    "_meta": {
+      "title": "Still"
+    }
+  },
+  "3": {
+    "class_type": "MagnificImageSkinEnhancerNode",
+    "inputs": {
+      "sharpen": 10,
+      "smart_grain": 4,
+      "mode": "faithful",
+      "mode.skin_detail": 80,
+      "image": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Skin enhancer (faithful)"
+    }
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "portraius/real",
+      "images": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save image"
+    }
+  }
+}

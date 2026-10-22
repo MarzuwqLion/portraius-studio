@@ -1,0 +1,202 @@
+{
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "my-prop-1.jpg"
+    },
+    "_meta": {
+      "title": "Prop photo"
+    }
+  },
+  "3": {
+    "class_type": "GeminiNanoBanana2V2",
+    "inputs": {
+      "prompt": "Create a clean reference sheet of the object shown in the attached photos.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nLayout: one 16:9 image. Plain mid-grey studio background, soft even lighting, like a product photograph.\nPanels left to right: the front view of the object; a three-quarter view of the object; the side view of the object; a close-up of the object's materials, surface and details.\nDo not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+      "model": "Gemini Nano Banana 2.1",
+      "model.aspect_ratio": "16:9",
+      "model.resolution": "2K",
+      "model.thinking_level": "HIGH",
+      "seed": 1,
+      "response_modalities": "IMAGE",
+      "system_prompt": "",
+      "temperature": 1,
+      "top_p": 0.95,
+      "model.images.image_1": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Prop sheet"
+    }
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "portraius/element/prop/sheet",
+      "images": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save image"
+    }
+  },
+  "5": {
+    "class_type": "GeminiNanoBanana2V2",
+    "inputs": {
+      "prompt": "Draw the front view of the object, the same object shown in the attached photos and reference sheet.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nPlain mid-grey studio background, soft even lighting, like a product photograph.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+      "model": "Gemini Nano Banana 2.1",
+      "model.aspect_ratio": "1:1",
+      "model.resolution": "2K",
+      "model.thinking_level": "HIGH",
+      "seed": 2,
+      "response_modalities": "IMAGE",
+      "system_prompt": "",
+      "temperature": 1,
+      "top_p": 0.95,
+      "model.images.image_1": [
+        "2",
+        0
+      ],
+      "model.images.image_2": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Prop: Front"
+    }
+  },
+  "6": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "portraius/element/prop/front",
+      "images": [
+        "5",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save image"
+    }
+  },
+  "7": {
+    "class_type": "GeminiNanoBanana2V2",
+    "inputs": {
+      "prompt": "Draw a three-quarter view of the object, the same object shown in the attached photos and reference sheet.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nPlain mid-grey studio background, soft even lighting, like a product photograph.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+      "model": "Gemini Nano Banana 2.1",
+      "model.aspect_ratio": "1:1",
+      "model.resolution": "2K",
+      "model.thinking_level": "HIGH",
+      "seed": 3,
+      "response_modalities": "IMAGE",
+      "system_prompt": "",
+      "temperature": 1,
+      "top_p": 0.95,
+      "model.images.image_1": [
+        "2",
+        0
+      ],
+      "model.images.image_2": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Prop: Three-quarter"
+    }
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "portraius/element/prop/three-quarter",
+      "images": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save image"
+    }
+  },
+  "9": {
+    "class_type": "GeminiNanoBanana2V2",
+    "inputs": {
+      "prompt": "Draw the side view of the object, the same object shown in the attached photos and reference sheet.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nPlain mid-grey studio background, soft even lighting, like a product photograph.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+      "model": "Gemini Nano Banana 2.1",
+      "model.aspect_ratio": "1:1",
+      "model.resolution": "2K",
+      "model.thinking_level": "HIGH",
+      "seed": 4,
+      "response_modalities": "IMAGE",
+      "system_prompt": "",
+      "temperature": 1,
+      "top_p": 0.95,
+      "model.images.image_1": [
+        "2",
+        0
+      ],
+      "model.images.image_2": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Prop: Side"
+    }
+  },
+  "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "portraius/element/prop/side",
+      "images": [
+        "9",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save image"
+    }
+  },
+  "11": {
+    "class_type": "GeminiNanoBanana2V2",
+    "inputs": {
+      "prompt": "Draw a close-up of the object's materials, surface and details, the same object shown in the attached photos and reference sheet.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nPlain mid-grey studio background, soft even lighting, like a product photograph.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+      "model": "Gemini Nano Banana 2.1",
+      "model.aspect_ratio": "1:1",
+      "model.resolution": "2K",
+      "model.thinking_level": "HIGH",
+      "seed": 5,
+      "response_modalities": "IMAGE",
+      "system_prompt": "",
+      "temperature": 1,
+      "top_p": 0.95,
+      "model.images.image_1": [
+        "2",
+        0
+      ],
+      "model.images.image_2": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Prop: Detail"
+    }
+  },
+  "12": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "portraius/element/prop/detail",
+      "images": [
+        "11",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save image"
+    }
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "2": {
+    "class_type": "ByteDance2TextToVideoNode",
+    "inputs": {
+      "model": "Seedance 2.5 Draft",
+      "model.prompt": "Fishing boats rock at their moorings in a small harbour at dawn while gulls wheel over the masts.\nExtreme wide shot, the figure small in a vast setting, the camera cranes up and away, warm golden-hour light.",
+      "model.resolution": "480p",
+      "model.ratio": "16:9",
+      "model.duration": 5,
+      "model.generate_audio": true,
+      "model.output_format": "mp4",
+      "seed": 2025,
+      "watermark": false
+    },
+    "_meta": {
+      "title": "Seedance 2.5 draft (480p)"
+    }
+  },
+  "3": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "video/portraius-text-draft",
+      "format": "auto",
+      "format.codec": "auto",
+      "video": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save video"
+    }
+  },
+  "4": {
+    "class_type": "PreviewAny",
+    "inputs": {
+      "source": [
+        "2",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "Preview as Text"
+    }
+  },
+  "7": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "satchel-sheet.jpg"
+    },
+    "_meta": {
+      "title": "Element sheet"
+    }
+  },
+  "8": {
+    "class_type": "MinimaxHailuo03ReferenceNode",
+    "inputs": {
+      "model": "MiniMax H3",
+      "model.prompt": "Reference image 1 is the PRODUCT.\nPRODUCT on a matte black pedestal; a narrow beam of studio light sweeps across it as the camera orbits slowly.\nMedium shot from the waist up, the camera orbits slowly around the subject, soft key light from one side.",
+      "model.resolution": "768P",
+      "model.ratio": "16:9",
+      "model.duration": 5,
+      "seed": 31,
+      "watermark": false,
+      "model.reference_images.image_1": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "MiniMax H3 (references)"
+    }
+  },
+  "9": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "video/portraius-references",
+      "format": "auto",
+      "format.codec": "auto",
+      "video": [
+        "8",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save video"
+    }
+  },
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-diner.jpg"
+    },
+    "_meta": {
+      "title": "First frame"
+    }
+  },
+  "11": {
+    "class_type": "MinimaxHailuo03FirstLastFrameNode",
+    "inputs": {
+      "model": "MiniMax H3",
+      "model.prompt": "He turns a page of his paperback, then glances up at the rain on the window.\nThe camera slowly pushes in toward the subject.",
+      "model.resolution": "768P",
+      "model.duration": 5,
+      "seed": 32,
+      "watermark": false,
+      "first_frame": [
+        "10",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "MiniMax H3 (a face in the frame)"
+    }
+  },
+  "12": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "video/portraius-animate",
+      "format": "auto",
+      "format.codec": "auto",
+      "video": [
+        "11",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save video"
+    }
+  }
+}

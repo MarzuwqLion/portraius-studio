@@ -1,0 +1,2442 @@
+{
+  "id": "7d1b6c2e-4a7e-4f0e-9a51-5c3d2b1a0005",
+  "revision": 0,
+  "last_node_id": 34,
+  "last_link_id": 42,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "title": "Note",
+      "pos": [
+        -560,
+        0
+      ],
+      "size": [
+        460,
+        480
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "MarkdownNote"
+      },
+      "widgets_values": [
+        "## Portraius Studio: element sheets\n\nAn outfit, prop or location from photos, as a clean product-style sheet and four views, the way the app makes elements (spec: Character vault, Elements). Each type has its own prompts, so each has its own group.\n\n1. Put a photo in `ComfyUI/input/` as `my-prop-1.jpg` and run: the **Prop** group is on.\n2. For an outfit or a location, select that group's nodes and press **Ctrl+B** to turn them on (they start bypassed), then add its photo.\n\nThe app takes 1 to 6 photos: add Load Image nodes and wire them into each Nano Banana node's next image slot, before the sheet. Leave out logos, brand names and trademarked designs: the contest bans unlicensed IP.\n\nNeeds a Comfy account with credits: these are partner nodes."
+      ],
+      "widgets_values_named": {
+        "text": "## Portraius Studio: element sheets\n\nAn outfit, prop or location from photos, as a clean product-style sheet and four views, the way the app makes elements (spec: Character vault, Elements). Each type has its own prompts, so each has its own group.\n\n1. Put a photo in `ComfyUI/input/` as `my-prop-1.jpg` and run: the **Prop** group is on.\n2. For an outfit or a location, select that group's nodes and press **Ctrl+B** to turn them on (they start bypassed), then add its photo.\n\nThe app takes 1 to 6 photos: add Load Image nodes and wire them into each Nano Banana node's next image slot, before the sheet. Leave out logos, brand names and trademarked designs: the contest bans unlicensed IP.\n\nNeeds a Comfy account with credits: these are partner nodes."
+      }
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "title": "Prop photo",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1,
+            3,
+            6,
+            9,
+            12
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "my-prop-1.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "my-prop-1.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 3,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Prop sheet",
+      "pos": [
+        400,
+        0
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 1,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            2,
+            4,
+            7,
+            10,
+            13
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Create a clean reference sheet of the object shown in the attached photos.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nLayout: one 16:9 image. Plain mid-grey studio background, soft even lighting, like a product photograph.\nPanels left to right: the front view of the object; a three-quarter view of the object; the side view of the object; a close-up of the object's materials, surface and details.\nDo not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "16:9",
+        "2K",
+        "HIGH",
+        1,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Create a clean reference sheet of the object shown in the attached photos.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nLayout: one 16:9 image. Plain mid-grey studio background, soft even lighting, like a product photograph.\nPanels left to right: the front view of the object; a three-quarter view of the object; the side view of the object; a close-up of the object's materials, surface and details.\nDo not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "16:9",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 1,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 4,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        880,
+        0
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 2
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/prop/sheet"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/prop/sheet"
+      }
+    },
+    {
+      "id": 5,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Prop: Front",
+      "pos": [
+        1300,
+        0
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 3,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 4,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            5
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw the front view of the object, the same object shown in the attached photos and reference sheet.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nPlain mid-grey studio background, soft even lighting, like a product photograph.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "1:1",
+        "2K",
+        "HIGH",
+        2,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw the front view of the object, the same object shown in the attached photos and reference sheet.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nPlain mid-grey studio background, soft even lighting, like a product photograph.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "1:1",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 2,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 6,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        1300,
+        660
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 5
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/prop/front"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/prop/front"
+      }
+    },
+    {
+      "id": 7,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Prop: Three-quarter",
+      "pos": [
+        1760,
+        0
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 6,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 7,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            8
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw a three-quarter view of the object, the same object shown in the attached photos and reference sheet.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nPlain mid-grey studio background, soft even lighting, like a product photograph.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "1:1",
+        "2K",
+        "HIGH",
+        3,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a three-quarter view of the object, the same object shown in the attached photos and reference sheet.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nPlain mid-grey studio background, soft even lighting, like a product photograph.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "1:1",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 3,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 8,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        1760,
+        660
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 8
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/prop/three-quarter"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/prop/three-quarter"
+      }
+    },
+    {
+      "id": 9,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Prop: Side",
+      "pos": [
+        2220,
+        0
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 9,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 10,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            11
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw the side view of the object, the same object shown in the attached photos and reference sheet.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nPlain mid-grey studio background, soft even lighting, like a product photograph.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "1:1",
+        "2K",
+        "HIGH",
+        4,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw the side view of the object, the same object shown in the attached photos and reference sheet.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nPlain mid-grey studio background, soft even lighting, like a product photograph.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "1:1",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 4,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 10,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        2220,
+        660
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 11
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/prop/side"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/prop/side"
+      }
+    },
+    {
+      "id": 11,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Prop: Detail",
+      "pos": [
+        2680,
+        0
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 12,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 13,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            14
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw a close-up of the object's materials, surface and details, the same object shown in the attached photos and reference sheet.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nPlain mid-grey studio background, soft even lighting, like a product photograph.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "1:1",
+        "2K",
+        "HIGH",
+        5,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a close-up of the object's materials, surface and details, the same object shown in the attached photos and reference sheet.\nKeep its exact shape, proportions, colours, materials, textures and every detail.\nPlain mid-grey studio background, soft even lighting, like a product photograph.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "1:1",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 5,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 12,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        2680,
+        660
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 14
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/prop/detail"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/prop/detail"
+      }
+    },
+    {
+      "id": 13,
+      "type": "LoadImage",
+      "title": "Outfit photo",
+      "pos": [
+        0,
+        1200
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 4,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            15,
+            17,
+            20,
+            23,
+            26
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "my-outfit-1.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "my-outfit-1.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 14,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Outfit sheet",
+      "pos": [
+        400,
+        1200
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 15,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            16,
+            18,
+            21,
+            24,
+            27
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Create a clean reference sheet of the outfit shown in the attached photos.\nKeep its exact cut, colours, fabrics, textures, patterns, fastenings and every detail.\nLayout: one 16:9 image. Plain mid-grey studio background, soft even lighting. The clothes are shown on an invisible mannequin, with no person wearing them.\nPanels left to right: the front view of the outfit on an invisible mannequin; a three-quarter view of the outfit on an invisible mannequin; the back view of the outfit on an invisible mannequin; a close-up of the outfit's fabric, stitching, fastenings and details.\nDo not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "16:9",
+        "2K",
+        "HIGH",
+        1,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Create a clean reference sheet of the outfit shown in the attached photos.\nKeep its exact cut, colours, fabrics, textures, patterns, fastenings and every detail.\nLayout: one 16:9 image. Plain mid-grey studio background, soft even lighting. The clothes are shown on an invisible mannequin, with no person wearing them.\nPanels left to right: the front view of the outfit on an invisible mannequin; a three-quarter view of the outfit on an invisible mannequin; the back view of the outfit on an invisible mannequin; a close-up of the outfit's fabric, stitching, fastenings and details.\nDo not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "16:9",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 1,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 15,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        880,
+        1200
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 16
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/outfit/sheet"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/outfit/sheet"
+      }
+    },
+    {
+      "id": 16,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Outfit: Front",
+      "pos": [
+        1300,
+        1200
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 17,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 18,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            19
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw the front view of the outfit on an invisible mannequin, the same outfit shown in the attached photos and reference sheet.\nKeep its exact cut, colours, fabrics, textures, patterns, fastenings and every detail.\nPlain mid-grey studio background, soft even lighting. The clothes are shown on an invisible mannequin, with no person wearing them.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "3:4",
+        "2K",
+        "HIGH",
+        2,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw the front view of the outfit on an invisible mannequin, the same outfit shown in the attached photos and reference sheet.\nKeep its exact cut, colours, fabrics, textures, patterns, fastenings and every detail.\nPlain mid-grey studio background, soft even lighting. The clothes are shown on an invisible mannequin, with no person wearing them.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "3:4",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 2,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 17,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        1300,
+        1860
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 19
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/outfit/front"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/outfit/front"
+      }
+    },
+    {
+      "id": 18,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Outfit: Three-quarter",
+      "pos": [
+        1760,
+        1200
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 20,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 21,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            22
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw a three-quarter view of the outfit on an invisible mannequin, the same outfit shown in the attached photos and reference sheet.\nKeep its exact cut, colours, fabrics, textures, patterns, fastenings and every detail.\nPlain mid-grey studio background, soft even lighting. The clothes are shown on an invisible mannequin, with no person wearing them.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "3:4",
+        "2K",
+        "HIGH",
+        3,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a three-quarter view of the outfit on an invisible mannequin, the same outfit shown in the attached photos and reference sheet.\nKeep its exact cut, colours, fabrics, textures, patterns, fastenings and every detail.\nPlain mid-grey studio background, soft even lighting. The clothes are shown on an invisible mannequin, with no person wearing them.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "3:4",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 3,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 19,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        1760,
+        1860
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 22
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/outfit/three-quarter"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/outfit/three-quarter"
+      }
+    },
+    {
+      "id": 20,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Outfit: Back",
+      "pos": [
+        2220,
+        1200
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 23,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 24,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            25
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw the back view of the outfit on an invisible mannequin, the same outfit shown in the attached photos and reference sheet.\nKeep its exact cut, colours, fabrics, textures, patterns, fastenings and every detail.\nPlain mid-grey studio background, soft even lighting. The clothes are shown on an invisible mannequin, with no person wearing them.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "3:4",
+        "2K",
+        "HIGH",
+        4,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw the back view of the outfit on an invisible mannequin, the same outfit shown in the attached photos and reference sheet.\nKeep its exact cut, colours, fabrics, textures, patterns, fastenings and every detail.\nPlain mid-grey studio background, soft even lighting. The clothes are shown on an invisible mannequin, with no person wearing them.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "3:4",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 4,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 21,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        2220,
+        1860
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 25
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/outfit/back"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/outfit/back"
+      }
+    },
+    {
+      "id": 22,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Outfit: Detail",
+      "pos": [
+        2680,
+        1200
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 26,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 27,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            28
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw a close-up of the outfit's fabric, stitching, fastenings and details, the same outfit shown in the attached photos and reference sheet.\nKeep its exact cut, colours, fabrics, textures, patterns, fastenings and every detail.\nPlain mid-grey studio background, soft even lighting. The clothes are shown on an invisible mannequin, with no person wearing them.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "1:1",
+        "2K",
+        "HIGH",
+        5,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a close-up of the outfit's fabric, stitching, fastenings and details, the same outfit shown in the attached photos and reference sheet.\nKeep its exact cut, colours, fabrics, textures, patterns, fastenings and every detail.\nPlain mid-grey studio background, soft even lighting. The clothes are shown on an invisible mannequin, with no person wearing them.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "1:1",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 5,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 23,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        2680,
+        1860
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 28
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/outfit/detail"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/outfit/detail"
+      }
+    },
+    {
+      "id": 24,
+      "type": "LoadImage",
+      "title": "Location photo",
+      "pos": [
+        0,
+        2400
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 4,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            29,
+            31,
+            34,
+            37,
+            40
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "my-location-1.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "my-location-1.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 25,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Location sheet",
+      "pos": [
+        400,
+        2400
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 29,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            30,
+            32,
+            35,
+            38,
+            41
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Create a clean reference sheet of the location shown in the attached photos.\nKeep its exact layout, architecture, furniture, materials, colours and light.\nLayout: one 16:9 image. Even, natural light that shows the space clearly. The location is empty.\nPanels left to right: a wide establishing view of the location; the reverse angle of the location, looking back the other way; a side angle of the location; a close-up of one characteristic detail of the location.\nDo not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "16:9",
+        "2K",
+        "HIGH",
+        1,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Create a clean reference sheet of the location shown in the attached photos.\nKeep its exact layout, architecture, furniture, materials, colours and light.\nLayout: one 16:9 image. Even, natural light that shows the space clearly. The location is empty.\nPanels left to right: a wide establishing view of the location; the reverse angle of the location, looking back the other way; a side angle of the location; a close-up of one characteristic detail of the location.\nDo not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "16:9",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 1,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 26,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        880,
+        2400
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 30
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/location/sheet"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/location/sheet"
+      }
+    },
+    {
+      "id": 27,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Location: Wide",
+      "pos": [
+        1300,
+        2400
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 31,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 32,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            33
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw a wide establishing view of the location, the same location shown in the attached photos and reference sheet.\nKeep its exact layout, architecture, furniture, materials, colours and light.\nEven, natural light that shows the space clearly. The location is empty.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "16:9",
+        "2K",
+        "HIGH",
+        2,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a wide establishing view of the location, the same location shown in the attached photos and reference sheet.\nKeep its exact layout, architecture, furniture, materials, colours and light.\nEven, natural light that shows the space clearly. The location is empty.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "16:9",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 2,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 28,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        1300,
+        3060
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 27,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 33
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/location/wide"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/location/wide"
+      }
+    },
+    {
+      "id": 29,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Location: Reverse angle",
+      "pos": [
+        1760,
+        2400
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 28,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 34,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 35,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            36
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw the reverse angle of the location, looking back the other way, the same location shown in the attached photos and reference sheet.\nKeep its exact layout, architecture, furniture, materials, colours and light.\nEven, natural light that shows the space clearly. The location is empty.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "16:9",
+        "2K",
+        "HIGH",
+        3,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw the reverse angle of the location, looking back the other way, the same location shown in the attached photos and reference sheet.\nKeep its exact layout, architecture, furniture, materials, colours and light.\nEven, natural light that shows the space clearly. The location is empty.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "16:9",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 3,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 30,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        1760,
+        3060
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 29,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 36
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/location/reverse-angle"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/location/reverse-angle"
+      }
+    },
+    {
+      "id": 31,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Location: Side angle",
+      "pos": [
+        2220,
+        2400
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 30,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 37,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 38,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            39
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw a side angle of the location, the same location shown in the attached photos and reference sheet.\nKeep its exact layout, architecture, furniture, materials, colours and light.\nEven, natural light that shows the space clearly. The location is empty.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "16:9",
+        "2K",
+        "HIGH",
+        4,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a side angle of the location, the same location shown in the attached photos and reference sheet.\nKeep its exact layout, architecture, furniture, materials, colours and light.\nEven, natural light that shows the space clearly. The location is empty.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "16:9",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 4,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 32,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        2220,
+        3060
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 31,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 39
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/location/side-angle"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/location/side-angle"
+      }
+    },
+    {
+      "id": 33,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Location: Detail",
+      "pos": [
+        2680,
+        2400
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 32,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 40,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 41,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            42
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Draw a close-up of one characteristic detail of the location, the same location shown in the attached photos and reference sheet.\nKeep its exact layout, architecture, furniture, materials, colours and light.\nEven, natural light that shows the space clearly. The location is empty.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "Gemini Nano Banana 2.1",
+        "1:1",
+        "2K",
+        "HIGH",
+        5,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a close-up of one characteristic detail of the location, the same location shown in the attached photos and reference sheet.\nKeep its exact layout, architecture, furniture, materials, colours and light.\nEven, natural light that shows the space clearly. The location is empty.\nOne photograph only. Do not add, remove or redesign anything.\nNo people, no logos or brand names, no text, labels, borders or watermarks.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "1:1",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 5,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 34,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        2680,
+        3060
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 33,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 42
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/element/location/detail"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/element/location/detail"
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      3,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      3,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      3,
+      2,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      4,
+      3,
+      0,
+      5,
+      1,
+      "IMAGE"
+    ],
+    [
+      5,
+      5,
+      0,
+      6,
+      0,
+      "IMAGE"
+    ],
+    [
+      6,
+      2,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ],
+    [
+      7,
+      3,
+      0,
+      7,
+      1,
+      "IMAGE"
+    ],
+    [
+      8,
+      7,
+      0,
+      8,
+      0,
+      "IMAGE"
+    ],
+    [
+      9,
+      2,
+      0,
+      9,
+      0,
+      "IMAGE"
+    ],
+    [
+      10,
+      3,
+      0,
+      9,
+      1,
+      "IMAGE"
+    ],
+    [
+      11,
+      9,
+      0,
+      10,
+      0,
+      "IMAGE"
+    ],
+    [
+      12,
+      2,
+      0,
+      11,
+      0,
+      "IMAGE"
+    ],
+    [
+      13,
+      3,
+      0,
+      11,
+      1,
+      "IMAGE"
+    ],
+    [
+      14,
+      11,
+      0,
+      12,
+      0,
+      "IMAGE"
+    ],
+    [
+      15,
+      13,
+      0,
+      14,
+      0,
+      "IMAGE"
+    ],
+    [
+      16,
+      14,
+      0,
+      15,
+      0,
+      "IMAGE"
+    ],
+    [
+      17,
+      13,
+      0,
+      16,
+      0,
+      "IMAGE"
+    ],
+    [
+      18,
+      14,
+      0,
+      16,
+      1,
+      "IMAGE"
+    ],
+    [
+      19,
+      16,
+      0,
+      17,
+      0,
+      "IMAGE"
+    ],
+    [
+      20,
+      13,
+      0,
+      18,
+      0,
+      "IMAGE"
+    ],
+    [
+      21,
+      14,
+      0,
+      18,
+      1,
+      "IMAGE"
+    ],
+    [
+      22,
+      18,
+      0,
+      19,
+      0,
+      "IMAGE"
+    ],
+    [
+      23,
+      13,
+      0,
+      20,
+      0,
+      "IMAGE"
+    ],
+    [
+      24,
+      14,
+      0,
+      20,
+      1,
+      "IMAGE"
+    ],
+    [
+      25,
+      20,
+      0,
+      21,
+      0,
+      "IMAGE"
+    ],
+    [
+      26,
+      13,
+      0,
+      22,
+      0,
+      "IMAGE"
+    ],
+    [
+      27,
+      14,
+      0,
+      22,
+      1,
+      "IMAGE"
+    ],
+    [
+      28,
+      22,
+      0,
+      23,
+      0,
+      "IMAGE"
+    ],
+    [
+      29,
+      24,
+      0,
+      25,
+      0,
+      "IMAGE"
+    ],
+    [
+      30,
+      25,
+      0,
+      26,
+      0,
+      "IMAGE"
+    ],
+    [
+      31,
+      24,
+      0,
+      27,
+      0,
+      "IMAGE"
+    ],
+    [
+      32,
+      25,
+      0,
+      27,
+      1,
+      "IMAGE"
+    ],
+    [
+      33,
+      27,
+      0,
+      28,
+      0,
+      "IMAGE"
+    ],
+    [
+      34,
+      24,
+      0,
+      29,
+      0,
+      "IMAGE"
+    ],
+    [
+      35,
+      25,
+      0,
+      29,
+      1,
+      "IMAGE"
+    ],
+    [
+      36,
+      29,
+      0,
+      30,
+      0,
+      "IMAGE"
+    ],
+    [
+      37,
+      24,
+      0,
+      31,
+      0,
+      "IMAGE"
+    ],
+    [
+      38,
+      25,
+      0,
+      31,
+      1,
+      "IMAGE"
+    ],
+    [
+      39,
+      31,
+      0,
+      32,
+      0,
+      "IMAGE"
+    ],
+    [
+      40,
+      24,
+      0,
+      33,
+      0,
+      "IMAGE"
+    ],
+    [
+      41,
+      25,
+      0,
+      33,
+      1,
+      "IMAGE"
+    ],
+    [
+      42,
+      33,
+      0,
+      34,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Prop",
+      "bounding": [
+        -20,
+        -60,
+        3180,
+        1140
+      ],
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Outfit (bypassed: select its nodes, then Ctrl+B)",
+      "bounding": [
+        -20,
+        1140,
+        3180,
+        1140
+      ],
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "Location (bypassed: select its nodes, then Ctrl+B)",
+      "bounding": [
+        -20,
+        2340,
+        3180,
+        1140
+      ],
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6,
+      "offset": [
+        0,
+        0
+      ]
+    },
+    "frontendVersion": "1.53.6"
+  },
+  "version": 0.4
+}

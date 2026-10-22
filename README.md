@@ -135,15 +135,23 @@ Sync Labs). It forwards requests and stores no keys.
 
 ## ComfyUI workflows
 
-[`workflows/`](workflows/README.md) has the app's two core flows as ComfyUI graphs, in UI and Workflow (API)
-format, built from Comfy's partner nodes:
+[`workflows/`](workflows/README.md) has every studio feature with a ComfyUI partner node as a graph, in UI and
+Workflow (API) format:
 
-- **character-sheet:** your photos to a turnaround sheet and four views, with Nano Banana 2.1.
-- **still-first-video:** a still with the character in it, animated on MiniMax H3; and a shot without people as a
-  Seedance 2.5 draft, then its 1080p final.
+- **Characters:** your photos to a turnaround sheet and four views (character-sheet), a person designed from text
+  (design-from-text), and outfits, props and locations (element-sheet), all with Nano Banana 2.1.
+- **Images:** a still with a cast, and editing a source image (image-studio); the realism pass with Magnific's skin
+  enhancer (make-it-real).
+- **Video:** "Image, then animate" with the character on MiniMax H3 and a shot without people as a Seedance 2.5
+  draft, then its final (still-first-video); text to video, use references and animate an image (video-studio).
+- **Recast:** motion transfer with a new setting and the clip's own audio, a style swap and an object swap, on
+  MiniMax H3 and HappyHorse (recast).
+- **Finishing:** a line in an ElevenLabs voice, lip-synced with Sync-3 or spoken in a new H3 clip (add-a-line).
+- **Director:** the sample scene shot by shot and joined (director-scene), as a Kling 3.0 Omni one-take
+  (kling-one-take), and its shot list drafted by Claude Sonnet 5.5 (draft-shots).
 
-They're generated from the app's own prompt code, so a graph sends what the app sends, and checked against
-ComfyUI's published node definitions.
+They're generated from the app's own prompt code and presets, so a graph sends what the app sends, and checked
+against ComfyUI's published node definitions. The workflows README lists where a graph has to differ from the app.
 
 The node pack in [`custom_nodes/comfyui-portraius-characters/`](custom_nodes/comfyui-portraius-characters/README.md)
 brings the character file itself into ComfyUI: **Load Portraius Character** (a person from photos needs their

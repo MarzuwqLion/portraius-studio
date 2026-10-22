@@ -1,0 +1,669 @@
+{
+  "id": "7d1b6c2e-4a7e-4f0e-9a51-5c3d2b1a0007",
+  "revision": 0,
+  "last_node_id": 12,
+  "last_link_id": 7,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "title": "Note",
+      "pos": [
+        -560,
+        0
+      ],
+      "size": [
+        460,
+        560
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "MarkdownNote"
+      },
+      "widgets_values": [
+        "## Portraius Studio: the Video studio\n\n**Text (top row).** Seedance 2.5, the app's default for video without people: a 480p draft first. Copy the draft_task_id from \"Preview as Text\" into \"Seedance 2.5 final\", turn it and its Save Video on (Ctrl+B), and run again for the 1080p final.\n\n**Use references (middle row).** The \"Product reveal\" preset with an element's sheet as {product}. Any cast in references mode renders on MiniMax H3 in the app, because Seedance refuses photoreal people, so this does too. Put the sheet in as `satchel-sheet.jpg`.\n\n**Animate an image (bottom row).** A frame with a face goes to MiniMax H3. A frame without people goes to Seedance 2.5 instead: see the second row of still-first-video. Put the frame in as `walt-diner.jpg`.\n\nNeeds a Comfy account with credits: these are partner nodes."
+      ],
+      "widgets_values_named": {
+        "text": "## Portraius Studio: the Video studio\n\n**Text (top row).** Seedance 2.5, the app's default for video without people: a 480p draft first. Copy the draft_task_id from \"Preview as Text\" into \"Seedance 2.5 final\", turn it and its Save Video on (Ctrl+B), and run again for the 1080p final.\n\n**Use references (middle row).** The \"Product reveal\" preset with an element's sheet as {product}. Any cast in references mode renders on MiniMax H3 in the app, because Seedance refuses photoreal people, so this does too. Put the sheet in as `satchel-sheet.jpg`.\n\n**Animate an image (bottom row).** A frame with a face goes to MiniMax H3. A frame without people goes to Seedance 2.5 instead: see the second row of still-first-video. Put the frame in as `walt-diner.jpg`.\n\nNeeds a Comfy account with credits: these are partner nodes."
+      }
+    },
+    {
+      "id": 2,
+      "type": "ByteDance2TextToVideoNode",
+      "title": "Seedance 2.5 draft (480p)",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        450,
+        420
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "draft_task_id",
+          "type": "STRING",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ByteDance2TextToVideoNode"
+      },
+      "widgets_values": [
+        "Seedance 2.5 Draft",
+        "Fishing boats rock at their moorings in a small harbour at dawn while gulls wheel over the masts.\nExtreme wide shot, the figure small in a vast setting, the camera cranes up and away, warm golden-hour light.",
+        "480p",
+        "16:9",
+        5,
+        true,
+        "mp4",
+        2025,
+        "fixed",
+        false
+      ],
+      "widgets_values_named": {
+        "model": "Seedance 2.5 Draft",
+        "model.prompt": "Fishing boats rock at their moorings in a small harbour at dawn while gulls wheel over the masts.\nExtreme wide shot, the figure small in a vast setting, the camera cranes up and away, warm golden-hour light.",
+        "model.resolution": "480p",
+        "model.ratio": "16:9",
+        "model.duration": 5,
+        "model.generate_audio": true,
+        "model.output_format": "mp4",
+        "seed": 2025,
+        "control_after_generate": "fixed",
+        "watermark": false
+      }
+    },
+    {
+      "id": 3,
+      "type": "SaveVideo",
+      "title": "Save video",
+      "pos": [
+        480,
+        0
+      ],
+      "size": [
+        420,
+        380
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo"
+      },
+      "widgets_values": [
+        "video/portraius-text-draft",
+        "auto",
+        "auto",
+        "auto"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "video/portraius-text-draft",
+        "format": "auto",
+        "format.codec": "auto",
+        "codec": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "type": "PreviewAny",
+      "title": "Preview as Text",
+      "pos": [
+        480,
+        420
+      ],
+      "size": [
+        420,
+        160
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "source",
+          "type": "*",
+          "link": 2
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewAny"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 5,
+      "type": "ByteDance2DraftToFinalVideoNode",
+      "title": "Seedance 2.5 final (1080p)",
+      "pos": [
+        960,
+        0
+      ],
+      "size": [
+        420,
+        160
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 4,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ByteDance2DraftToFinalVideoNode"
+      },
+      "widgets_values": [
+        "",
+        false
+      ],
+      "widgets_values_named": {
+        "draft_task_id": "",
+        "watermark": false
+      }
+    },
+    {
+      "id": 6,
+      "type": "SaveVideo",
+      "title": "Save video",
+      "pos": [
+        960,
+        220
+      ],
+      "size": [
+        420,
+        380
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo"
+      },
+      "widgets_values": [
+        "video/portraius-text-final",
+        "auto",
+        "auto",
+        "auto"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "video/portraius-text-final",
+        "format": "auto",
+        "format.codec": "auto",
+        "codec": "auto"
+      }
+    },
+    {
+      "id": 7,
+      "type": "LoadImage",
+      "title": "Element sheet",
+      "pos": [
+        0,
+        800
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "satchel-sheet.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "satchel-sheet.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 8,
+      "type": "MinimaxHailuo03ReferenceNode",
+      "title": "MiniMax H3 (references)",
+      "pos": [
+        400,
+        800
+      ],
+      "size": [
+        420,
+        420
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.reference_images.image_1",
+          "type": "IMAGE",
+          "link": 4,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.reference_images.image_2",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.reference_videos.video_1",
+          "type": "VIDEO",
+          "link": null,
+          "shape": 7,
+          "label": "video_1"
+        },
+        {
+          "name": "model.reference_audios.audio_1",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7,
+          "label": "audio_1"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MinimaxHailuo03ReferenceNode"
+      },
+      "widgets_values": [
+        "MiniMax H3",
+        "Reference image 1 is the PRODUCT.\nPRODUCT on a matte black pedestal; a narrow beam of studio light sweeps across it as the camera orbits slowly.\nMedium shot from the waist up, the camera orbits slowly around the subject, soft key light from one side.",
+        "768P",
+        "16:9",
+        5,
+        31,
+        "randomize",
+        false
+      ],
+      "widgets_values_named": {
+        "model": "MiniMax H3",
+        "model.prompt": "Reference image 1 is the PRODUCT.\nPRODUCT on a matte black pedestal; a narrow beam of studio light sweeps across it as the camera orbits slowly.\nMedium shot from the waist up, the camera orbits slowly around the subject, soft key light from one side.",
+        "model.resolution": "768P",
+        "model.ratio": "16:9",
+        "model.duration": 5,
+        "seed": 31,
+        "control_after_generate": "randomize",
+        "watermark": false
+      }
+    },
+    {
+      "id": 9,
+      "type": "SaveVideo",
+      "title": "Save video",
+      "pos": [
+        880,
+        800
+      ],
+      "size": [
+        420,
+        380
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo"
+      },
+      "widgets_values": [
+        "video/portraius-references",
+        "auto",
+        "auto",
+        "auto"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "video/portraius-references",
+        "format": "auto",
+        "format.codec": "auto",
+        "codec": "auto"
+      }
+    },
+    {
+      "id": 10,
+      "type": "LoadImage",
+      "title": "First frame",
+      "pos": [
+        0,
+        1400
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            6
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "walt-diner.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "walt-diner.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 11,
+      "type": "MinimaxHailuo03FirstLastFrameNode",
+      "title": "MiniMax H3 (a face in the frame)",
+      "pos": [
+        400,
+        1400
+      ],
+      "size": [
+        420,
+        340
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "first_frame",
+          "type": "IMAGE",
+          "link": 6
+        },
+        {
+          "name": "last_frame",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            7
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MinimaxHailuo03FirstLastFrameNode"
+      },
+      "widgets_values": [
+        "MiniMax H3",
+        "He turns a page of his paperback, then glances up at the rain on the window.\nThe camera slowly pushes in toward the subject.",
+        "768P",
+        5,
+        32,
+        "randomize",
+        false
+      ],
+      "widgets_values_named": {
+        "model": "MiniMax H3",
+        "model.prompt": "He turns a page of his paperback, then glances up at the rain on the window.\nThe camera slowly pushes in toward the subject.",
+        "model.resolution": "768P",
+        "model.duration": 5,
+        "seed": 32,
+        "control_after_generate": "randomize",
+        "watermark": false
+      }
+    },
+    {
+      "id": 12,
+      "type": "SaveVideo",
+      "title": "Save video",
+      "pos": [
+        880,
+        1400
+      ],
+      "size": [
+        420,
+        380
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveVideo"
+      },
+      "widgets_values": [
+        "video/portraius-animate",
+        "auto",
+        "auto",
+        "auto"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "video/portraius-animate",
+        "format": "auto",
+        "format.codec": "auto",
+        "codec": "auto"
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      3,
+      0,
+      "VIDEO"
+    ],
+    [
+      2,
+      2,
+      1,
+      4,
+      0,
+      "STRING"
+    ],
+    [
+      3,
+      5,
+      0,
+      6,
+      0,
+      "VIDEO"
+    ],
+    [
+      4,
+      7,
+      0,
+      8,
+      0,
+      "IMAGE"
+    ],
+    [
+      5,
+      8,
+      0,
+      9,
+      0,
+      "VIDEO"
+    ],
+    [
+      6,
+      10,
+      0,
+      11,
+      0,
+      "IMAGE"
+    ],
+    [
+      7,
+      11,
+      0,
+      12,
+      0,
+      "VIDEO"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Text: a Seedance 2.5 draft, then the final from its ID",
+      "bounding": [
+        -20,
+        -60,
+        1420,
+        700
+      ],
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Use references: the Product reveal preset",
+      "bounding": [
+        -20,
+        740,
+        1340,
+        520
+      ],
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "Animate an image",
+      "bounding": [
+        -20,
+        1340,
+        1340,
+        500
+      ],
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6,
+      "offset": [
+        0,
+        0
+      ]
+    },
+    "frontendVersion": "1.53.6"
+  },
+  "version": 0.4
+}

@@ -1,0 +1,287 @@
+{
+  "2": {
+    "class_type": "LoadVideo",
+    "inputs": {
+      "file": "concert-original.mp4"
+    },
+    "_meta": {
+      "title": "Clip to recast"
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-sheet.jpg"
+    },
+    "_meta": {
+      "title": "Character sheet"
+    }
+  },
+  "4": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-front.jpg"
+    },
+    "_meta": {
+      "title": "Character front view"
+    }
+  },
+  "5": {
+    "class_type": "MinimaxHailuo03ReferenceNode",
+    "inputs": {
+      "model": "MiniMax H3",
+      "model.prompt": "Reference image 1 is the reference sheet for LEAD (Walt Harmon). Reference image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD performs exactly the movement, timing and camera of the reference video.",
+      "model.resolution": "768P",
+      "model.ratio": "16:9",
+      "model.duration": 8,
+      "seed": 41,
+      "watermark": false,
+      "model.reference_images.image_1": [
+        "3",
+        0
+      ],
+      "model.reference_images.image_2": [
+        "4",
+        0
+      ],
+      "model.reference_videos.video_1": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "MiniMax H3 (motion transfer)"
+    }
+  },
+  "6": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "video/portraius-recast-performer",
+      "format": "auto",
+      "format.codec": "auto",
+      "video": [
+        "5",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save video"
+    }
+  },
+  "7": {
+    "class_type": "HappyHorseVideoEditApi",
+    "inputs": {
+      "model": "happyhorse-1.0-video-edit",
+      "model.prompt": "Move the person to a new location: a large concert stage with crowd lights and haze behind. Replace everything around them, including walls, windows, furniture and props, with that location. Keep the person, their face, their hair, their clothes and their motion exactly as they are.",
+      "model.resolution": "720P",
+      "model.ratio": "16:9",
+      "seed": 42,
+      "watermark": false,
+      "video": [
+        "5",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "HappyHorse (new setting)"
+    }
+  },
+  "8": {
+    "class_type": "GetVideoComponents",
+    "inputs": {
+      "video": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Edited frames"
+    }
+  },
+  "9": {
+    "class_type": "GetVideoComponents",
+    "inputs": {
+      "video": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Original audio"
+    }
+  },
+  "10": {
+    "class_type": "CreateVideo",
+    "inputs": {
+      "fps": [
+        "8",
+        2
+      ],
+      "bit_depth": "auto",
+      "color_space": "sRGB",
+      "codec": "none",
+      "images": [
+        "8",
+        0
+      ],
+      "audio": [
+        "9",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "Edit with the original audio"
+    }
+  },
+  "11": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "video/portraius-recast",
+      "format": "auto",
+      "format.codec": "auto",
+      "video": [
+        "10",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save video"
+    }
+  },
+  "12": {
+    "class_type": "MinimaxHailuo03ReferenceNode",
+    "inputs": {
+      "model": "MiniMax H3",
+      "model.prompt": "Recreate the reference video exactly, with the same motion, timing and camera, as claymation: handmade clay figures and miniature sets.",
+      "model.resolution": "768P",
+      "model.ratio": "16:9",
+      "model.duration": 8,
+      "seed": 43,
+      "watermark": false,
+      "model.reference_videos.video_1": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "MiniMax H3 (claymation)"
+    }
+  },
+  "13": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "video/portraius-recast-style",
+      "format": "auto",
+      "format.codec": "auto",
+      "video": [
+        "12",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save video"
+    }
+  },
+  "14": {
+    "class_type": "LoadVideo",
+    "inputs": {
+      "file": "my-product-clip.mp4"
+    },
+    "_meta": {
+      "title": "Clip with the product"
+    }
+  },
+  "15": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "satchel-sheet.jpg"
+    },
+    "_meta": {
+      "title": "Replacement sheet"
+    }
+  },
+  "16": {
+    "class_type": "HappyHorseVideoEditApi",
+    "inputs": {
+      "model": "happyhorse-1.0-video-edit",
+      "model.prompt": "Replace the product held in the video with the prop from the reference image. Keep the hands, the motion and everything else unchanged.",
+      "model.resolution": "720P",
+      "model.ratio": "16:9",
+      "seed": 44,
+      "watermark": false,
+      "video": [
+        "14",
+        0
+      ],
+      "model.reference_images.image1": [
+        "15",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "HappyHorse (object swap)"
+    }
+  },
+  "17": {
+    "class_type": "GetVideoComponents",
+    "inputs": {
+      "video": [
+        "16",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Edited frames"
+    }
+  },
+  "18": {
+    "class_type": "GetVideoComponents",
+    "inputs": {
+      "video": [
+        "14",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Original audio"
+    }
+  },
+  "19": {
+    "class_type": "CreateVideo",
+    "inputs": {
+      "fps": [
+        "17",
+        2
+      ],
+      "bit_depth": "auto",
+      "color_space": "sRGB",
+      "codec": "none",
+      "images": [
+        "17",
+        0
+      ],
+      "audio": [
+        "18",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "Edit with the original audio"
+    }
+  },
+  "20": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "video/portraius-recast-swap",
+      "format": "auto",
+      "format.codec": "auto",
+      "video": [
+        "19",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save video"
+    }
+  }
+}

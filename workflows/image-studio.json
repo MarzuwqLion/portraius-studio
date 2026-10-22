@@ -1,0 +1,543 @@
+{
+  "id": "7d1b6c2e-4a7e-4f0e-9a51-5c3d2b1a0006",
+  "revision": 0,
+  "last_node_id": 9,
+  "last_link_id": 6,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "title": "Note",
+      "pos": [
+        -560,
+        0
+      ],
+      "size": [
+        460,
+        560
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "MarkdownNote"
+      },
+      "widgets_values": [
+        "## Portraius Studio: the Image studio\n\n**With a cast (top row).** The \"Film still\" preset with Walt as {lead}. The prompt is the app's compiler output: which image is whose, a lock on the face, the scene, the camera, then skin and lens realism. Put a character's sheet and front view in `ComfyUI/input/` as `walt-sheet.jpg` and `walt-front.jpg`: unzip any `.portraius` file, they're `sheet/turnaround.png` and `sheet/front.png`. The samples are in this repo's `public/samples/`.\n\n**Editing an image (bottom row).** The source goes first, then the cast's references, and the prompt numbers them the same way. Put the image to edit in as `walt-diner.jpg` and an element's sheet as `satchel-sheet.jpg` (both in `public/samples/`).\n\nThe app scores each still against the character and retries once under 60; the graph doesn't. Settings are the Image studio's defaults: 2K, Best. Needs a Comfy account with credits: these are partner nodes."
+      ],
+      "widgets_values_named": {
+        "text": "## Portraius Studio: the Image studio\n\n**With a cast (top row).** The \"Film still\" preset with Walt as {lead}. The prompt is the app's compiler output: which image is whose, a lock on the face, the scene, the camera, then skin and lens realism. Put a character's sheet and front view in `ComfyUI/input/` as `walt-sheet.jpg` and `walt-front.jpg`: unzip any `.portraius` file, they're `sheet/turnaround.png` and `sheet/front.png`. The samples are in this repo's `public/samples/`.\n\n**Editing an image (bottom row).** The source goes first, then the cast's references, and the prompt numbers them the same way. Put the image to edit in as `walt-diner.jpg` and an element's sheet as `satchel-sheet.jpg` (both in `public/samples/`).\n\nThe app scores each still against the character and retries once under 60; the graph doesn't. Settings are the Image studio's defaults: 2K, Best. Needs a Comfy account with credits: these are partner nodes."
+      }
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "title": "Character sheet",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "walt-sheet.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "walt-sheet.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "title": "Character front view",
+      "pos": [
+        0,
+        420
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "walt-front.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "walt-front.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 4,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Film still (with a cast)",
+      "pos": [
+        400,
+        0
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 1,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 2,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            3
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nA cinematic film still: LEAD at a rain-streaked window at night, lit by passing car lights, lost in thought.\nMedium shot from the waist up, anamorphic lens with oval bokeh and horizontal flares, lit only by practical lamps in the scene, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+        "Gemini Nano Banana 2.1",
+        "21:9",
+        "2K",
+        "HIGH",
+        21,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nA cinematic film still: LEAD at a rain-streaked window at night, lit by passing car lights, lost in thought.\nMedium shot from the waist up, anamorphic lens with oval bokeh and horizontal flares, lit only by practical lamps in the scene, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "21:9",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 21,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 5,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        880,
+        0
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 3
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/image/still"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/image/still"
+      }
+    },
+    {
+      "id": 6,
+      "type": "LoadImage",
+      "title": "Image to edit",
+      "pos": [
+        0,
+        1000
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "walt-diner.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "walt-diner.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 7,
+      "type": "LoadImage",
+      "title": "Element sheet",
+      "pos": [
+        0,
+        1420
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            5
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "satchel-sheet.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "satchel-sheet.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 8,
+      "type": "GeminiNanoBanana2V2",
+      "title": "Edit the image",
+      "pos": [
+        400,
+        1000
+      ],
+      "size": [
+        420,
+        620
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model.images.image_1",
+          "type": "IMAGE",
+          "link": 4,
+          "shape": 7,
+          "label": "image_1"
+        },
+        {
+          "name": "model.images.image_2",
+          "type": "IMAGE",
+          "link": 5,
+          "shape": 7,
+          "label": "image_2"
+        },
+        {
+          "name": "model.images.image_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7,
+          "label": "image_3"
+        },
+        {
+          "name": "model.files",
+          "type": "GEMINI_INPUT_FILES",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            6
+          ]
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "thought_image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GeminiNanoBanana2V2"
+      },
+      "widgets_values": [
+        "Image 1 is the image to edit. Image 2 is the PROP.\nPut the PROP on the booth seat beside him. Keep everything else in the image exactly as it is.\nNatural skin texture with visible pores, real lens imperfections.",
+        "Gemini Nano Banana 2.1",
+        "4:5",
+        "2K",
+        "HIGH",
+        22,
+        "randomize",
+        "IMAGE",
+        "",
+        1,
+        0.95
+      ],
+      "widgets_values_named": {
+        "prompt": "Image 1 is the image to edit. Image 2 is the PROP.\nPut the PROP on the booth seat beside him. Keep everything else in the image exactly as it is.\nNatural skin texture with visible pores, real lens imperfections.",
+        "model": "Gemini Nano Banana 2.1",
+        "model.aspect_ratio": "4:5",
+        "model.resolution": "2K",
+        "model.thinking_level": "HIGH",
+        "seed": 22,
+        "control_after_generate": "randomize",
+        "response_modalities": "IMAGE",
+        "system_prompt": "",
+        "temperature": 1,
+        "top_p": 0.95
+      }
+    },
+    {
+      "id": 9,
+      "type": "SaveImage",
+      "title": "Save image",
+      "pos": [
+        880,
+        1000
+      ],
+      "size": [
+        320,
+        380
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 6
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/image/edit"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/image/edit"
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      3,
+      0,
+      4,
+      1,
+      "IMAGE"
+    ],
+    [
+      3,
+      4,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      4,
+      6,
+      0,
+      8,
+      0,
+      "IMAGE"
+    ],
+    [
+      5,
+      7,
+      0,
+      8,
+      1,
+      "IMAGE"
+    ],
+    [
+      6,
+      8,
+      0,
+      9,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "A cast in a scene: references, then the compiled prompt",
+      "bounding": [
+        -20,
+        -60,
+        1260,
+        920
+      ],
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Edit an image: the source is image 1, the cast follows",
+      "bounding": [
+        -20,
+        940,
+        1260,
+        920
+      ],
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6,
+      "offset": [
+        0,
+        0
+      ]
+    },
+    "frontendVersion": "1.53.6"
+  },
+  "version": 0.4
+}
