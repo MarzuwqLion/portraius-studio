@@ -12,7 +12,7 @@ import { join } from "node:path";
 
 type Spec = [unknown, Record<string, unknown>?];
 type Inputs = { required?: Record<string, Spec>; optional?: Record<string, Spec> };
-type Allowed = { options?: unknown[]; min?: number; max?: number; link?: boolean };
+type Allowed = { options?: unknown[]; min?: number; max?: number; link?: boolean; required?: boolean };
 
 const source = process.env.OBJECT_INFO_URL?.trim() || "https://cloud.comfy.org/api/object_info";
 const key = process.env.COMFY_API_KEY?.trim();
@@ -25,26 +25,33 @@ if (!res.ok) throw new Error(`object_info: HTTP ${res.status}`);
 const catalog = (await res.json()) as Record<string, { input: Inputs }>;
 
 // Dynamic inputs (a model choice with its own inputs, a growing list of image
-// slots) are flattened to the dotted names a prompt uses.
+// slots) are flattened to the dotted names a prompt uses. The chosen model's
+// inputs are required as ComfyUI requires them; a growing list isn't an
+// input itself, and only its first `min` slots are required.
 function flatten(inputs: Inputs, prefix: string, chosen: Record<string, unknown>, out: Record<string, Allowed>): void {
-  for (const group of [inputs.required, inputs.optional]) {
+  for (const [group, required] of [[inputs.required, true], [inputs.optional, false]] as const) {
     for (const [name, [type, opts = {}]] of Object.entries(group ?? {})) {
       const id = prefix ? `${prefix}.${name}` : name;
       if (type === "COMFY_DYNAMICCOMBO_V3") {
         const options = opts.options as { key: string; inputs: Inputs }[];
-        out[id] = { options: options.map((o) => o.key) };
+        out[id] = { options: options.map((o) => o.key), required };
         const pick = options.find((o) => o.key === chosen[id]);
         if (pick) flatten(pick.inputs, id, chosen, out);
       } else if (type === "COMFY_AUTOGROW_V3") {
-        for (const n of ((opts.template as { names?: string[] }).names ?? [])) out[`${id}.${n}`] = { link: true };
-      } else if (Array.isArray(type)) out[id] = { options: type };
-      else if (type === "COMBO") out[id] = { options: opts.options as unknown[] };
-      else out[id] = { min: opts.min as number | undefined, max: opts.max as number | undefined };
+        // A list of names, or a prefix counted from 0 ("video0", "video1", ...).
+        const template = opts.template as { names?: string[]; prefix?: string; max?: number; min?: number };
+        const names = template.names ?? Array.from({ length: template.max ?? 0 }, (_, i) => `${template.prefix}${i}`);
+        names.forEach((n, i) => (out[`${id}.${n}`] = { link: true, required: required && i < (template.min ?? 1) }));
+      } else if (Array.isArray(type)) out[id] = { options: type, required };
+      else if (type === "COMBO") out[id] = { options: opts.options as unknown[], required };
+      else out[id] = { min: opts.min as number | undefined, max: opts.max as number | undefined, required };
     }
   }
 }
 
-const PACK_EXAMPLE = "custom_nodes/comfyui-portraius-characters/tests/portraius-character-still.api.json";
+const USER_FILES = new Set(["LoadImage.image", "LoadVideo.file"]);
+
+const PACK_EXAMPLE ="custom_nodes/comfyui-portraius-characters/tests/portraius-character-still.api.json";
 const files = readdirSync("workflows")
   .filter((f) => f.endsWith(".api.json"))
   .map((f) => join("workflows", f));
@@ -67,11 +74,11 @@ for (const file of files) {
       const a = allowed[name];
       if (!a) problems.push(`${where}: takes no input ${name}`);
       else if (Array.isArray(value)) continue; // a link to another node
-      // Image files are whatever the user puts in ComfyUI/input/.
-      else if (a.options && !(node.class_type === "LoadImage" && name === "image") && !a.options.includes(value)) problems.push(`${where}: ${name} ${JSON.stringify(value)} isn't an option`);
+      // Image and video files are whatever the user puts in ComfyUI/input/.
+      else if (a.options && !USER_FILES.has(`${node.class_type}.${name}`) && !a.options.includes(value)) problems.push(`${where}: ${name} ${JSON.stringify(value)} isn't an option`);
       else if (typeof value === "number" && ((a.min !== undefined && value < a.min) || (a.max !== undefined && value > a.max))) problems.push(`${where}: ${name} ${value} is out of range`);
     }
-    for (const name of Object.keys(def.input.required ?? {})) if (!(name in node.inputs)) problems.push(`${where}: missing ${name}`);
+    for (const [name, a] of Object.entries(allowed)) if (a.required && !(name in node.inputs)) problems.push(`${where}: missing ${name}`);
   }
   console.log(`checked ${file}: ${Object.keys(prompt).length} nodes`);
 }
