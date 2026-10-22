@@ -5,7 +5,7 @@ export interface AppError {
   requestId?: string;
   refusalSubject?: string;
   retry: "auto" | "manual" | "never";
-  action?: "add_credits" | "check_key" | "edit_input" | "wait";
+  action?: "add_credits" | "check_key" | "edit_input" | "wait" | "check_local";
   // Seconds the server asked us to wait, for retry: "auto".
   retryAfter?: number;
   // Field paths from an invalid_input detail[].loc, for mapping to form fields.

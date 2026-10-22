@@ -1,4 +1,5 @@
-// The only file that holds Router model IDs. Nothing here may start with
+// The only file that holds model IDs: Router's, and the local engine's
+// (spec: Local engine), which start with local/. Nothing here may start with
 // higgsfield/, and no call ever sends model_provider.
 import type { Capability, ModelId } from "./capabilities";
 
@@ -16,31 +17,51 @@ export const MODEL_IDS = {
   bflVideoEdit: "bfl/video-edit-v1",
   directorAgent: "anthropic/claude-sonnet-5-5",
   identityJudge: "vertexai/gemini-3.8-flash",
+  // The local engine: open-weight models on the visitor's own ComfyUI.
+  localQwenEdit: "local/qwen-image-edit-2511",
+  localWanFast: "local/wan2.2-ti2v-5b",
+  localWanBest: "local/wan2.2-14b",
+  localWanAnimate: "local/wan-animate-2",
+  localWanSpeech: "local/wan2.2-s2v-14b",
+  localSeedVR2: "local/seedvr2-7b",
+  localGemma: "local/gemma-4-12b",
 } as const satisfies Record<string, ModelId>;
 
 export type RegistryModelId = (typeof MODEL_IDS)[keyof typeof MODEL_IDS];
+
+// Where a model runs: Comfy Router, or the visitor's ComfyUI.
+export type Backend = "router" | "local";
 
 export interface RegistryEntry {
   id: RegistryModelId;
   label: string;
   capabilities: Capability[];
   delivery: "queue" | "sync";
+  backend: Backend;
 }
 
 export const REGISTRY: readonly RegistryEntry[] = [
-  { id: MODEL_IDS.nanoBanana, label: "Nano Banana 2.1", capabilities: ["character.sheet", "image.generate", "image.edit"], delivery: "queue" },
-  { id: MODEL_IDS.seedance, label: "Seedance 2.5", capabilities: ["video.generate"], delivery: "queue" },
-  { id: MODEL_IDS.minimaxH3, label: "MiniMax H3", capabilities: ["video.generate"], delivery: "queue" },
-  { id: MODEL_IDS.klingOmni, label: "Kling V3 Omni", capabilities: ["video.multishot", "video.edit"], delivery: "queue" },
-  { id: MODEL_IDS.freepikSkin, label: "Skin enhancer", capabilities: ["image.enhance"], delivery: "queue" },
-  { id: MODEL_IDS.elevenLabs, label: "ElevenLabs v4", capabilities: ["audio.tts"], delivery: "sync" },
-  { id: MODEL_IDS.sync3, label: "Sync-3", capabilities: ["video.lipsync"], delivery: "queue" },
-  { id: MODEL_IDS.wanVideoEdit, label: "Wan 2.7 video edit", capabilities: ["video.edit"], delivery: "queue" },
-  { id: MODEL_IDS.happyHorseEdit, label: "HappyHorse 1.0 video edit", capabilities: ["video.edit"], delivery: "queue" },
-  { id: MODEL_IDS.bflVideoEdit, label: "BFL video edit", capabilities: ["video.edit"], delivery: "queue" },
+  { id: MODEL_IDS.nanoBanana, label: "Nano Banana 2.1", capabilities: ["character.sheet", "image.generate", "image.edit"], delivery: "queue", backend: "router" },
+  { id: MODEL_IDS.seedance, label: "Seedance 2.5", capabilities: ["video.generate"], delivery: "queue", backend: "router" },
+  { id: MODEL_IDS.minimaxH3, label: "MiniMax H3", capabilities: ["video.generate"], delivery: "queue", backend: "router" },
+  { id: MODEL_IDS.klingOmni, label: "Kling V3 Omni", capabilities: ["video.multishot", "video.edit"], delivery: "queue", backend: "router" },
+  { id: MODEL_IDS.freepikSkin, label: "Skin enhancer", capabilities: ["image.enhance"], delivery: "queue", backend: "router" },
+  { id: MODEL_IDS.elevenLabs, label: "ElevenLabs v4", capabilities: ["audio.tts"], delivery: "sync", backend: "router" },
+  { id: MODEL_IDS.sync3, label: "Sync-3", capabilities: ["video.lipsync"], delivery: "queue", backend: "router" },
+  { id: MODEL_IDS.wanVideoEdit, label: "Wan 2.7 video edit", capabilities: ["video.edit"], delivery: "queue", backend: "router" },
+  { id: MODEL_IDS.happyHorseEdit, label: "HappyHorse 1.0 video edit", capabilities: ["video.edit"], delivery: "queue", backend: "router" },
+  { id: MODEL_IDS.bflVideoEdit, label: "BFL video edit", capabilities: ["video.edit"], delivery: "queue", backend: "router" },
   // Queued: Router's queue takes Claude (checked in M7), so it never needs the sync route.
-  { id: MODEL_IDS.directorAgent, label: "Claude Sonnet 5.5", capabilities: ["text.plan"], delivery: "queue" },
-  { id: MODEL_IDS.identityJudge, label: "Gemini 3.8 Flash", capabilities: ["vision.judge"], delivery: "sync" },
+  { id: MODEL_IDS.directorAgent, label: "Claude Sonnet 5.5", capabilities: ["text.plan"], delivery: "queue", backend: "router" },
+  { id: MODEL_IDS.identityJudge, label: "Gemini 3.8 Flash", capabilities: ["vision.judge"], delivery: "sync", backend: "router" },
+  // Every local model goes on the ComfyUI's own queue.
+  { id: MODEL_IDS.localQwenEdit, label: "Qwen-Image-Edit 2511", capabilities: ["character.sheet", "image.generate", "image.edit"], delivery: "queue", backend: "local" },
+  { id: MODEL_IDS.localWanFast, label: "Wan 2.2 5B (fast)", capabilities: ["video.generate"], delivery: "queue", backend: "local" },
+  { id: MODEL_IDS.localWanBest, label: "Wan 2.2 14B", capabilities: ["video.generate"], delivery: "queue", backend: "local" },
+  { id: MODEL_IDS.localWanAnimate, label: "Wan Animate 2", capabilities: ["video.edit"], delivery: "queue", backend: "local" },
+  { id: MODEL_IDS.localWanSpeech, label: "Wan 2.2 S2V", capabilities: ["video.lipsync"], delivery: "queue", backend: "local" },
+  { id: MODEL_IDS.localSeedVR2, label: "SeedVR2 7B", capabilities: ["image.enhance"], delivery: "queue", backend: "local" },
+  { id: MODEL_IDS.localGemma, label: "Gemma 4 12B", capabilities: ["text.plan", "vision.judge"], delivery: "queue", backend: "local" },
 ];
 
 // Seedance 2.5 is the default for video without people. It refuses photoreal
@@ -70,3 +91,9 @@ export function isAllowedModel(id: string): id is RegistryModelId {
 export function registryEntry(id: string): RegistryEntry | undefined {
   return REGISTRY.find((entry) => entry.id === id);
 }
+
+export function backendOf(id: string): Backend {
+  return registryEntry(id)?.backend ?? "router";
+}
+
+export const isLocalModel = (id: string) => backendOf(id) === "local";

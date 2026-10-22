@@ -1025,7 +1025,7 @@ Every node is a native ComfyUI node, so no custom node pack is needed. File name
 
 | Capability | Local model | Licence | How it runs |
 | --- | --- | --- | --- |
-| Character sheet, image generate, image edit | Qwen-Image-Edit-2511, fp8 | Apache 2.0 | At most 3 images per call (the edit source counts). Fast uses the Lightning 4-step LoRA; Best runs 40 steps. About 1 megapixel at every size. A sheet uses the first 3 good photos; each view uses 2 photos plus the composite. In the Image studio each person sends their front view and each element its sheet, and the footer blocks a run that needs more than 3 images. |
+| Character sheet, image generate, image edit | Qwen-Image-Edit-2511, fp8 | Apache 2.0 | At most 3 images per call (the edit source counts). Fast uses the Lightning 4-step LoRA, Best the 8-step one. About 1 megapixel at 1K and 1.6 at 2K and 4K (the model's own sizes top out near 1.8). A sheet uses the first 3 good photos; each view uses 2 photos plus the composite. In the Image studio each person sends their front view and each element its sheet, and the footer blocks a run that needs more than 3 images. |
 | Video, fast | Wan 2.2 TI2V 5B | Apache 2.0 | Text or a first frame; 1280×704 (or the ratio's equivalent) at 24 fps. This is the local draft. |
 | Video, best | Wan 2.2 14B, T2V and I2V, lightx2v 4-step LoRAs | Apache 2.0 | Text, a first frame, or a first and last frame; 720p at 16 fps. A local final is a new render of the same request on 14B with the same seed, labelled so: it may differ from the draft. |
 | Recast: motion transfer with a new setting | Wan Animate 2, distilled | Apache 2.0 | The performer's front view plus the clip's frames; the background comes from the prompt. The clip's own audio is kept. |
@@ -1566,7 +1566,7 @@ model, then the pickers and prices. No GPU on the build machine: check every gra
 a CPU ComfyUI's /object_info (npm run workflows:check style) and test the client against a
 fake server. Write docs/local-setup.md (install, flags, model files) and
 scripts/local-smoke.ts for Marzuwq to run on the RTX 4090 desktop, plus
-docs/notes/local-notes.md. Merge to main only after his run passes.
+docs/notes/local-notes.md. Merge to main only after Marzuwq's run passes.
 ```
 
 ## References

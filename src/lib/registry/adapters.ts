@@ -1,9 +1,16 @@
 // Attaches each adapter to its registry model ID, so adapters never hold an ID.
-// Director agent and identity judge return text, not assets, so they have none.
+// Router's Director agent and identity judge return text, not assets, so they
+// have none. Every local model has one: its adapter builds the ComfyUI prompt.
 import { bflEdit } from "@/lib/adapters/bfl-edit";
 import { elevenLabs } from "@/lib/adapters/elevenlabs";
 import { freepikSkin } from "@/lib/adapters/freepik-skin";
 import { klingOmni } from "@/lib/adapters/kling-omni";
+import { gemma } from "@/lib/adapters/local/gemma";
+import { qwenEdit } from "@/lib/adapters/local/qwen-edit";
+import { seedvr2 } from "@/lib/adapters/local/seedvr2";
+import { wanBest, wanFast } from "@/lib/adapters/local/wan";
+import { wanAnimate } from "@/lib/adapters/local/wan-animate";
+import { wanSpeech } from "@/lib/adapters/local/wan-speech";
 import { minimaxH3 } from "@/lib/adapters/minimax-h3";
 import { nanoBanana } from "@/lib/adapters/nano-banana";
 import { seedance } from "@/lib/adapters/seedance";
@@ -32,6 +39,13 @@ const ADAPTERS = new Map<string, AnyAdapter>(
     attach(MODEL_IDS.wanVideoEdit, wanEdit),
     attach(MODEL_IDS.happyHorseEdit, wanEdit),
     attach(MODEL_IDS.bflVideoEdit, bflEdit),
+    attach(MODEL_IDS.localQwenEdit, qwenEdit),
+    attach(MODEL_IDS.localWanFast, wanFast),
+    attach(MODEL_IDS.localWanBest, wanBest),
+    attach(MODEL_IDS.localWanAnimate, wanAnimate),
+    attach(MODEL_IDS.localWanSpeech, wanSpeech),
+    attach(MODEL_IDS.localSeedVR2, seedvr2),
+    attach(MODEL_IDS.localGemma, gemma),
   ].map((adapter) => [adapter.id, adapter]),
 );
 

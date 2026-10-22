@@ -105,7 +105,55 @@ export interface LipSyncInput {
 
 // The realism pass on one still (Freepik skin enhancer). Strength runs 0 to
 // 100; 80 gives the spec's defaults (skin detail 80, sharpen 10, grain 4).
+// The local engine's SeedVR2 takes the same input and ignores strength.
 export interface EnhanceImageInput {
   image: InlineImage;
   strength: number;
+}
+
+// ---- The local engine (spec: Local engine) ----
+// Media are data URIs, or files already in the visitor's ComfyUI
+// (local-input:<name>, from client.uploadLocalInput()). Never links.
+
+// Wan 2.2: text, a first frame, or (14B only) a first and last frame.
+export interface WanInput {
+  stage: "generate";
+  prompt: string;
+  firstFrame?: string;
+  lastFrame?: string;          // needs firstFrame
+  durationSec: number;
+  aspect: number;              // width / height: the ratio's, or the first frame's
+  seed?: number;
+}
+
+// Wan Animate 2: the performer drawn into the clip's motion, with the
+// background from the prompt and the clip's own sound kept.
+export interface AnimateInput {
+  prompt: string;              // the performer's looks and the new setting, no motion words
+  motion: string;              // what happens in the clip, e.g. "a person dancing"
+  performer: InlineImage;      // their front view
+  clip: string;
+  durationSec: number;         // the clip's length
+  aspect: number;              // the clip's width / height
+  seed?: number;
+}
+
+// Wan 2.2 S2V: a still that speaks the line, for as long as the line lasts.
+export interface SpeakInput {
+  prompt: string;
+  image: string;
+  audio: string;
+  durationSec: number;         // the line's length
+  aspect: number;
+  seed?: number;
+}
+
+// Gemma 4 through ComfyUI's Generate Text: the Director agent's plan and the
+// identity second opinion.
+export interface LocalTextInput {
+  system?: string;
+  prompt: string;
+  images?: InlineImage[];      // side by side, in this order
+  maxTokens: number;
+  seed?: number;
 }

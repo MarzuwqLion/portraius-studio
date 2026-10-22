@@ -1,13 +1,17 @@
 // The only module that imports @comfyorg/sdk. Every Router call checks the
 // model against the registry allowlist and carries the visitor's key, which
-// lives only in this module (and in the SDK's private binding).
+// lives only in this module (and in the SDK's private binding). A local
+// model's calls go to the visitor's ComfyUI through local.ts instead (spec:
+// Local engine), and never carry the key.
 import { comfy } from "@comfyorg/sdk";
 import { config } from "@/lib/config";
-import { isAllowedModel } from "@/lib/registry/models";
+import { isLocalBody, type LocalResult } from "@/lib/registry/local-body";
+import { isAllowedModel, isLocalModel } from "@/lib/registry/models";
 import type { AppError } from "@/lib/types/errors";
 import type { JobEstimate } from "@/lib/types/jobs";
 import { RouterHttpError, appError } from "./errors";
 import { COMFY_CLOUD_API_URL } from "./hosts";
+import * as local from "./local";
 
 // Router caps a request body at 100 MiB.
 export const MAX_BODY_BYTES = 100 * 1024 * 1024;
@@ -121,8 +125,12 @@ export async function submit(
   body: unknown,
   options: { idempotencyKey: string; signal?: AbortSignal },
 ): Promise<SubmitResult> {
-  requireKey();
   requireModel(modelId);
+  if (isLocalModel(modelId)) {
+    if (!isLocalBody(body)) throw appError("invalid_body", "A local model needs a ComfyUI prompt.");
+    return local.submit(body, options);
+  }
+  requireKey();
   const handle = await comfy.models.submit(modelId, checkedBody(body), {
     idempotencyKey: options.idempotencyKey,
     signal: options.signal,
@@ -140,8 +148,12 @@ export interface StatusResult {
 }
 
 export async function status(modelId: string, requestId: string, signal?: AbortSignal): Promise<StatusResult> {
-  requireKey();
   requireModel(modelId);
+  if (isLocalModel(modelId)) {
+    const s = await local.status(requestId, signal);
+    return { ...s, errorType: null, retryAfterMs: null, raw: {} };
+  }
+  requireKey();
   const update = await comfy.models.handle(modelId, requestId).status({ signal });
   return {
     status: update.status,
@@ -162,8 +174,9 @@ export interface ResultData {
 // Reads a finished request. Rejects with the typed Router error when the
 // request completed with an error_type.
 export async function result(modelId: string, requestId: string, signal?: AbortSignal): Promise<ResultData> {
-  requireKey();
   requireModel(modelId);
+  if (isLocalModel(modelId)) return { data: await local.result(requestId, signal), requestId, creditsUsed: null };
+  requireKey();
   const res = await comfy.models.handle(modelId, requestId).get({ signal });
   warnIfFallback(res.servingProvider, res.requestId);
   recordCredits(res.creditsUsed);
@@ -171,8 +184,9 @@ export async function result(modelId: string, requestId: string, signal?: AbortS
 }
 
 export async function cancel(modelId: string, requestId: string): Promise<void> {
-  requireKey();
   requireModel(modelId);
+  if (isLocalModel(modelId)) return local.cancel(requestId);
+  requireKey();
   await comfy.models.handle(modelId, requestId).cancel();
 }
 
@@ -190,8 +204,9 @@ export async function run(
   body: unknown,
   options: { idempotencyKey?: string; signal?: AbortSignal } = {},
 ): Promise<SyncResult> {
-  requireKey();
   requireModel(modelId);
+  if (isLocalModel(modelId)) throw appError("invalid_body", "Local models go on your ComfyUI's queue.");
+  requireKey();
   const res = await comfy.models.run(modelId, checkedBody(body), {
     fallbackProvider: false,
     idempotencyKey: options.idempotencyKey,
@@ -227,6 +242,8 @@ export function parseEstimate(raw: unknown): JobEstimate & { reason?: string } {
 
 export async function estimate(modelId: string, body: unknown, signal?: AbortSignal): Promise<EstimateResult> {
   requireModel(modelId);
+  // A local run costs nothing (spec: Local engine, Where things run).
+  if (isLocalModel(modelId)) return { enabled: true, estimate: { source: "exact", amountCents: 0 } };
   try {
     const response = await routerFetch(`/v2/models/${modelPath(modelId)}/estimate`, {
       method: "POST",
@@ -320,6 +337,34 @@ export async function deleteAsset(id: string): Promise<void> {
     headers: { Authorization: `Bearer ${key}` },
   });
   if (!response.ok && response.status !== 404) throw await httpError(response);
+}
+
+// ---- The visitor's ComfyUI ----
+
+export const DEFAULT_LOCAL_URL = local.DEFAULT_LOCAL_URL;
+
+export function setLocalUrl(url: string | undefined): void {
+  local.setLocalUrl(url);
+}
+
+export function localUrl(): string | undefined {
+  return local.localUrl();
+}
+
+export type LocalCheck = local.LocalCheck;
+export type { LocalResult };
+
+export function checkLocal(folders: readonly string[], signal?: AbortSignal): Promise<LocalCheck> {
+  return local.check(folders, signal);
+}
+
+// Puts a clip, frame or line in the ComfyUI's input folder ahead of a job,
+// so the job's input names it instead of carrying the bytes. Named by a
+// hash of the bytes, so the same file is never stored twice.
+export async function uploadLocalInput(file: Blob, extension: string, signal?: AbortSignal): Promise<string> {
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()));
+  const hash = [...digest.slice(0, 8)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  return local.uploadInput(file, `portraius-${hash}.${extension}`, signal);
 }
 
 // ---- Diagnostics: which Comfy response headers the browser can read ----

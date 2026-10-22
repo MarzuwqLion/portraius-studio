@@ -113,6 +113,12 @@ export interface Settings {
   theme: "system" | "light" | "dark";
   autoRetry: boolean;
   keepDrafts: boolean;
+  // The local engine (spec: Local engine). Unindexed, so no Dexie version.
+  localEnabled?: boolean;
+  localUrl?: string;
+  neverSpend?: boolean;
+  // A model ID per feature (lib/registry/availability.ts).
+  defaultModels?: Record<string, string>;
 }
 
 export const DEFAULT_SETTINGS: Settings = {

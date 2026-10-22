@@ -111,6 +111,12 @@ function isExpiry(error: AppError): boolean {
   return error.code === "expired" || error.code === "request_not_found";
 }
 
+// Worth waiting out: the network dropped, or the visitor's ComfyUI is briefly
+// down (restarting, loading a model).
+function isUnreachable(error: AppError): boolean {
+  return error.code === "network_error" || error.code === "local_unreachable";
+}
+
 // ---- Starting ----
 
 export async function startJob<I>(spec: StartJob<I>): Promise<Job> {
@@ -135,7 +141,7 @@ async function submitThenPoll(job: Job, body: unknown): Promise<void> {
       break;
     } catch (err) {
       const error = toAppError(err);
-      if (error.code === "network_error" && networkRetries < 2) {
+      if (isUnreachable(error) && networkRetries < 2) {
         await timing.sleep(timing.backoffMs(networkRetries++));
         continue;
       }
@@ -170,7 +176,7 @@ async function pollUntilDone(id: string): Promise<void> {
         await apply(id, job.status === "cancelling" ? { type: "completed_with_error", error: appError("cancelled", "Cancelled.") } : { type: "expired" });
         return;
       }
-      if (error.code === "network_error" || error.retry === "auto") {
+      if (isUnreachable(error) || error.retry === "auto") {
         await timing.sleep(Math.min((error.retryAfter ?? 0) * 1000 || timing.backoffMs(transientFailures++), timing.maxPollMs));
         continue;
       }
@@ -197,8 +203,8 @@ async function pollUntilDone(id: string): Promise<void> {
       const error = toAppError(err);
       if (isExpiry(error)) {
         await apply(id, job.status === "cancelling" ? { type: "completed_with_error", error: appError("cancelled", "Cancelled.") } : { type: "expired" });
-      } else if (error.code === "network_error") {
-        await timing.sleep(timing.backoffMs(transientFailures++));
+      } else if (isUnreachable(error)) {
+        await timing.sleep(Math.min(timing.backoffMs(transientFailures++), timing.maxPollMs));
         continue;
       } else {
         await apply(id, { type: "completed_with_error", error });

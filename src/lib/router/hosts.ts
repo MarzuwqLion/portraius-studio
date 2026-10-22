@@ -43,8 +43,12 @@ export function needsWorkerFetch(link: string | URL): boolean {
   return WORKER_FETCH_PREFIXES.some((prefix) => url.href.startsWith(prefix)) || WORKER_FETCH_HOSTS.some((host) => host.test(url.hostname));
 }
 
+// The visitor's own ComfyUI (spec: Local engine). An https page may call
+// plain-http loopback, on any port; other hosts need the app run locally.
+export const LOCAL_COMFY_ORIGINS: readonly string[] = ["http://127.0.0.1:*", "http://localhost:*"];
+
 export function connectSources(options: { routerBaseUrl?: string; workerUrl?: string }): string[] {
-  const origins = new Set<string>([ROUTER_DEFAULT_BASE_URL]);
+  const origins = new Set<string>([ROUTER_DEFAULT_BASE_URL, ...LOCAL_COMFY_ORIGINS]);
   for (const url of [options.routerBaseUrl, options.workerUrl]) {
     if (url) origins.add(new URL(url).origin);
   }
