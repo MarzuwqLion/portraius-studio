@@ -5,6 +5,8 @@ import { CastPicker } from "@/components/studio/CastPicker";
 import { PresetTiles } from "@/components/studio/PresetTiles";
 import { useLaunch } from "@/components/studio/useLaunch";
 import { GenerateFooter } from "@/components/studio/GenerateFooter";
+import { ModelPicker } from "@/components/studio/ModelPicker";
+import { useFeatureModels } from "@/lib/session/engine";
 import { Field, Select, TextArea } from "@/components/studio/fields";
 import { jobStatusText } from "@/components/studio/JobTake";
 import { SocialExport } from "@/components/studio/SocialExport";
@@ -26,7 +28,7 @@ import { useBlobUrl, useCharacter, useGeneration } from "@/lib/store/hooks";
 import type { CastPick } from "@/lib/studio/cast";
 import { randomSeed } from "@/lib/studio/image";
 import {
-  LIMITS,
+  recastLimits,
   defaultRange,
   GROUP_LABEL,
   GROUP_ORDER,
@@ -219,7 +221,9 @@ export function RecastScreen() {
   const presetPoster = posterUrl(preset);
   const presetStill = presetPoster ? { src: presetPoster, alt: preset.title } : undefined;
   const mode = modeOf(preset);
-  const limits = LIMITS[mode];
+  const recastModels = useFeatureModels("recast");
+  const local = recastModels.option?.backend === "local";
+  const limits = recastLimits(mode, local);
   const limitsNow = useRef(limits);
   limitsNow.current = limits;
   const people = mode === "motion" || (mode === "style" && preset.recipe.slots.some((s) => s.kind === "person"));
@@ -266,7 +270,7 @@ export function RecastScreen() {
   // seconds. The prepared clip stays and is used again whenever it fits.
   function choosePreset(p: Preset) {
     setPresetId(p.id);
-    const next = LIMITS[modeOf(p)];
+    const next = recastLimits(modeOf(p), local);
     if (!rawInfo || trim[1] - trim[0] <= next.maxSec + 0.05) return;
     const first = defaultRange(rawInfo.durationSec, next);
     setRange(first);
@@ -325,8 +329,9 @@ export function RecastScreen() {
     });
   }, [want]);
 
-  const needs = recastNeeds({
+  const needs = recastModels.option?.blocked ?? recastNeeds({
     mode,
+    local,
     hasClip: Boolean(rawBlobId),
     tooShort: short,
     ...(progress !== undefined ? { preparing: progress } : {}),
@@ -343,12 +348,14 @@ export function RecastScreen() {
   const price = usePrice(
     rawBlobId && clipSec > 0
       ? async () => [
-          mode === "swap"
+          local
+            ? { modelId: recastModels.modelId, input: {} }
+            : mode === "swap"
             ? { modelId: MODEL_IDS.happyHorseEdit, input: { prompt: preset.recipe.prompt, videoUrl: "https://example.invalid/clip.mp4" }, hints: { durationSec: clipSec } }
             : { modelId: MODEL_IDS.minimaxH3, input: { stage: "generate", prompt: preset.recipe.prompt, referenceVideos: ["https://example.invalid/clip.mp4"], durationSec: Math.max(4, clipSec), ratio: "16:9", resolution: h3Resolution } },
         ]
       : undefined,
-    `${mode}:${clipSec}:${h3Resolution}`,
+    `${recastModels.modelId}:${mode}:${clipSec}:${h3Resolution}`,
   );
 
   async function recast() {
@@ -367,6 +374,7 @@ export function RecastScreen() {
         direction,
         h3Resolution,
         seed: randomSeed(),
+        ...(local ? { modelId: recastModels.modelId } : {}),
       });
     } catch (err) {
       setError((err as Error).message);
@@ -506,7 +514,9 @@ export function RecastScreen() {
         {(id) => <TextArea id={id} value={direction} onChange={setDirection} rows={2} maxLength={400} />}
       </Field>
 
-      {mode !== "swap" && (
+      <ModelPicker feature="recast" label="Runs on" />
+
+      {mode !== "swap" && !local && (
         <Field label="Resolution">
           {(id) => <Select id={id} value={h3Resolution} onChange={(v) => v && setH3Resolution(v)} options={H3_RESOLUTIONS} />}
         </Field>
@@ -549,7 +559,7 @@ export function RecastScreen() {
     </div>
   );
 
-  const rateLabel = perSecondLabel(mode === "swap" ? MODEL_IDS.happyHorseEdit : MODEL_IDS.minimaxH3, h3Resolution);
+  const rateLabel = local ? undefined : perSecondLabel(mode === "swap" ? MODEL_IDS.happyHorseEdit : MODEL_IDS.minimaxH3, h3Resolution);
   const footer = (
     <GenerateFooter
       label="Recast"
@@ -557,8 +567,13 @@ export function RecastScreen() {
       price={rawBlobId ? price : rateLabel ? { state: "known", label: rateLabel } : price}
       waitingFor={needs}
       busy={busy}
+      local={local}
       onRun={() => void recast()}
-      note={mode === "swap" ? "Object Swap runs on HappyHorse 1.0 video edit." : "Recasts with people run on MiniMax H3."}
+      note={
+        local ? "Runs on Wan Animate 2 on your GPU, with the setting drawn in the same pass."
+        : mode === "swap" ? "Object Swap runs on HappyHorse 1.0 video edit."
+        : "Recasts with people run on MiniMax H3."
+      }
     />
   );
 

@@ -5,7 +5,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useEstimateLabel, useJob } from "@/lib/jobs/hooks";
 import { withPrice } from "@/lib/jobs/estimate";
 import { VOICES, voice } from "@/lib/presets/load";
+import { routerListed } from "@/lib/registry/availability";
 import { MODEL_IDS } from "@/lib/registry/models";
+import { reachOf, useEngineStore, useFeatureModels } from "@/lib/session/engine";
+import { useKeyStore } from "@/lib/session/key";
 import { useBlobUrl } from "@/lib/store/hooks";
 import {
   MAX_LINE_CHARS,
@@ -14,6 +17,7 @@ import {
   speakingInput,
   speakLine,
   startLipSync,
+  startLocalSpeakingClip,
   startSpeakingClip,
   storeRecording,
   type SpokenLine,
@@ -21,6 +25,7 @@ import {
 import type { Job } from "@/lib/types/jobs";
 import { cn } from "@/lib/utils";
 import { jobStatusText } from "./JobTake";
+import { ModelPicker } from "./ModelPicker";
 import { Field, TextArea } from "./fields";
 import { VoicePicker } from "./VoicePicker";
 
@@ -68,6 +73,14 @@ export function SpeakAction({
   const [error, setError] = useState<string>();
   const [started, setStarted] = useState<{ id: string; label: string }[]>([]);
   const lineUrl = useBlobUrl(line?.blobId);
+  // Where a new speaking clip runs, and whether Comfy's own models are on
+  // offer at all (spec: Local engine, Where things run). The visitor's
+  // ComfyUI has no text-to-speech, so with Comfy hidden the line is recorded.
+  const speak = useFeatureModels("speak");
+  const local = speak.option?.backend === "local";
+  const engine = useEngineStore();
+  const hasKey = useKeyStore((s) => s.location !== "none");
+  const comfy = routerListed(reachOf(engine, hasKey));
 
   useEffect(() => {
     let live = true;
@@ -105,16 +118,24 @@ export function SpeakAction({
   return (
     <section aria-label="Speak a line" className={cn("grid gap-3", heading && "border-t border-rule pt-4", className)}>
       {heading && <h2 className="text-body font-semibold">Speak a line</h2>}
-      <Field label="Line" hint={`Up to ${MAX_LINE_SEC} s once spoken, about 40 words.`}>
-        {(id) => <TextArea id={id} value={text} rows={3} maxLength={MAX_LINE_CHARS} placeholder="I wrote this forty years ago." onChange={setText} />}
-      </Field>
-      <Field label="Voice" hint="Stock voices only: no voice cloning.">
-        {(id) => <VoicePicker id={id} value={voiceId} onChange={setVoiceId} />}
-      </Field>
+      {comfy ? (
+        <>
+          <Field label="Line" hint={`Up to ${MAX_LINE_SEC} s once spoken, about 40 words.`}>
+            {(id) => <TextArea id={id} value={text} rows={3} maxLength={MAX_LINE_CHARS} placeholder="I wrote this forty years ago." onChange={setText} />}
+          </Field>
+          <Field label="Voice" hint="Stock voices only: no voice cloning.">
+            {(id) => <VoicePicker id={id} value={voiceId} onChange={setVoiceId} />}
+          </Field>
+        </>
+      ) : (
+        <p className="text-control text-ink-muted">Your ComfyUI has no text-to-speech, so record the line yourself (MP3 or WAV, up to {MAX_LINE_SEC} s).</p>
+      )}
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="secondary" disabled={!text.trim() || !voiceId || busy !== undefined} onClick={() => void step("voice", async () => setLine(await speakLine(text, voiceId!)))}>
-          {busy === "voice" ? "Speaking" : withPrice("Make the line", voicePrice)}
-        </Button>
+        {comfy && (
+          <Button size="sm" variant="secondary" disabled={!text.trim() || !voiceId || busy !== undefined} onClick={() => void step("voice", async () => setLine(await speakLine(text, voiceId!)))}>
+            {busy === "voice" ? "Speaking" : withPrice("Make the line", voicePrice)}
+          </Button>
+        )}
         <Button size="sm" variant="ghost" disabled={!rights || busy !== undefined} onClick={() => file.current?.click()}>
           Use a recording
         </Button>
@@ -132,6 +153,7 @@ export function SpeakAction({
           }}
         />
       </div>
+      {allowNewClip && <ModelPicker feature="speak" label="Speaking clip runs on" />}
       <label htmlFor={ids.rights} className="flex items-start gap-2 text-control">
         <Checkbox id={ids.rights} checked={rights} onCheckedChange={(v) => setRights(v === true)} className="mt-0.5" />
         To use a recording: I recorded it or have the rights to use it.
@@ -144,7 +166,23 @@ export function SpeakAction({
             {line.durationSec.toFixed(1)} s{line.voiceId ? `, ${voice(line.voiceId)?.label ?? "stock voice"}` : ", your recording"}
           </p>
           <div className="flex flex-wrap gap-2">
-            {defaults && (
+            {local && allowNewClip && (
+              <Button
+                size="sm"
+                disabled={busy !== undefined || Boolean(speak.option?.blocked)}
+                title={speak.option?.blocked}
+                onClick={() =>
+                  void step("speaking", async () => {
+                    const job = await startLocalSpeakingClip({ speakFrom: generationId, line, modelId: speak.modelId, seed: Math.floor(Math.random() * 2 ** 31) });
+                    setStarted((s) => [{ id: job.id, label: "Speaking clip" }, ...s]);
+                    onStarted?.(job);
+                  })
+                }
+              >
+                Speaking clip · your GPU
+              </Button>
+            )}
+            {defaults && !local && comfy && (
               <Button
                 size="sm"
                 disabled={busy !== undefined}
@@ -159,9 +197,10 @@ export function SpeakAction({
                 {withPrice("New speaking clip", speakingPrice)}
               </Button>
             )}
+            {comfy && (
             <Button
               size="sm"
-              variant={defaults ? "secondary" : "primary"}
+              variant={defaults || local ? "secondary" : "primary"}
               disabled={busy !== undefined}
               onClick={() =>
                 void step("sync", async () => {
@@ -173,11 +212,14 @@ export function SpeakAction({
             >
               {withPrice("Lip sync this clip", syncPrice)}
             </Button>
+            )}
           </div>
           <p className="text-control text-ink-muted">
-            {defaults
-              ? `A new speaking clip draws ${defaults.speakerName} again from their sheet on MiniMax H3, mouth following the words. Lip sync keeps this exact clip and moves only the mouth.`
-              : "Lip sync keeps this exact clip and moves only the mouth to the line."}
+            {local
+              ? "The speaking clip starts from this clip's first frame on Wan 2.2 S2V, mouth following the words."
+              : defaults
+                ? `A new speaking clip draws ${defaults.speakerName} again from their sheet on MiniMax H3, mouth following the words. Lip sync keeps this exact clip and moves only the mouth.`
+                : "Lip sync keeps this exact clip and moves only the mouth to the line."}
           </p>
         </div>
       )}

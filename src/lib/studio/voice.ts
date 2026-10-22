@@ -8,6 +8,9 @@
 //   reference audio, hosted (H3 refused it as a data URI in M7). The spec
 //   planned Seedance for this, but Seedance refuses photoreal people, and H3
 //   can't take a first frame with reference media.
+// - On the visitor's ComfyUI (spec: Local engine): a speaking clip on Wan 2.2
+//   S2V from the clip's own first frame, so the scene stays. ComfyUI has no
+//   text-to-speech of its own, so the line is the visitor's recording.
 //
 // The line rides on the result as an audio asset, so the library keeps it.
 import { MAX_LINE_CHARS } from "@/lib/adapters/elevenlabs";
@@ -16,9 +19,11 @@ import { onRestart, startJob, type JobInput } from "@/lib/jobs/runner";
 import { LINE_TYPES, audioDuration } from "@/lib/media/audio";
 import { isStylised, type CameraSelection } from "@/lib/prompts/camera";
 import { compileVideoPrompt, role } from "@/lib/prompts/compile";
-import type { H3Input, LipSyncInput, SpeechInput, VideoRatio } from "@/lib/registry/inputs";
+import type { H3Input, LipSyncInput, SpeakInput, SpeechInput, VideoRatio } from "@/lib/registry/inputs";
+import { LOCAL_INPUT } from "@/lib/registry/local-body";
 import { MODEL_IDS } from "@/lib/registry/models";
-import { deleteAsset, uploadAsset, type HostedAsset } from "@/lib/router/client";
+import { deleteAsset, uploadAsset, uploadLocalInput, type HostedAsset } from "@/lib/router/client";
+import { firstFrame } from "@/lib/media/video-frames";
 import { db } from "@/lib/store/db";
 import type { Job } from "@/lib/types/jobs";
 import type { GenerationAsset } from "@/lib/types/records";
@@ -230,12 +235,52 @@ export async function startSpeakingClip(request: SpeakingRequest, parentJobId?: 
   }));
 }
 
+// ---- A speaking clip on the visitor's GPU (Wan 2.2 S2V) ----
+
+export interface LocalSpeakingRequest {
+  speakFrom: string;   // the generation whose first frame speaks
+  line: SpokenLine;
+  modelId: string;
+  seed: number;
+}
+
+// A stored prompt's {slots} as plain words, for a model that has no cast.
+const withoutSlots = (prompt: string) => prompt.replace(/\{([a-z][a-z0-9_-]*)\}/g, "the person");
+
+export async function startLocalSpeakingClip(request: LocalSpeakingRequest, parentJobId?: string): Promise<Job> {
+  const { generation, blob } = await generationVideo(request.speakFrom);
+  const frame = await firstFrame(blob);
+  const sound = await lineBlob(request.line);
+  const input: SpeakInput = {
+    prompt: `${withoutSlots(generation.prompt ?? "A person faces the camera").trim().replace(/[.!?]?$/, ".")} The person speaks the words in the audio, lips moving in sync with it.`,
+    image: `${LOCAL_INPUT}${await uploadLocalInput(frame.jpeg, "jpg")}`,
+    audio: `${LOCAL_INPUT}${await uploadLocalInput(sound, request.line.mime === "audio/wav" ? "wav" : "mp3")}`,
+    durationSec: request.line.durationSec,
+    aspect: frame.width / frame.height,
+    seed: request.seed,
+  };
+  return startJob({
+    kind: "lipsync",
+    modelId: request.modelId,
+    input: {
+      model: input,
+      characterIds: generation.characterIds,
+      prompt: `${generation.prompt ?? "A clip"}, saying ${quoted(request.line)}`,
+      ...(generation.scoreNote === "stylised" ? { stylised: true } : {}),
+      keepAssets: [lineAsset(request.line)],
+      request,
+    } satisfies JobInput<SpeakInput>,
+    ...(parentJobId ? { parentJobId } : {}),
+  });
+}
+
 // Retry: the line and the clip are hosted again (the old links went when the
 // job ended).
 async function restartVoiceJob(job: Job): Promise<Job | undefined> {
   if (job.kind !== "lipsync") return undefined;
-  const request = (job.input as JobInput).request as LipSyncRequest | SpeakingRequest | undefined;
+  const request = (job.input as JobInput).request as LipSyncRequest | SpeakingRequest | LocalSpeakingRequest | undefined;
   if (!request) return undefined;
+  if ("speakFrom" in request) return startLocalSpeakingClip({ ...request, seed: Math.floor(Math.random() * 2 ** 31) }, job.id);
   return "lipSyncOf" in request ? startLipSync(request.lipSyncOf, request.line, job.id) : startSpeakingClip(request, job.id);
 }
 

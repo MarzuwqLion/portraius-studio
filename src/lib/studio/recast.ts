@@ -7,15 +7,20 @@
 // style run on MiniMax H3, which kept motion, timing and camera in M4's test.
 // Object Swap runs on HappyHorse 1.0 video edit, the A/B winner over Kling
 // (which retimes the clip), Wan 2.7 and BFL (docs/notes/recast-ab.md).
+// On the visitor's ComfyUI (spec: Local engine), Motion Transfer runs on Wan
+// Animate 2, which draws the setting from the prompt in the same pass; the
+// other modes stay on Comfy.
 import { onJobDone, onRestart, startJob, type JobInput } from "@/lib/jobs/runner";
 import { prepareImage } from "@/lib/media/image-prep";
 import { loadFfmpeg, type ClipInfo } from "@/lib/media/video-prep";
 import { preset as findPreset } from "@/lib/presets/load";
 import type { Preset } from "@/lib/presets/schema";
 import { compileVideoPrompt } from "@/lib/prompts/compile";
-import type { H3Input, VideoEditInput, VideoRatio } from "@/lib/registry/inputs";
-import { MODEL_IDS } from "@/lib/registry/models";
-import { uploadAsset } from "@/lib/router/client";
+import type { AnimateInput, H3Input, VideoEditInput, VideoRatio } from "@/lib/registry/inputs";
+import { LOCAL_INPUT } from "@/lib/registry/local-body";
+import { MODEL_IDS, isLocalModel } from "@/lib/registry/models";
+import { uploadAsset, uploadLocalInput } from "@/lib/router/client";
+import { ANIMATE_DURATION } from "@/lib/adapters/local/wan-animate";
 import { db } from "@/lib/store/db";
 import type { Job } from "@/lib/types/jobs";
 import { buildCast, dataUri, type CastPick } from "./cast";
@@ -50,6 +55,18 @@ export const LIMITS: Record<RecastMode, ClipLimits> = {
   style: { minSec: 4, maxSec: 15, maxHeight: 1080 },
   swap: { minSec: 3, maxSec: 10, maxHeight: 1080, fps: 30 },
 };
+
+// Wan Animate 2 on the visitor's GPU: motion transfer only.
+const LOCAL_MOTION: ClipLimits = { minSec: ANIMATE_DURATION[0], maxSec: ANIMATE_DURATION[1], maxHeight: 1080 };
+
+export function recastLimits(mode: RecastMode, local: boolean): ClipLimits {
+  return local && mode === "motion" ? LOCAL_MOTION : LIMITS[mode];
+}
+
+// Why a mode can't run on the visitor's GPU, or undefined.
+export function localUnsupported(mode: RecastMode): string | undefined {
+  return mode === "motion" ? undefined : `${MODE_LABEL[mode]} needs Comfy credits. On your GPU, Recast does motion transfer.`;
+}
 
 export function modeOf(p: Preset): RecastMode {
   const mode = p.recipe.params?.mode;
@@ -88,6 +105,7 @@ export function tooShort(lengthSec: number, limits: ClipLimits): boolean {
 
 export interface RecastForm {
   mode: RecastMode;
+  local?: boolean;           // runs on the visitor's ComfyUI
   hasClip: boolean;
   tooShort: boolean;         // the clip, or its trim, is shorter than the mode allows
   preparing?: number;        // share done while the clip prepares
@@ -102,7 +120,8 @@ export interface RecastForm {
 // undefined when it can run. The screen shows it under the button. The clip
 // prepares on its own, so the only clip step left to the visitor is a length.
 export function recastNeeds(form: RecastForm): string | undefined {
-  const limits = LIMITS[form.mode];
+  const limits = recastLimits(form.mode, form.local === true);
+  if (form.local && localUnsupported(form.mode)) return localUnsupported(form.mode);
   if (!form.hasClip) return "Upload a clip";
   if (form.tooShort) return `Recast needs a ${limits.minSec} to ${limits.maxSec} s clip`;
   if (form.preparing !== undefined || !form.prepared || !fitsLimits(form.prepared, limits)) {
@@ -133,6 +152,43 @@ export interface RecastRequest {
   h3Resolution: H3Input["resolution"];
   seed: number;
   settingStep?: boolean;     // the second step of a setting-change preset
+  modelId?: string;          // a local model; Comfy's per-mode engines when unset
+}
+
+// Wan Animate's prompt: who the performer is and where, with no motion words
+// (those go in the motion prompt).
+export function animatePrompt(name: string, description: string | undefined, setting: string | undefined, direction: string): string {
+  const who = `Character appearance description: ${name}, exactly as in the reference image, with the same face, hair, skin and build.${description ? ` ${description.trim()}` : ""}`;
+  const where = `Background description: ${setting ?? "the same kind of place as the driving video, with the same light"}.`;
+  return [who, where, direction.trim()].filter(Boolean).join("\n");
+}
+
+async function startLocalRecast(request: RecastRequest, p: Preset, clip: Blob, parentJobId?: string): Promise<string> {
+  const mode = modeOf(p);
+  const unsupported = localUnsupported(mode);
+  if (unsupported) throw new Error(unsupported);
+  const modelId = request.modelId!;
+  // One image per performer: their front view.
+  const cast = await buildCast(request.cast.slice(0, 1), { compact: true });
+  const member = cast.members[0];
+  if (!member || !cast.images[0]) throw new Error("Pick who performs.");
+  const setting = p.recipe.params?.setting;
+  const model: AnimateInput = {
+    prompt: animatePrompt(member.name, member.description, typeof setting === "string" ? setting : undefined, request.direction ?? ""),
+    motion: p.recipe.prompt.replace(/\{([a-z][a-z0-9_-]*)\}/g, "a person"),
+    performer: cast.images[0],
+    clip: `${LOCAL_INPUT}${await uploadLocalInput(clip, "mp4")}`,
+    durationSec: request.clipDurationSec,
+    aspect: request.clipWidth / request.clipHeight,
+    seed: request.seed,
+  };
+  const job = await startJob({
+    kind: "recast",
+    modelId,
+    input: { model, characterIds: cast.characterIds, prompt: p.title, request } satisfies RecastJobInput,
+    ...(parentJobId ? { parentJobId } : {}),
+  });
+  return job.id;
 }
 
 // A recast job whose result is the first of two steps (a setting change follows).
@@ -153,11 +209,13 @@ export async function startRecast(request: RecastRequest, parentJobId?: string):
   const p = findPreset(request.presetId);
   if (!p) throw new Error("That preset isn't available.");
   const mode = modeOf(p);
-  const limits = LIMITS[mode];
+  const local = Boolean(request.modelId && isLocalModel(request.modelId));
+  const limits = recastLimits(mode, local);
   if (request.clipDurationSec < limits.minSec - 0.05 || request.clipDurationSec > limits.maxSec + 0.05) {
     throw new RangeError(`This mode takes a ${limits.minSec} to ${limits.maxSec} s clip.`);
   }
   const clip = await requireBlob(request.clipBlobId, "clip");
+  if (local) return startLocalRecast(request, p, clip, parentJobId);
   const direction = request.direction?.trim() ? ` ${request.direction.trim()}` : "";
   const stylised = p.recipe.params?.stylised === true;
 
@@ -254,7 +312,8 @@ async function startSettingStep(job: Job, input: RecastJobInput, setting: string
 }
 
 async function afterRecast(job: Job): Promise<void> {
-  if (job.kind !== "recast") return;
+  // A local recast drew its setting and kept the clip's sound in one pass.
+  if (job.kind !== "recast" || isLocalModel(job.modelId)) return;
   const input = job.input as RecastJobInput;
   const p = findPreset(input.request?.presetId);
   const setting = p?.recipe.params?.setting;

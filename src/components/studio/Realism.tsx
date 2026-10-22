@@ -5,7 +5,7 @@ import { useEstimateLabel, useJob } from "@/lib/jobs/hooks";
 import { withPrice } from "@/lib/jobs/estimate";
 import { retryJob } from "@/lib/jobs/runner";
 import { toInlineImage } from "@/lib/media/image-prep";
-import { MODEL_IDS } from "@/lib/registry/models";
+import { useFeatureModels } from "@/lib/session/engine";
 import { db } from "@/lib/store/db";
 import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
 import { DEFAULT_STRENGTH, realismSource, startRealism, type RealismJobInput } from "@/lib/studio/realism";
@@ -22,8 +22,11 @@ export function RealismAction({ generationId, onStarted, className }: { generati
   const [strength, setStrength] = useState(DEFAULT_STRENGTH);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  // The skin enhancer, or SeedVR2 on the visitor's GPU, which has no strength.
+  const { modelId, option } = useFeatureModels("enhance");
+  const local = option?.backend === "local";
   const price = useEstimateLabel(
-    MODEL_IDS.freepikSkin,
+    modelId,
     async () => {
       const generation = await db.generations.get(generationId);
       const asset = generation?.assets.find((a) => a.kind === "image");
@@ -39,7 +42,7 @@ export function RealismAction({ generationId, onStarted, className }: { generati
     setError(undefined);
     try {
       // Not onStarted?.(await ...): with no listener that skips the call itself.
-      const job = await startRealism(generationId, strength);
+      const job = await startRealism(generationId, strength, modelId);
       onStarted?.(job);
     } catch (err) {
       setError((err as Error).message);
@@ -50,14 +53,16 @@ export function RealismAction({ generationId, onStarted, className }: { generati
 
   return (
     <div role="group" aria-label="Make it real" className={cn("flex flex-wrap items-center gap-3", className)}>
-      <Button size="sm" variant="secondary" onClick={() => void run()} disabled={busy}>
+      <Button size="sm" variant="secondary" onClick={() => void run()} disabled={busy || Boolean(option?.blocked)} title={option?.blocked}>
         {withPrice("Make it real", price)}
       </Button>
-      <label htmlFor={id} className="flex items-center gap-2 text-control">
-        Realism strength
-        <input id={id} type="range" min={20} max={100} step={10} value={strength} onChange={(e) => setStrength(Number(e.target.value))} className="w-24" />
-        <span className="w-6 tabular-nums">{strength}</span>
-      </label>
+      {!local && (
+        <label htmlFor={id} className="flex items-center gap-2 text-control">
+          Realism strength
+          <input id={id} type="range" min={20} max={100} step={10} value={strength} onChange={(e) => setStrength(Number(e.target.value))} className="w-24" />
+          <span className="w-6 tabular-nums">{strength}</span>
+        </label>
+      )}
       {error && (
         <p className="text-control text-drift" role="alert">
           {error}

@@ -35,6 +35,16 @@ function jpeg(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("The frame couldn't be encoded."))), "image/jpeg", 0.92));
 }
 
+export async function firstFrame(blob: Blob): Promise<{ jpeg: Blob; width: number; height: number }> {
+  const { video, close } = await openVideo(blob);
+  try {
+    const canvas = await frameAt(video, 0);
+    return { jpeg: await jpeg(canvas), width: canvas.width, height: canvas.height };
+  } finally {
+    close();
+  }
+}
+
 export async function lastFrame(blob: Blob): Promise<Blob> {
   const { video, close } = await openVideo(blob);
   try {
