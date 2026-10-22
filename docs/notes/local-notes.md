@@ -51,9 +51,8 @@ path, for speed.
 | 9 | Gemma 4 12B returns the shot list as JSON | Lower the temperature, or ask for fewer shots |
 | 10 | Every file name in `lib/registry/local-models.ts` matches Hugging Face | Fix the name; `npm run local:models` fails loudly on a 404 |
 
-## Open question for Marzuwq
+## Add a line without text-to-speech
 
 ComfyUI has no native text-to-speech node, so a visitor with only their GPU records the line for "Add a line"
-themselves. Options: keep it that way; add a TTS custom node (an extra install for every local user, which this
-build has avoided); or run a small TTS model such as Kokoro in the browser (no install, about 90 MB of weights the
-page would host).
+themselves. The other options were a TTS custom node (an extra install for every local user) or a small TTS model
+such as Kokoro in the browser (about 90 MB of weights the page would host). Marzuwq kept the recording, October 22.

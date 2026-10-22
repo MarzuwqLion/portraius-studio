@@ -1033,7 +1033,7 @@ Every node is a native ComfyUI node, so no custom node pack is needed. File name
 | Make it real | SeedVR2 7B | Apache 2.0 | One-step restore at 2×. Re-scored like the Router pass. |
 | Director agent, identity second opinion | Gemma 4 12B through Generate Text | Apache 2.0 | The agent's reply is parsed and checked against the same zod schema as Claude's. |
 
-Not available locally, and shown disabled with "Needs Comfy credits" when no key is set or Never spend is on: Object swap and Style swap in Recast, lip sync onto an existing clip (Sync-3), and Kling's one-take. Voice has no native ComfyUI text-to-speech; the local path for a spoken line is an open question in docs/notes/local-notes.md.
+Not available locally, and shown disabled with "Needs Comfy credits" when no key is set or Never spend is on: Object swap and Style swap in Recast, lip sync onto an existing clip (Sync-3), and Kling's one-take. Voice has no native ComfyUI text-to-speech, so locally the spoken line is the visitor's own recording (Marzuwq, October 22).
 
 ### Rules
 
