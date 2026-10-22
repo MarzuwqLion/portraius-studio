@@ -45,7 +45,7 @@ Marzuwq settled every open decision on October 19, and the UI pass on October 21
 | --- | --- |
 | Name | Portraius Studio. Repo `portraius-studio`. |
 | Video models | Seedance 2.5 is the default video model for anything without people. Seedance refuses photoreal people as input images (M3 notes), so every video with a cast or a face in its first frame renders on MiniMax H3 (768P or 2K, 4 to 15 s, no draft mode). Decided by Marzuwq on October 19 after M3; it replaces "H3 is selectable, never the default". |
-| Open weights | Not pursued. No open-weights profile, no Open Weights Only entry. |
+| Open weights | Not pursued. No open-weights profile, no Open Weights Only entry. Superseded on October 22: see Decisions (October 22) and Local engine. Still no Open Weights Only entry. |
 | Hosting | GitHub Pages, as a static site. See Architecture for what that changes. |
 | Keys | The visitor's own Comfy API key, plus a no-key Tour mode with pre-made samples. |
 | Demo video | Marzuwq records it after testing. Not part of Claude Code's milestones. |
@@ -95,6 +95,18 @@ A review of the live site after U0 to U4 scored it 8.5 of 10. These are what kep
 | 12 | Copy | Recast drop zone: "Use a clip you filmed or have the rights to use. Playing behind this: the sample, and Walt Harmon doing the same moves." Prompt placeholders: "Type @ to add someone, then what happens: …". "Strength" becomes "Realism strength", beside Make it real as one group. First run: a small "How it works" heading over the three steps. Library and take page: a known cast member shows as a chip (face and name), "@lead" only when the cast isn't known. Phone bottom bar: every label fits at 360 px. | Each one was misread in the review. |
 | 13 | Director details | The open shot's camera summary drops the length (its own Length select shows it); folded rows keep it. The Tour's Director "Try this with Walt" reopens the scene it made before while that scene has no takes, instead of making another. | Two lengths read as two settings, and two "The Letter, again" cards as a bug. |
 | 14 | Skip link | "Skip to content" is the first focus stop on every screen, visible only on focus, and moves focus to the main area. | Every screen started with eight rail links. |
+
+### Decisions (October 22, local engine)
+
+Marzuwq reopened the October 19 open-weights decision so that someone who doesn't want to spend anything can run the studio on their own GPU. Contracts change where the table says so; Marzuwq approved each change.
+
+| # | Decision | Answer | Why |
+| --- | --- | --- | --- |
+| 1 | A second backend | The visitor's own ComfyUI runs open-weight models as a second backend beside Comfy Router (Local engine section). Both can be used at once; nothing changes for a visitor who sets up only a key. | Free to run, and inputs never leave the visitor's machines. |
+| 2 | Models | Qwen-Image-Edit-2511 for characters and images, Wan 2.2 for video, Wan Animate 2 for Recast, Wan 2.2 S2V for speaking clips, SeedVR2 for Make it real, Gemma 4 for the Director agent and the identity second opinion. All Apache 2.0 and all native ComfyUI nodes. | Marzuwq picked Qwen for characters and Wan for video. The open MiniMax H3 weights were ruled out (their licence excludes the US, EU, UK and Korea), as was Qwen Image 2.1 (research-only licence). |
+| 3 | Where things run | No global mode switch. Model pickers list what can run now, grouped "On your GPU" and "Comfy credits"; Settings holds a default per feature and a "Never spend credits" switch. | A switch would rule out the useful mix (local drafts, paid finals) and adds nothing for a visitor with no key, who can't spend anyway. |
+| 4 | Prices | A local run's price reads "Free · your GPU". Decision October 21 item 2 still holds for Router models. | The visitor pays for nothing but power, and should see that before running. |
+| 5 | Contracts | Module boundaries: `lib/router` also talks to the visitor's ComfyUI (`lib/router/local.ts`), still only through `client.ts`. Error mapping: six `local_*` codes and the `check_local` action. Configuration: the CSP allows loopback ComfyUI origins; the ComfyUI URL is a Setting, not a variable. Dexie: no new version is needed (the new Settings fields aren't indexed, and a generation's `modelId` says where it ran). | Approved by Marzuwq, October 22. |
 
 ### Defaults
 
@@ -440,7 +452,7 @@ These are the shapes and boundaries Claude Code must not improvise. Changing one
 | --- | --- | --- |
 | `routes/*`, `components/*` | `lib/*` hooks and types | `@comfyorg/sdk`, `lib/router` internals |
 | `lib/jobs` (runner and state machine) | `lib/router`, `lib/registry`, `lib/store`, `lib/media`, `lib/identity` | React |
-| `lib/router` | `@comfyorg/sdk`, `@comfyorg/sdk/errors`, `lib/registry` | `lib/store` |
+| `lib/router` | `@comfyorg/sdk`, `@comfyorg/sdk/errors`, `lib/registry`; `local.ts` calls the visitor's ComfyUI and is imported only by `client.ts` (October 22) | `lib/store` |
 | `lib/adapters/*` | `lib/registry/schemas`, `lib/prompts` | Anything that makes a network call |
 | `lib/store` | Dexie | Anything that makes a network call |
 
@@ -528,7 +540,7 @@ export interface AppError {
   requestId?: string;
   refusalSubject?: string;
   retry: "auto" | "manual" | "never";
-  action?: "add_credits" | "check_key" | "edit_input" | "wait";
+  action?: "add_credits" | "check_key" | "edit_input" | "wait" | "check_local";
 }
 ```
 
@@ -546,6 +558,17 @@ export interface AppError {
 | `RequestNotFound`, HTTP `410` | never |  | "This result expired before it was saved." |
 | Anything else | manual |  | "Something went wrong. Request ID {id}." |
 
+Local engine errors (October 22), from `lib/router/local.ts`:
+
+| Code | When | Retry | Action | Message |
+| --- | --- | --- | --- | --- |
+| `local_unreachable` | No answer, or a CORS refusal | manual | `check_local` | "Couldn't reach your ComfyUI at {url}. Start it with --enable-cors-header, then retry." |
+| `local_model_missing` | `/api/prompt` refuses a model file name | never | `check_local` | "Your ComfyUI is missing {file}. Settings lists where to get it." |
+| `local_node_missing` | `/api/prompt` doesn't know a node | never | `check_local` | "Your ComfyUI doesn't have the {node} node. Update ComfyUI, then retry." |
+| `local_out_of_memory` | The run stops on a CUDA out-of-memory error | manual | `edit_input` | "Your GPU ran out of memory. Try a shorter clip, a smaller size or the faster model." |
+| `local_error` | Any other refusal or failed run | manual |  | "Your ComfyUI stopped at {node}: {message}" |
+| `local_lost` | The ComfyUI no longer knows the job (it restarted) | manual |  | "Your ComfyUI restarted before this finished. Retry it?" |
+
 Messages say what happened and what to do next, never apologise, and always show the request ID when there is one.
 
 ### Configuration
@@ -558,6 +581,8 @@ Messages say what happened and what to do next, never apologise, and always show
 | `VITE_BASE` | `/portraius-studio/` | Vite `base` for GitHub Pages |
 
 No secret ever goes in a `VITE_` variable: everything in them ends up public in the built site.
+
+The visitor's ComfyUI URL is a Setting, not a variable (October 22). The built site's CSP allows `http://127.0.0.1:*` and `http://localhost:*` in `connect-src`, so a loopback ComfyUI works on any port.
 
 ## Character vault
 
@@ -977,9 +1002,55 @@ Built with the V3 node schema ([migration guide](https://docs.comfy.org/custom-n
 
 The pitch for Most Innovative: a character you make in the app is a file you can load in ComfyUI, score in ComfyUI, and share with anyone running either.
 
-## Open weights: out of scope
+## Local engine (open weights)
 
-Decided October 19: no open-weights profile and no Open Weights Only entry. The app uses partner models through Comfy Router, which the official rules explicitly allow; only the Open Weights Only category bans them.
+Decided October 22 (Decisions, October 22). A visitor who doesn't want to spend runs every feature that has an open-weight equivalent on their own GPU, through a ComfyUI they run themselves. Comfy Router stays the default and both backends can be used at once. The entry is still not an Open Weights Only entry: the partner models stay.
+
+### How the browser reaches it
+
+- The visitor runs a current ComfyUI (October 2026 or newer) with `--enable-cors-header <app origin>`. Without it ComfyUI refuses cross-origin calls. Settings has a "Your ComfyUI" card: its URL (default `http://127.0.0.1:8188`), a Check button and the model files it found.
+- `lib/router/local.ts` talks to it, and only `lib/router/client.ts` calls that module:
+  - submit: `POST /api/prompt` with the job's idempotency key as `prompt_id`. Before a resubmit it asks `GET /api/jobs/{id}`, so a repeat never queues a second run.
+  - status: `GET /api/jobs/{id}` (`pending`, `in_progress`, `completed`, `failed`, `cancelled`), and the queue position from `GET /api/queue`.
+  - cancel: `POST /api/jobs/{id}/cancel`.
+  - inputs: `POST /api/upload/image` into `input/portraius/` (images, clips and audio alike), named by a hash of the bytes, so a retry reuses the file.
+  - results: the job's outputs, downloaded from `GET /api/view`.
+  - readiness: `GET /api/system_stats` (GPU name and VRAM) and `GET /api/models/{folder}` for each model file a local model needs.
+- From the GitHub Pages site only `http://127.0.0.1` and `http://localhost` work: browsers let an https page call plain-http loopback, and the CSP lists both with any port. A ComfyUI on another machine works when the app runs locally (`npm run dev`).
+- No key, no Worker and no media hosting: inputs never leave the visitor's machines.
+
+### Models
+
+Every node is a native ComfyUI node, so no custom node pack is needed. File names, folders, sizes and download links live in `lib/registry/local-models.ts`, next to the model IDs in `lib/registry/models.ts`.
+
+| Capability | Local model | Licence | How it runs |
+| --- | --- | --- | --- |
+| Character sheet, image generate, image edit | Qwen-Image-Edit-2511, fp8 | Apache 2.0 | At most 3 images per call (the edit source counts). Fast uses the Lightning 4-step LoRA; Best runs 40 steps. About 1 megapixel at every size. A sheet uses the first 3 good photos; each view uses 2 photos plus the composite. In the Image studio each person sends their front view and each element its sheet, and the footer blocks a run that needs more than 3 images. |
+| Video, fast | Wan 2.2 TI2V 5B | Apache 2.0 | Text or a first frame; 1280×704 (or the ratio's equivalent) at 24 fps. This is the local draft. |
+| Video, best | Wan 2.2 14B, T2V and I2V, lightx2v 4-step LoRAs | Apache 2.0 | Text, a first frame, or a first and last frame; 720p at 16 fps. A local final is a new render of the same request on 14B with the same seed, labelled so: it may differ from the draft. |
+| Recast: motion transfer with a new setting | Wan Animate 2, distilled | Apache 2.0 | The performer's front view plus the clip's frames; the background comes from the prompt. The clip's own audio is kept. |
+| Speaking clip ("Add a line") | Wan 2.2 S2V 14B | Apache 2.0 | The front view or the clip's first frame, plus the line's audio. |
+| Make it real | SeedVR2 7B | Apache 2.0 | One-step restore at 2×. Re-scored like the Router pass. |
+| Director agent, identity second opinion | Gemma 4 12B through Generate Text | Apache 2.0 | The agent's reply is parsed and checked against the same zod schema as Claude's. |
+
+Not available locally, and shown disabled with "Needs Comfy credits" when no key is set or Never spend is on: Object swap and Style swap in Recast, lip sync onto an existing clip (Sync-3), and Kling's one-take. Voice has no native ComfyUI text-to-speech; the local path for a spoken line is an open question in docs/notes/local-notes.md.
+
+### Rules
+
+1. **IDs.** Local model IDs start with `local/` and live in `lib/registry/models.ts`. Every registry entry has `backend: "router" | "local"`. A local ID never reaches Router, and a Router ID never reaches the visitor's ComfyUI.
+2. **One state machine.** Local jobs use the same job states and events. `pending` is `IN_QUEUE`, `in_progress` is `IN_PROGRESS`, and `completed`, `failed` and `cancelled` are `COMPLETED` (with an error for the last two). A job the ComfyUI no longer knows (it restarted) completes with `local_lost`.
+3. **Adapters build graphs.** A local adapter turns the same app-level input into a ComfyUI API prompt plus the files to upload. It makes no network call; `local.ts` uploads the files at submit.
+4. **Download on completion,** as for Router: results come from `/api/view` into the blobs table.
+5. **Scoring is unchanged.** Identity scores, bands and the automatic retry work the same on local results.
+6. **Character files** record the local model ID in `sheet.model`.
+
+### Where things run
+
+- A Router model is listed when a key is set, or when no ComfyUI is set up (a first visit sees today's app). A local model is listed when "Your ComfyUI" is turned on in Settings. "Never spend credits" hides every Router model.
+- A listed local model whose files are missing stays in the list, disabled, with "Missing on your ComfyUI: {file}". A Router model with no key keeps today's "Add your Comfy API key" prompt.
+- Each feature (Characters, Image, Video, Recast, Make it real, Add a line, Director agent) has a default in Settings. With no saved default the first usable model wins: the Router default with a key, otherwise the local default.
+- Pickers group the list under "On your GPU, free" and "Comfy credits". With one group the heading is left out.
+- The price slot reads "Free · your GPU" for a local run.
 
 ## UI and UX
 
@@ -997,7 +1068,7 @@ Six work screens in a left rail, a shared jobs tray, and a first-run path that g
 | Director | Scene cards with cover and readiness; scene card with logline and "Draft shots with AI"; shot list with one open shot and the rest collapsed; timeline pinned to the bottom of the set; export ending on a large player | Shot missing anchor, stitching, export done |
 | Library | Masonry grid; filters for type, character, model, date and score; recipe view; remix link; bulk zip export | Storage nearly full |
 | Remix | Recipe card, slot pickers, run button | Empty vault (offer "Design a character") |
-| Settings | Key handling, default models, auto-retry, keep drafts, storage use, export library, delete all data |  |
+| Settings | Key handling, Your ComfyUI (URL, check, model files), Never spend credits, default model per feature, auto-retry, keep drafts, storage use, export library, delete all data | ComfyUI not set up, unreachable, missing files, ready |
 | Tour | Plays pre-made outputs from `samples/` with a "pre-made sample" label on each; no key needed. A sticky chapter list; each chapter ends with "Try this with Walt", which adds Walt to the vault if he isn't there and opens that studio with Walt cast and the matching preset picked |  |
 
 ### Job lifecycle (every card, every screen)
@@ -1245,6 +1316,7 @@ Eight milestones from October 19 to October 29, each with a prompt to paste into
 | U4 UI pass: check | Oct 28 |
 | U5 UI pass: review fixes | Oct 21 |
 | M8 Submission | Oct 27 to Oct 29 (code freeze noon Oct 29) |
+| L1 Local engine | Oct 22 to Oct 26, on the `local-engine` branch; merged after Marzuwq's desktop test |
 | Submit (target) | Oct 29 |
 | Deadline | Oct 30, 9:00am PT |
 
@@ -1481,6 +1553,20 @@ Oct 29.
 Then STOP AND ASK Marzuwq for the sample character. When he provides it, regenerate
 public/samples/ and the preset thumbnails with it and redeploy. Marzuwq records the demo
 video himself after testing.
+```
+
+**L1: Local engine (Oct 22 to 26)**
+
+```
+Read CLAUDE.md, then docs/SPEC.md: Decisions (October 22, local engine), Local engine,
+Contracts (Module boundaries, Error mapping, Configuration).
+On branch local-engine, one commit per feature: the registry's backends and local models,
+lib/router/local.ts behind client.ts, the Settings card, then each feature on its local
+model, then the pickers and prices. No GPU on the build machine: check every graph against
+a CPU ComfyUI's /object_info (npm run workflows:check style) and test the client against a
+fake server. Write docs/local-setup.md (install, flags, model files) and
+scripts/local-smoke.ts for Marzuwq to run on the RTX 4090 desktop, plus
+docs/notes/local-notes.md. Merge to main only after his run passes.
 ```
 
 ## References
