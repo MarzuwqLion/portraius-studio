@@ -2,6 +2,7 @@ import { Link, useSearchParams } from "react-router";
 import { Screen } from "@/components/shell/Screen";
 import { Button } from "@/components/ui/button";
 import type { CreatePath } from "@/lib/characters/draft";
+import { useFeatureModels } from "@/lib/session/engine";
 import { useKeyStore } from "@/lib/session/key";
 import { cn } from "@/lib/utils";
 import { ConsentStep } from "./wizard/ConsentStep";
@@ -83,13 +84,15 @@ function Stepper({ labels, current }: { labels: readonly string[]; current: numb
 function Wizard({ path }: { path: CreatePath }) {
   const { draft, update, reset } = useDraft(path);
   const keyLocation = useKeyStore((s) => s.location);
+  const sheetBackend = useFeatureModels("characters").option?.backend ?? "router";
   if (!draft) return <Screen title="Make a character" />;
 
   const steps = STEPS[path];
   const step = Math.min(draft.step, steps.length - 1);
   const name = steps[step]!.name;
   const go = (next: number) => update({ step: next });
-  const needsKey = keyLocation === "none" && NEEDS_KEY.includes(name);
+  // A step that draws needs a key unless it draws on the visitor's ComfyUI.
+  const needsKey = keyLocation === "none" && NEEDS_KEY.includes(name) && sheetBackend === "router";
   const props = { draft, update, onNext: () => go(step + 1) };
 
   return (

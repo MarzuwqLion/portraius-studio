@@ -6,7 +6,8 @@ import { faceDescriptor, jobImage, startCandidates } from "@/lib/characters/crea
 import type { WizardDraft } from "@/lib/characters/draft";
 import { CANDIDATE_COUNT, candidateInput } from "@/lib/characters/sheet";
 import { useEstimateLabel } from "@/lib/jobs/hooks";
-import { MODEL_IDS } from "@/lib/registry/models";
+import { ModelPicker } from "@/components/studio/ModelPicker";
+import { useFeatureModels } from "@/lib/session/engine";
 import type { UpdateDraft } from "./useDraft";
 
 export const MIN_DESCRIPTION = 10;
@@ -18,13 +19,14 @@ export function DesignStep({ draft, update, onNext }: { draft: WizardDraft; upda
   const [error, setError] = useState<string>();
   const [starting, setStarting] = useState(false);
   const valid = text.trim().length >= MIN_DESCRIPTION;
-  const price = useEstimateLabel(MODEL_IDS.nanoBanana, valid ? async () => candidateInput(text) : undefined, valid ? text : "");
+  const { modelId, option } = useFeatureModels("characters");
+  const price = useEstimateLabel(modelId, valid ? async () => candidateInput(text) : undefined, valid ? text : "");
 
   async function draw() {
     setStarting(true);
     setError(undefined);
     try {
-      const ids = await startCandidates(text);
+      const ids = await startCandidates(text, modelId);
       update({ personDescription: text.trim(), candidateJobIds: ids, pickedCandidateJobId: undefined, candidateDescriptor: undefined });
       onNext();
     } catch (err) {
@@ -52,13 +54,14 @@ export function DesignStep({ draft, update, onNext }: { draft: WizardDraft; upda
           className="w-full rounded-control border border-rule bg-proof p-3 text-body text-ink placeholder:text-ink-muted"
         />
       </div>
+      <ModelPicker feature="characters" label="Draw with" />
       {error && (
         <p className="text-control text-drift" role="alert">
           {error}
         </p>
       )}
       <div className="flex flex-wrap items-center gap-3">
-        <Button onClick={() => void draw()} disabled={!valid || starting}>
+        <Button onClick={() => void draw()} disabled={!valid || starting || Boolean(option?.blocked)}>
           {price ? `Draw ${CANDIDATE_COUNT} faces · ${price} each` : `Draw ${CANDIDATE_COUNT} faces`}
         </Button>
         {draft.candidateJobIds.length > 0 && (

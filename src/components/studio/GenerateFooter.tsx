@@ -15,6 +15,7 @@ export function GenerateFooter({
   busy = false,
   onRun,
   note,
+  local = false,
 }: {
   label: string;
   price: Price;
@@ -22,12 +23,13 @@ export function GenerateFooter({
   busy?: boolean;
   onRun: () => void;
   note?: ReactNode;        // one quiet line under the button
+  local?: boolean;         // runs only on the visitor's ComfyUI, so it needs no key
 }) {
   const reasonId = useId();
   // With everything else ready, the last thing missing is often the key: a
   // visitor from the Tour has none yet.
   const noKey = useKeyStore((s) => s.location === "none");
-  const needsKey = !waitingFor && noKey;
+  const needsKey = !waitingFor && noKey && !local;
   const disabled = Boolean(waitingFor) || needsKey || busy;
   const run = useRef(onRun);
   run.current = onRun;

@@ -9,7 +9,7 @@ import type { AdapterImpl } from "@/lib/registry/capabilities";
 import type { AnimateInput } from "@/lib/registry/inputs";
 import type { LocalBody, LocalResult } from "@/lib/registry/local-body";
 import { FILES } from "@/lib/registry/local-models";
-import { LocalGraph, WAN_NEGATIVE, clip, frameSize, loadImage, loadVideo, localAssets, out, saveVideo, text, unet, vae, type Link } from "./graph";
+import { LocalGraph, WAN_NEGATIVE, clip, frameSize, loadImage, loadVideo, localAssets, out, saveVideo, seedOf, text, unet, vae, type Link } from "./graph";
 
 export const ANIMATE_DURATION: [number, number] = [2, 10];
 
@@ -87,7 +87,7 @@ export const wanAnimate: AdapterImpl<AnimateInput, LocalResult> = {
     const sampled = g.add("SamplerCustom", {
       model: out(sampling),
       add_noise: true,
-      noise_seed: input.seed ?? 0,
+      noise_seed: seedOf(input.seed),
       cfg: 1,
       positive: out(animate, 0),
       negative: out(animate, 1),

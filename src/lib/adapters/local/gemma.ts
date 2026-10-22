@@ -7,7 +7,7 @@ import type { AdapterImpl } from "@/lib/registry/capabilities";
 import type { LocalTextInput } from "@/lib/registry/inputs";
 import type { LocalBody, LocalResult } from "@/lib/registry/local-body";
 import { FILES } from "@/lib/registry/local-models";
-import { LocalGraph, clip, loadImage, out, type Link } from "./graph";
+import { LocalGraph, clip, loadImage, out, seedOf, type Link } from "./graph";
 
 export const gemma: AdapterImpl<LocalTextInput, LocalResult> = {
   capabilities: ["text.plan", "vision.judge"],
@@ -35,7 +35,7 @@ export const gemma: AdapterImpl<LocalTextInput, LocalResult> = {
       "sampling_mode.top_p": 0.95,
       "sampling_mode.min_p": 0.05,
       "sampling_mode.repetition_penalty": 1.05,
-      "sampling_mode.seed": input.seed ?? 0,
+      "sampling_mode.seed": seedOf(input.seed),
       thinking: false,
       use_default_template: true,
       ...(input.system ? { system_prompt: input.system } : {}),

@@ -7,7 +7,7 @@ import type { AdapterImpl } from "@/lib/registry/capabilities";
 import type { SpeakInput } from "@/lib/registry/inputs";
 import type { LocalBody, LocalResult } from "@/lib/registry/local-body";
 import { FILES } from "@/lib/registry/local-models";
-import { LocalGraph, WAN_NEGATIVE, clip, frameSize, loadAudio, loadImage, localAssets, lora, out, saveVideo, text, unet, vae } from "./graph";
+import { LocalGraph, WAN_NEGATIVE, clip, frameSize, loadAudio, loadImage, localAssets, lora, out, saveVideo, seedOf, text, unet, vae } from "./graph";
 
 export const SPEECH_DURATION: [number, number] = [1, 15];
 const FPS = 16;
@@ -45,7 +45,7 @@ export const wanSpeech: AdapterImpl<SpeakInput, LocalResult> = {
         denoise: 1,
       });
     const shared = { positive: out(positive), negative: out(negative), vae: out(decoder), audio_encoder_output: out(heard), ref_image: out(still) };
-    const seed = input.seed ?? 0;
+    const seed = seedOf(input.seed);
 
     const start = g.add("WanSoundImageToVideo", { ...shared, width, height, length: CHUNK, batch_size: 1 });
     let latent = sample(start, seed);

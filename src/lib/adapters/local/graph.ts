@@ -79,6 +79,9 @@ export class LocalGraph {
 
 export const out = (node: string, index = 0): Link => [node, index];
 
+// A request without a seed gets a new one, so drawing it again differs.
+export const seedOf = (seed: number | undefined) => seed ?? Math.floor(Math.random() * 2 ** 31);
+
 // ---- Shared nodes ----
 
 export const unet = (g: LocalGraph, file: ModelFile) => g.add("UNETLoader", { unet_name: file.name, weight_dtype: "default" });

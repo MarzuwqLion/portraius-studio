@@ -21,13 +21,13 @@ import { VIDEO_PRESETS } from "@/lib/presets/load";
 import type { Preset } from "@/lib/presets/schema";
 import type { CameraSelection } from "@/lib/prompts/camera";
 import type { H3Input, VideoRatio } from "@/lib/registry/inputs";
-import { MODEL_IDS } from "@/lib/registry/models";
+import { MODEL_IDS, isLocalModel, registryEntry } from "@/lib/registry/models";
+import { useFeatureModels } from "@/lib/session/engine";
 import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
 import type { CastPick } from "@/lib/studio/cast";
 import { randomSeed } from "@/lib/studio/image";
 import { generationImageBlobId, storeUpload } from "@/lib/studio/uploads";
 import {
-  DEFAULT_MODEL,
   VIDEO_MODELS,
   blobHasPerson,
   modelFor,
@@ -40,6 +40,7 @@ import {
   rerollClip,
   retrySilent,
   startVideo,
+  takesReferences,
   type VideoMode,
   type VideoModel,
   type VideoRequest,
@@ -59,6 +60,8 @@ type ClipInput = JobInput & { request?: VideoRequest };
 function clipLabel(job: Job): string {
   if (job.kind === "image") return "Opening still";
   if (job.modelId === MODEL_IDS.minimaxH3) return `H3 ${resolutionLabel((job.input as JobInput<H3Input>).model.resolution)}`;
+  if (job.modelId === MODEL_IDS.localWanFast) return "Wan 5B draft · your GPU";
+  if (job.modelId === MODEL_IDS.localWanBest) return isFinal(job) ? "Wan 14B final · your GPU" : "Wan 14B · your GPU";
   return isFinal(job) ? "Final 1080p" : "Draft 480p";
 }
 
@@ -120,7 +123,11 @@ function ClipActions({ job, followUps, onContinue }: { job: Job; followUps: Job[
 export function VideoScreen() {
   const [params] = useSearchParams();
   const [mode, setMode] = useState<VideoMode>("text");
-  const [model, setModel] = useState<VideoModel>(DEFAULT_MODEL);
+  // The picked model is the Video feature's default (spec: Local engine).
+  const videoModels = useFeatureModels("video");
+  const stillModels = useFeatureModels("image");
+  const model = videoModels.modelId as VideoModel;
+  const setModel = videoModels.setModel;
   const [scene, setScene] = useState("");
   const [cast, setCast] = useState<CastPick[]>([]);
   const [sourceBlobId, setSourceBlobId] = useState<string>();
@@ -194,19 +201,26 @@ export function VideoScreen() {
     setDurationSec((d) => Math.min(max, Math.max(min, d)));
   }, [effective]);
 
-  const request: VideoRequest = { mode, model: effective, scene, cast, ...(sourceBlobId ? { sourceBlobId } : {}), durationSec, ratio, audio, seed, h3Resolution, camera };
+  const request: VideoRequest = { mode, model: effective, scene, cast, ...(sourceBlobId ? { sourceBlobId } : {}), durationSec, ratio, audio, seed, h3Resolution, camera, stillModel: stillModels.modelId };
   const needsCast = mode === "still" || mode === "references";
-  const waitingFor = needsCast && !cast.length ? "Pick a character" : mode === "image" && !sourceBlobId ? "Add a first frame" : !scene.trim() ? "Write a prompt" : undefined;
+  const local = isLocalModel(effective);
+  const stillLocal = isLocalModel(stillModels.modelId);
+  const waitingFor =
+    needsCast && !cast.length ? "Pick a character"
+    : mode === "image" && !sourceBlobId ? "Add a first frame"
+    : !scene.trim() ? "Write a prompt"
+    : mode === "references" && !takesReferences(effective) ? "Use references needs Comfy credits. Try Image, then animate."
+    : (videoModels.option?.blocked ?? (mode === "still" ? stillModels.option?.blocked : undefined));
   const ready = !waitingFor;
   // Image, then animate is two calls: the 2K opening still, then the clip.
   const price = usePrice(
     async () => [
-      ...(mode === "still" ? [{ modelId: MODEL_IDS.nanoBanana, input: { prompt: scene, references: [], aspectRatio: "16:9", size: "2K", quality: "best" } }] : []),
+      ...(mode === "still" ? [{ modelId: stillModels.modelId, input: { prompt: scene, references: [], aspectRatio: "16:9", size: "2K", quality: "best" } }] : []),
       effective === MODEL_IDS.minimaxH3
         ? { modelId: effective, input: { stage: "generate", prompt: scene, durationSec, ratio, resolution: h3Resolution } }
         : { modelId: effective, input: { stage: "draft", prompt: scene, durationSec, ratio, generateAudio: audio } },
     ],
-    `${mode}:${effective}:${durationSec}:${h3Resolution}:${audio}`,
+    `${mode}:${effective}:${stillModels.modelId}:${durationSec}:${h3Resolution}:${audio}`,
   );
 
   async function generate() {
@@ -246,7 +260,11 @@ export function VideoScreen() {
       <Segmented label="Mode" value={mode} onChange={setMode} options={MODES} columns={2} />
       {/* Who, then what (Decisions, October 21, item 6). Picking a cast in Text mode moves to Image, then animate. */}
       {mode !== "image" && <Field label="Cast">{(id) => <CastPicker id={id} value={cast} onChange={setCast} />}</Field>}
-      {mode === "still" && <p className="text-control text-ink-muted">Nano Banana 2.1 draws the opening still with your cast, then the clip starts from it.</p>}
+      {mode === "still" && (
+        <p className="text-control text-ink-muted">
+          {registryEntry(stillModels.modelId)?.label ?? "Nano Banana 2.1"} draws the opening still with your cast, then the clip starts from it.
+        </p>
+      )}
       {mode === "references" && <p className="text-control text-ink-muted">Your cast's sheets set who is in the shot and what they wear; the model frames the opening itself.</p>}
 
       <Field label="Prompt" hint="Type @ to put someone from your vault in the shot.">
@@ -279,16 +297,50 @@ export function VideoScreen() {
         </Field>
       )}
 
-      {/* The picker and the takes agree: people always render on H3 (Decisions, October 21, item 9). */}
-      <Field label="Model" hint="People in the shot render on MiniMax H3.">
+      {/* The picker and the takes agree: people always render on H3 (Decisions, October 21, item 9), unless the clip runs on the visitor's GPU. */}
+      <Field label="Model" hint={local ? "Runs on your GPU, free." : "People in the shot render on MiniMax H3."}>
         {(id) =>
           routedForPeople ? (
             <Select id={id} value={effective} onChange={() => undefined} options={VIDEO_MODELS.filter((m) => m.id === effective).map((m) => ({ value: m.id, label: m.label }))} />
           ) : (
-            <Select id={id} value={model} onChange={(v) => v && setModel(v)} options={VIDEO_MODELS.map((m) => ({ value: m.id, label: m.label }))} />
+            <select id={id} value={model} onChange={(e) => setModel(e.target.value)} className="h-10 w-full rounded-control border border-rule bg-proof px-3 text-body text-ink">
+              {[
+                { label: "On your GPU, free", options: videoModels.options.filter((o) => o.backend === "local") },
+                { label: "Comfy credits", options: videoModels.options.filter((o) => o.backend === "router") },
+              ]
+                .filter((g) => g.options.length)
+                .map((g, _, groups) => {
+                  const items = g.options.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.label}
+                      {o.blocked ? " (not ready)" : ""}
+                    </option>
+                  ));
+                  return groups.length > 1 ? (
+                    <optgroup key={g.label} label={g.label}>
+                      {items}
+                    </optgroup>
+                  ) : (
+                    items
+                  );
+                })}
+            </select>
           )
         }
       </Field>
+      {mode === "still" && stillModels.options.length > 1 && (
+        <Field label="Still drawn with">
+          {(id) => (
+            <select id={id} value={stillModels.modelId} onChange={(e) => stillModels.setModel(e.target.value)} className="h-10 w-full rounded-control border border-rule bg-proof px-3 text-body text-ink">
+              {stillModels.options.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label} · {o.backend === "local" ? "your GPU" : "Comfy credits"}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+      )}
 
       <Field label={`Duration: ${durationSec} s`}>
         {(id) => <input id={id} type="range" min={spec.duration[0]} max={spec.duration[1]} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} className="w-full" />}
@@ -364,8 +416,9 @@ export function VideoScreen() {
       price={price}
       waitingFor={waitingFor}
       busy={busy}
+      local={local && (mode !== "still" || stillLocal)}
       onRun={() => void generate()}
-      note={spec.draft ? "A 480p draft first; render the 1080p final once you like it." : undefined}
+      note={spec.draft ? "A 480p draft first; render the 1080p final once you like it." : local ? "Renders on your GPU. A clip takes a few minutes." : undefined}
     />
   );
 

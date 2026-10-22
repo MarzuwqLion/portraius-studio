@@ -36,8 +36,10 @@ export interface CastBundle {
 
 // Per person: the sheet composite plus the best source photo (or, for a
 // designed character, the front view); per element: its sheet. withFront adds
-// each person's front view too (the drift retry).
-export async function buildCast(picks: readonly CastPick[], options: { withFront?: boolean } = {}): Promise<CastBundle> {
+// each person's front view too (the drift retry). compact sends one image per
+// member, for a model that takes few (Qwen on the visitor's ComfyUI takes 3):
+// a person's front view, an element's sheet.
+export async function buildCast(picks: readonly CastPick[], options: { withFront?: boolean; compact?: boolean } = {}): Promise<CastBundle> {
   const members: CastMember[] = [];
   const images: InlineImage[] = [];
   for (const pick of picks) {
@@ -50,8 +52,9 @@ export async function buildCast(picks: readonly CastPick[], options: { withFront
       if (!blob) throw new Error(`${record.name} is missing ${path}.`);
       return blob;
     };
-    const refs: { kind: ReferenceKind; blob: Blob }[] = [{ kind: "sheet", blob: file(record.file.sheet.composite) }];
-    if (record.kind === "person") {
+    const refs: { kind: ReferenceKind; blob: Blob }[] =
+      options.compact && record.kind === "person" ? [{ kind: "front", blob: file(record.file.sheet.views.front) }] : [{ kind: "sheet", blob: file(record.file.sheet.composite) }];
+    if (record.kind === "person" && !options.compact) {
       const photo = record.file.photos[0];
       refs.push(photo ? { kind: "photo", blob: file(photo.path) } : { kind: "front", blob: file(record.file.sheet.views.front) });
       if (options.withFront && photo) refs.push({ kind: "front", blob: file(record.file.sheet.views.front) });
@@ -66,12 +69,13 @@ export const dataUri = (image: InlineImage) => `data:${image.mime};base64,${imag
 
 // The cast as the compiler sees it, without loading any images: for the
 // prompt preview, which updates as the user types.
-export async function describeCast(picks: readonly CastPick[]): Promise<CastMember[]> {
+export async function describeCast(picks: readonly CastPick[], options: { compact?: boolean } = {}): Promise<CastMember[]> {
   const records = await db.characters.bulkGet(picks.map((p) => p.characterId));
   return picks.flatMap((pick, i) => {
     const record = records[i];
     if (!record) return [];
-    const references: ReferenceKind[] = record.kind === "person" ? ["sheet", record.file.photos.length ? "photo" : "front"] : ["sheet"];
+    const references: ReferenceKind[] =
+      record.kind !== "person" ? ["sheet"] : options.compact ? ["front"] : ["sheet", record.file.photos.length ? "photo" : "front"];
     return [{ slot: pick.slot, name: record.name, kind: record.kind, description: record.file.description, references }];
   });
 }

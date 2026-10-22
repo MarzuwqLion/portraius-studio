@@ -15,6 +15,7 @@ import { useSettings } from "@/lib/store/hooks";
 import { updateSettings } from "@/lib/store/settings";
 import { deleteAllData } from "@/lib/store/wipe";
 import type { Settings } from "@/lib/types/records";
+import { LocalSection, WhereSection } from "./EngineSections";
 
 // Development builds only: the M1 day-one checks. Never part of the shipped site.
 const DayOneChecks = import.meta.env.DEV ? lazy(() => import("./DayOneChecks")) : null;
@@ -219,6 +220,8 @@ export function SettingsScreen() {
     <Screen title="Settings">
       <div className="grid max-w-2xl gap-10">
         <KeySection />
+        <LocalSection />
+        <WhereSection />
         <ThemeSection />
         <GenerationSection />
         <StorageSection />

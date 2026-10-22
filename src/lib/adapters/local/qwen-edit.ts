@@ -8,7 +8,7 @@ import type { AdapterImpl } from "@/lib/registry/capabilities";
 import type { GenerateImageInput } from "@/lib/registry/inputs";
 import type { LocalBody, LocalResult } from "@/lib/registry/local-body";
 import { FILES } from "@/lib/registry/local-models";
-import { LocalGraph, clip, frameSize, localAssets, lora, out, ratioValue, saveImage, unet, vae, type Link } from "./graph";
+import { LocalGraph, clip, frameSize, localAssets, lora, out, ratioValue, saveImage, seedOf, unet, vae, type Link } from "./graph";
 
 // TextEncodeQwenImageEditPlus has three image inputs; an edit's source is one.
 export const QWEN_MAX_IMAGES = 3;
@@ -56,7 +56,7 @@ export const qwenEdit: AdapterImpl<GenerateImageInput, LocalResult> = {
     }
     const sampled = g.add("KSampler", {
       model: out(lightning),
-      seed: input.seed ?? 0,
+      seed: seedOf(input.seed),
       steps: fast ? 4 : 8,
       cfg: 1,
       sampler_name: "euler",

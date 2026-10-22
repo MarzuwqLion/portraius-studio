@@ -1,23 +1,26 @@
 // The Video studio's work (spec: Video studio): Seedance 2.5 drafts then
-// finals, MiniMax H3 as the selectable second model, Still first chaining,
-// Continue, and the last frame when a final has none (Unknowns row 9).
+// finals, MiniMax H3 as the selectable second model, Wan 2.2 on the visitor's
+// ComfyUI (spec: Local engine), Still first chaining, Continue, and the last
+// frame when a final has none (Unknowns row 9).
 import { hasFace } from "@/lib/identity/embed";
 import { onJobDone, retryJob, startJob, type JobInput } from "@/lib/jobs/runner";
 import { blobToBase64, drawToCanvas, prepareImage } from "@/lib/media/image-prep";
 import { lastFrame } from "@/lib/media/video-frames";
 import { isStylised, type CameraSelection } from "@/lib/prompts/camera";
 import { compileImagePrompt, compileVideoPrompt } from "@/lib/prompts/compile";
-import type { GenerateVideoInput, H3Input, ImageAspectRatio, RenderFinalInput, VideoRatio } from "@/lib/registry/inputs";
-import { DEFAULT_VIDEO_MODEL, MODEL_IDS, PEOPLE_VIDEO_MODEL } from "@/lib/registry/models";
+import type { GenerateVideoInput, H3Input, ImageAspectRatio, RenderFinalInput, VideoRatio, WanInput } from "@/lib/registry/inputs";
+import { DEFAULT_VIDEO_MODEL, MODEL_IDS, PEOPLE_VIDEO_MODEL, isLocalModel } from "@/lib/registry/models";
+import { WAN_BEST_DURATION, WAN_FAST_DURATION } from "@/lib/adapters/local/wan";
+import { ratioValue } from "@/lib/adapters/local/graph";
 import { db } from "@/lib/store/db";
 import { getSettings } from "@/lib/store/settings";
 import type { Job } from "@/lib/types/jobs";
 import type { GenerationAsset } from "@/lib/types/records";
 import { buildCast, dataUri, type CastPick } from "./cast";
-import { randomSeed } from "./image";
+import { imageModel, isCompact, randomSeed, tooManyImages } from "./image";
 
 export type VideoMode = "text" | "still" | "references" | "image";
-export type VideoModel = typeof MODEL_IDS.seedance | typeof MODEL_IDS.minimaxH3;
+export type VideoModel = typeof MODEL_IDS.seedance | typeof MODEL_IDS.minimaxH3 | typeof MODEL_IDS.localWanBest | typeof MODEL_IDS.localWanFast;
 
 // H3's resolutions as the screen names them: "768p", though the request says 768P.
 export const resolutionLabel = (r: H3Input["resolution"]) => (r === "768P" ? "768p" : r);
@@ -26,7 +29,12 @@ export const H3_RESOLUTIONS = (["768P", "2K"] as const).map((value) => ({ value,
 export const VIDEO_MODELS: { id: VideoModel; label: string; duration: [number, number]; draft: boolean }[] = [
   { id: MODEL_IDS.seedance, label: "Seedance 2.5", duration: [4, 30], draft: true },
   { id: MODEL_IDS.minimaxH3, label: "MiniMax H3", duration: [4, 15], draft: false },
+  { id: MODEL_IDS.localWanBest, label: "Wan 2.2 14B", duration: WAN_BEST_DURATION, draft: false },
+  { id: MODEL_IDS.localWanFast, label: "Wan 2.2 5B (fast)", duration: WAN_FAST_DURATION, draft: false },
 ];
+
+// Use references needs a model that takes reference images; Wan doesn't.
+export const takesReferences = (model: string) => !isLocalModel(model);
 export const DEFAULT_MODEL: VideoModel = DEFAULT_VIDEO_MODEL;
 
 export interface VideoRequest {
@@ -42,16 +50,21 @@ export interface VideoRequest {
   h3Resolution: H3Input["resolution"];
   camera: CameraSelection;
   remixOf?: string;       // a remix: the source recipe's hash (lib/recipes/share.ts)
+  stillModel?: string;    // Image, then animate: what draws the still (Nano Banana 2.1 when unset)
 }
 
-type VideoJobInput = JobInput & { request: VideoRequest };
+// final: a local final, which is a new render on Wan 14B rather than the
+// draft's own final (spec: Local engine, Models).
+type VideoJobInput = JobInput & { request: VideoRequest; final?: true };
 
 // ---- Which model ----
 
 // Seedance refuses photoreal people as input images, so anything with a
 // person goes to H3: a cast (Still first, References) or a face in the first
-// frame. Text to video keeps the chosen model.
+// frame. Text to video keeps the chosen model, and so does a local model:
+// Wan refuses nobody.
 export function modelFor(request: Pick<VideoRequest, "mode" | "cast" | "model">, firstFrameHasPerson: boolean): VideoModel {
+  if (isLocalModel(request.model)) return request.model;
   if ((request.mode === "still" || request.mode === "references") && request.cast.length) return PEOPLE_VIDEO_MODEL;
   if (request.mode === "image" && firstFrameHasPerson) return PEOPLE_VIDEO_MODEL;
   return request.model;
@@ -74,10 +87,30 @@ async function frameUri(blob: Blob): Promise<string> {
   return `data:image/jpeg;base64,${await blobToBase64(jpeg)}`;
 }
 
-async function videoModelInput(request: VideoRequest, firstFrame?: string): Promise<{ input: GenerateVideoInput | H3Input; characterIds: string[] }> {
+// A first frame's width / height, for a model that sizes its clip from it.
+async function frameAspect(dataUriOrBlob: string): Promise<number> {
+  const bitmap = await createImageBitmap(await (await fetch(dataUriOrBlob)).blob());
+  const aspect = bitmap.width / bitmap.height;
+  bitmap.close();
+  return aspect;
+}
+
+async function videoModelInput(request: VideoRequest, firstFrame?: string): Promise<{ input: GenerateVideoInput | H3Input | WanInput; characterIds: string[] }> {
   const withReferences = request.mode === "references";
+  if (withReferences && !takesReferences(request.model)) throw new Error("Use references needs Comfy credits: Wan can't take reference images. Try Image, then animate.");
   const cast = await buildCast(request.cast);
   const prompt = compileVideoPrompt({ scene: request.scene, cast: cast.members, camera: request.camera, modelId: request.model, withReferences });
+  if (isLocalModel(request.model)) {
+    const input: WanInput = {
+      stage: "generate",
+      prompt,
+      ...(firstFrame ? { firstFrame } : {}),
+      durationSec: request.durationSec,
+      aspect: firstFrame ? await frameAspect(firstFrame) : ratioValue(request.ratio),
+      seed: request.seed,
+    };
+    return { input, characterIds: cast.characterIds };
+  }
   const referenceImages = withReferences ? cast.images.map(dataUri) : undefined;
   if (request.model === MODEL_IDS.minimaxH3) {
     const input: H3Input = {
@@ -103,12 +136,12 @@ async function videoModelInput(request: VideoRequest, firstFrame?: string): Prom
   return { input, characterIds: cast.characterIds };
 }
 
-async function startVideoJob(request: VideoRequest, firstFrame?: string, parentJobId?: string): Promise<string> {
+async function startVideoJob(request: VideoRequest, firstFrame?: string, parentJobId?: string, final?: true): Promise<string> {
   const { input, characterIds } = await videoModelInput(request, firstFrame);
   const job = await startJob({
     kind: "video",
     modelId: request.model,
-    input: { model: input, characterIds, prompt: request.scene, stylised: isStylised(request.camera), request } satisfies VideoJobInput,
+    input: { model: input, characterIds, prompt: request.scene, stylised: isStylised(request.camera), request, ...(final ? { final } : {}) } satisfies VideoJobInput,
     ...(parentJobId ? { parentJobId } : {}),
   });
   return job.id;
@@ -123,12 +156,15 @@ function stillAspect(ratio: VideoRatio): ImageAspectRatio {
 export async function startVideo(asked: VideoRequest): Promise<string> {
   const request = routed(asked, asked.mode === "image" && (await blobHasPerson(asked.sourceBlobId)));
   if (request.mode === "still") {
-    const cast = await buildCast(request.cast);
+    const stillModel = imageModel({ modelId: request.stillModel });
+    const tooMany = tooManyImages(stillModel, request.cast.length, false);
+    if (tooMany) throw new Error(tooMany);
+    const cast = await buildCast(request.cast, { compact: isCompact(stillModel) });
     const { movement: _still, ...camera } = request.camera;
-    const prompt = compileImagePrompt({ scene: request.scene, cast: cast.members, camera, modelId: MODEL_IDS.nanoBanana });
+    const prompt = compileImagePrompt({ scene: request.scene, cast: cast.members, camera, modelId: stillModel });
     const job = await startJob({
       kind: "image",
-      modelId: MODEL_IDS.nanoBanana,
+      modelId: stillModel,
       input: {
         model: { prompt, references: cast.images, aspectRatio: stillAspect(request.ratio), size: "2K", quality: "best", seed: request.seed },
         characterIds: cast.characterIds,
@@ -160,17 +196,27 @@ export async function rerollClip(jobId: string): Promise<string> {
 
 // ---- Draft, then final ----
 
+// A local clip on the fast Wan model is a draft too: its final renders on 14B.
 export function isDraft(job: Job): boolean {
+  if (job.modelId === MODEL_IDS.localWanFast) return !(job.input as VideoJobInput).final;
   return job.modelId === MODEL_IDS.seedance && (job.input as JobInput<GenerateVideoInput | RenderFinalInput>).model.stage === "draft";
 }
 
 export function isFinal(job: Job): boolean {
-  return (job.input as JobInput<GenerateVideoInput | RenderFinalInput>).model?.stage === "final";
+  return (job.input as JobInput<GenerateVideoInput | RenderFinalInput>).model?.stage === "final" || (job.input as VideoJobInput).final === true;
 }
 
 // Render final submits only the draft's ID (spec: Draft, then final, step 3).
+// A local draft's final is the same request again on Wan 14B, same seed and
+// first frame: a new render, which can differ from the draft.
 export async function renderFinal(draftJobId: string): Promise<string> {
   const draft = await db.jobs.get(draftJobId);
+  if (draft?.modelId === MODEL_IDS.localWanFast) {
+    const input = draft.input as VideoJobInput;
+    const firstFrame = (input.model as WanInput).firstFrame;
+    const durationSec = Math.min(WAN_BEST_DURATION[1], input.request.durationSec);
+    return startVideoJob({ ...input.request, model: MODEL_IDS.localWanBest, durationSec }, firstFrame, draft.id, true);
+  }
   if (!draft?.draftTaskId) throw new Error("This draft has no task ID to render from.");
   const input = draft.input as VideoJobInput;
   const job = await startJob({

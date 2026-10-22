@@ -1,12 +1,13 @@
 // The create wizard's work, apart from React (spec: Character vault). Photos
-// are prepped and checked in the browser, sheet images come from Nano Banana
-// 2.1 jobs on the runner, and saving assembles a .portraius bundle.
+// are prepped and checked in the browser, sheet images come from jobs on the
+// runner (Nano Banana 2.1, or Qwen-Image-Edit on the visitor's ComfyUI: spec,
+// Local engine), and saving assembles a .portraius bundle.
 import { FACE_MODEL, checkPhoto, detectFaces } from "@/lib/identity/embed";
 import { CONSENT_MAX_DISTANCE, bestDistance, meanDescriptor, scoreFromDistance } from "@/lib/identity/score";
 import { startJob } from "@/lib/jobs/runner";
 import { blobToBase64, drawToCanvas, makeThumb, prepareImage, toInlineImage } from "@/lib/media/image-prep";
 import { voice } from "@/lib/presets/load";
-import { MODEL_IDS } from "@/lib/registry/models";
+import { adapterFor } from "@/lib/registry/adapters";
 import type { InlineImage } from "@/lib/registry/inputs";
 import { saveCharacter } from "@/lib/store/characters";
 import { db } from "@/lib/store/db";
@@ -82,30 +83,45 @@ async function sheetReferences(draft: WizardDraft): Promise<InlineImage[]> {
   return Promise.all(goodPhotos(draft).map(async (p) => ({ mime: "image/jpeg" as const, base64: await blobToBase64(await blob(p.blobId)) })));
 }
 
-function sheetJob(input: ReturnType<typeof compositeInput>, prompt: string): Promise<string> {
-  return startJob({ kind: "sheet", modelId: MODEL_IDS.nanoBanana, input: { model: input, characterIds: [], prompt } }).then((job) => job.id);
+function sheetJob(modelId: string, input: ReturnType<typeof compositeInput>, prompt: string): Promise<string> {
+  return startJob({ kind: "sheet", modelId, input: { model: input, characterIds: [], prompt } }).then((job) => job.id);
 }
 
-export async function compositeInputFor(draft: WizardDraft): Promise<ReturnType<typeof compositeInput>> {
-  const references = await sheetReferences(draft);
+// The photos a model can take beside `others` more images. Qwen on the
+// visitor's ComfyUI takes 3 in all, so it gets the first good photos.
+function fitPhotos(modelId: string, photos: InlineImage[], others: number): InlineImage[] {
+  const max = adapterFor(modelId).limits.maxRefImages;
+  return max ? photos.slice(0, Math.max(1, max - others)) : photos;
+}
+
+export async function compositeInputFor(draft: WizardDraft, modelId: string): Promise<ReturnType<typeof compositeInput>> {
+  const references = fitPhotos(modelId, await sheetReferences(draft), 0);
   return draft.path === "element" ? elementCompositeInput(draft.elementType ?? "prop", references) : compositeInput(references);
 }
 
-export async function startComposite(draft: WizardDraft): Promise<string> {
-  return sheetJob(await compositeInputFor(draft), "Turnaround sheet");
+export async function startComposite(draft: WizardDraft, modelId: string): Promise<string> {
+  return sheetJob(modelId, await compositeInputFor(draft, modelId), "Turnaround sheet");
+}
+
+// The model that drew the latest composite, which draws the views too.
+async function compositeModel(draft: WizardDraft): Promise<string> {
+  const job = await db.jobs.get(draft.compositeJobIds.at(-1) ?? "");
+  if (!job) throw new Error("The turnaround sheet isn't ready yet.");
+  return job.modelId;
 }
 
 export async function startView(draft: WizardDraft, view: SheetView): Promise<string> {
+  const modelId = await compositeModel(draft);
   const composite = await toInlineImage(await requireJobImage(draft.compositeJobIds.at(-1), "turnaround sheet"));
-  const references = await sheetReferences(draft);
+  const references = fitPhotos(modelId, await sheetReferences(draft), 1);
   const input = draft.path === "element" ? elementViewInput(draft.elementType ?? "prop", view, references, composite) : viewInput(view, references, composite);
-  return sheetJob(input, `Sheet view: ${view}`);
+  return sheetJob(modelId, input, `Sheet view: ${view}`);
 }
 
-export async function startCandidates(description: string): Promise<string[]> {
+export async function startCandidates(description: string, modelId: string): Promise<string[]> {
   const input = candidateInput(description);
   const ids: string[] = [];
-  for (let i = 0; i < CANDIDATE_COUNT; i++) ids.push(await sheetJob(input, "Candidate face"));
+  for (let i = 0; i < CANDIDATE_COUNT; i++) ids.push(await sheetJob(modelId, { ...input, seed: Math.floor(Math.random() * 2 ** 31) }, "Candidate face"));
   return ids;
 }
 
@@ -186,7 +202,7 @@ export async function saveFromDraft(draft: WizardDraft): Promise<CharacterRecord
     sheet: {
       composite: SHEET_PATHS.composite,
       views: { front: SHEET_PATHS.front, threeQuarter: SHEET_PATHS.threeQuarter, profile: SHEET_PATHS.profile, fullBody: SHEET_PATHS.fullBody },
-      model: MODEL_IDS.nanoBanana,
+      model: await compositeModel(draft),
     },
     ...(descriptors.length ? { identity: { descriptors, mean: meanDescriptor(descriptors), model: FACE_MODEL, threshold: CONSENT_MAX_DISTANCE } } : {}),
     ...(draft.consent ? { consent: draft.consent } : {}),

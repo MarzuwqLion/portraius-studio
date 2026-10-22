@@ -5,7 +5,7 @@
 // rate below cites its row in docs/notes/u1-notes.md.
 import { requestBody } from "@/lib/registry/adapters";
 import type { GenerateImageInput, GenerateVideoInput, H3Input, KlingInput, SpeechInput } from "@/lib/registry/inputs";
-import { MODEL_IDS } from "@/lib/registry/models";
+import { MODEL_IDS, isLocalModel } from "@/lib/registry/models";
 import { estimate } from "@/lib/router/client";
 import type { JobEstimate } from "@/lib/types/jobs";
 
@@ -150,9 +150,14 @@ export function addEstimates(parts: JobEstimate[], times = 1): JobEstimate {
 
 const dollars = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
+// A run on the visitor's own ComfyUI (spec: Decisions, October 22, item 4).
+export const FREE_LABEL = "Free · your GPU";
+
 // "$0.24" for Router's exact price, "≈ $0.24" for one estimated figure,
-// "$0.20 to $0.30" for a range; undefined when there is no price.
+// "$0.20 to $0.30" for a range, "Free · your GPU" for a local run; undefined
+// when there is no price.
 export function estimateLabel(e: JobEstimate | undefined): string | undefined {
+  if (e?.source === "exact" && e.amountCents === 0) return FREE_LABEL;
   if (e?.source === "exact" && e.amountCents !== undefined) return dollars(e.amountCents);
   if (e?.source === "estimated") {
     const min = e.minCents ?? e.amountCents;
@@ -174,6 +179,7 @@ export const withPrice = (text: string, price: string | undefined) => (price ? `
 
 // Never throws: Router's price when it has one, else the static table.
 export async function estimateRun(modelId: string, input: unknown, hints?: PriceHints): Promise<JobEstimate> {
+  if (isLocalModel(modelId)) return { source: "exact", amountCents: 0 };
   try {
     const res = await estimate(modelId, requestBody(modelId, input));
     if (res.estimate.source !== "unknown") return res.estimate;

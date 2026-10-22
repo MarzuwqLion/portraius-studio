@@ -8,7 +8,8 @@ import { FLAGGED_VIEWS, SHEET_VIEWS, viewAspect, viewLabel, type SheetView } fro
 import { MATCH_SCORE } from "@/lib/identity/score";
 import { useEstimateLabel, useJob, useJobs } from "@/lib/jobs/hooks";
 import { withPrice } from "@/lib/jobs/estimate";
-import { MODEL_IDS } from "@/lib/registry/models";
+import { ModelPicker } from "@/components/studio/ModelPicker";
+import { useFeatureModels } from "@/lib/session/engine";
 import type { Job } from "@/lib/types/jobs";
 import type { UpdateDraft } from "./useDraft";
 
@@ -26,7 +27,8 @@ export function SheetStep({ draft, update, onNext }: { draft: WizardDraft; updat
   // An element has no face, so nothing is scored.
   const elementType = draft.path === "element" ? (draft.elementType ?? "prop") : undefined;
   const scored = !elementType;
-  const price = useEstimateLabel(MODEL_IDS.nanoBanana, compositeId ? undefined : () => compositeInputFor(draft), draft.id);
+  const { modelId, option } = useFeatureModels("characters");
+  const price = useEstimateLabel(modelId, compositeId ? undefined : () => compositeInputFor(draft, modelId), draft.id);
 
   const jobById = new Map<string, Job>();
   viewJobs?.forEach((job) => job && jobById.set(job.id, job));
@@ -44,7 +46,7 @@ export function SheetStep({ draft, update, onNext }: { draft: WizardDraft; updat
   }
 
   const drawSheet = () => run(async () => {
-    const id = await startComposite(draft);
+    const id = await startComposite(draft, modelId);
     update((d) => ({ compositeJobIds: [...d.compositeJobIds, id] }));
   });
 
@@ -102,14 +104,17 @@ export function SheetStep({ draft, update, onNext }: { draft: WizardDraft; updat
             <p className="max-w-[70ch] text-body text-ink-muted">One composite from {draft.path === "text" ? "the face you picked" : "your photos"}, then four single views drawn from both.</p>
           </div>
           {!compositeId ? (
-            <Button onClick={() => void drawSheet()} disabled={busy}>
+            <Button onClick={() => void drawSheet()} disabled={busy || Boolean(option?.blocked)}>
               {withPrice("Draw the sheet", price)}
             </Button>
           ) : (
-            <Button variant="secondary" onClick={() => void drawSheet()} disabled={busy || (composite?.status !== "done" && !failed(composite))}>
+            <Button variant="secondary" onClick={() => void drawSheet()} disabled={busy || Boolean(option?.blocked) || (composite?.status !== "done" && !failed(composite))}>
               Redraw the sheet
             </Button>
           )}
+        </div>
+        <div className="max-w-xs">
+          <ModelPicker feature="characters" label="Draw with" hint="The single views use the model that drew the sheet." />
         </div>
         <div className="max-w-5xl">
           {compositeId ? (

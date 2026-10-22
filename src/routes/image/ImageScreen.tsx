@@ -6,6 +6,7 @@ import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
 import { EmptyExample } from "@/components/studio/EmptyExample";
 import { GenerateFooter } from "@/components/studio/GenerateFooter";
+import { ModelPicker } from "@/components/studio/ModelPicker";
 import { Field, Segmented, Select, TextArea } from "@/components/studio/fields";
 import { OutputTake } from "@/components/studio/OutputTake";
 import { PresetPicker } from "@/components/studio/PresetPicker";
@@ -22,11 +23,11 @@ import type { Preset } from "@/lib/presets/schema";
 import type { CameraSelection } from "@/lib/prompts/camera";
 import { compileImagePrompt, slotsIn } from "@/lib/prompts/compile";
 import type { GenerateImageInput, ImageAspectRatio } from "@/lib/registry/inputs";
-import { MODEL_IDS } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
 import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
 import { describeCast, type CastPick } from "@/lib/studio/cast";
-import { startImages, type ImageRequest } from "@/lib/studio/image";
+import { isCompact, startImages, tooManyImages, type ImageRequest } from "@/lib/studio/image";
+import { useFeatureModels } from "@/lib/session/engine";
 import { generationImageBlobId, storeUpload } from "@/lib/studio/uploads";
 import type { Job } from "@/lib/types/jobs";
 
@@ -109,23 +110,25 @@ export function ImageScreen() {
     if (launch.cast) setCast(launch.cast);
   });
 
+  const { modelId, option } = useFeatureModels("image");
+
   // The compiled prompt, kept current as the controls change.
   useEffect(() => {
     let live = true;
-    void describeCast(cast).then((members) => {
-      if (live) setPreview(compileImagePrompt({ scene, cast: members, camera, modelId: MODEL_IDS.nanoBanana, editing: Boolean(sourceBlobId) }));
+    void describeCast(cast, { compact: isCompact(modelId) }).then((members) => {
+      if (live) setPreview(compileImagePrompt({ scene, cast: members, camera, modelId, editing: Boolean(sourceBlobId) }));
     });
     return () => {
       live = false;
     };
-  }, [scene, cast, camera, sourceBlobId]);
+  }, [scene, cast, camera, sourceBlobId, modelId]);
 
-  const request: ImageRequest = { scene, cast, ...(sourceBlobId ? { sourceBlobId } : {}), aspectRatio, size, quality, count, camera, ...(advanced && override.trim() ? { promptOverride: override } : {}) };
+  const request: ImageRequest = { scene, cast, ...(sourceBlobId ? { sourceBlobId } : {}), aspectRatio, size, quality, count, camera, modelId, ...(advanced && override.trim() ? { promptOverride: override } : {}) };
   const ready = Boolean(scene.trim() || (advanced && override.trim()));
   // The price doesn't depend on the words, so it shows before there are any.
-  const price = usePrice(async () => [{ modelId: MODEL_IDS.nanoBanana, input: { prompt: preview, references: [], aspectRatio, size, quality } }], `${size}:${quality}:${aspectRatio}:${Boolean(sourceBlobId)}`, count);
+  const price = usePrice(async () => [{ modelId, input: { prompt: preview, references: [], aspectRatio, size, quality } }], `${modelId}:${size}:${quality}:${aspectRatio}:${Boolean(sourceBlobId)}`, count);
   const unknownSlots = slotsIn(scene).filter((s) => !cast.some((c) => c.slot === s));
-  const waitingFor = !ready ? "Write a prompt" : unknownSlots.length ? "Pick a character" : undefined;
+  const waitingFor = !ready ? "Write a prompt" : unknownSlots.length ? "Pick a character" : (option?.blocked ?? tooManyImages(modelId, cast.length, Boolean(sourceBlobId)));
 
   async function generate() {
     if (waitingFor || busy) return;
@@ -207,6 +210,7 @@ export function ImageScreen() {
       </div>
       <Field label="Size">{() => <Segmented label="Size" value={size} onChange={setSize} options={[{ value: "1K", label: "1K" }, { value: "2K", label: "2K" }, { value: "4K", label: "4K" }]} />}</Field>
       <Field label="Quality">{() => <Segmented label="Quality" value={quality} onChange={setQuality} options={[{ value: "fast", label: "Fast" }, { value: "best", label: "Best" }]} />}</Field>
+      <ModelPicker feature="image" />
 
       <Field label="Camera and look">{() => <CameraPicker groups={["size", "angle", "lens", "aperture", "lighting"]} value={camera} onChange={setCamera} />}</Field>
 
@@ -291,7 +295,7 @@ export function ImageScreen() {
     </div>
   );
 
-  const footer = <GenerateFooter label={count > 1 ? `Generate ${count}` : "Generate"} price={price} waitingFor={waitingFor} busy={busy} onRun={() => void generate()} />;
+  const footer = <GenerateFooter label={count > 1 ? `Generate ${count}` : "Generate"} price={price} waitingFor={waitingFor} busy={busy} local={option?.backend === "local"} onRun={() => void generate()} />;
 
   return <WorkScreen title="Image" callSheet={callSheet} footer={footer} set={set} />;
 }

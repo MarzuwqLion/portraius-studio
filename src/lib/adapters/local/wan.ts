@@ -9,7 +9,7 @@ import type { AdapterImpl } from "@/lib/registry/capabilities";
 import type { WanInput } from "@/lib/registry/inputs";
 import type { LocalBody, LocalResult } from "@/lib/registry/local-body";
 import { FILES, type ModelFile } from "@/lib/registry/local-models";
-import { LocalGraph, WAN_NEGATIVE, clip, frameCount, frameSize, loadImage, localAssets, lora, out, saveVideo, text, unet, vae } from "./graph";
+import { LocalGraph, WAN_NEGATIVE, clip, frameCount, frameSize, loadImage, localAssets, lora, out, saveVideo, seedOf, text, unet, vae } from "./graph";
 
 export const WAN_FAST_DURATION: [number, number] = [2, 5];
 export const WAN_BEST_DURATION: [number, number] = [2, 5];
@@ -42,7 +42,7 @@ export const wanFast: AdapterImpl<WanInput, LocalResult> = {
     });
     const sampled = g.add("KSampler", {
       model: out(model),
-      seed: input.seed ?? 0,
+      seed: seedOf(input.seed),
       steps: 20,
       cfg: 5,
       sampler_name: "uni_pc",
@@ -99,7 +99,7 @@ export const wanBest: AdapterImpl<WanInput, LocalResult> = {
     }
 
     const common = { steps: 4, cfg: 1, sampler_name: "euler", scheduler: "simple", positive: positiveLink, negative: negativeLink };
-    const first = g.add("KSamplerAdvanced", { ...common, model: out(high), add_noise: "enable", noise_seed: input.seed ?? 0, latent_image: latentLink, start_at_step: 0, end_at_step: 2, return_with_leftover_noise: "enable" });
+    const first = g.add("KSamplerAdvanced", { ...common, model: out(high), add_noise: "enable", noise_seed: seedOf(input.seed), latent_image: latentLink, start_at_step: 0, end_at_step: 2, return_with_leftover_noise: "enable" });
     const second = g.add("KSamplerAdvanced", { ...common, model: out(low), add_noise: "disable", noise_seed: 0, latent_image: out(first), start_at_step: 2, end_at_step: 10000, return_with_leftover_noise: "disable" });
     const frames = g.add("VAEDecode", { samples: out(second), vae: out(decoder) });
     saveVideo(g, out(frames), fps, "wan");
