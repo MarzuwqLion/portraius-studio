@@ -3,6 +3,7 @@ import { Link, Navigate } from "react-router";
 import { ScreenTitle } from "@/components/shell/Screen";
 import { SplitView } from "@/components/studio/SplitView";
 import { buttonVariants } from "@/components/ui/button";
+import { useEngineStore } from "@/lib/session/engine";
 import { useKeyStore } from "@/lib/session/key";
 import { useCharacterCount } from "@/lib/store/hooks";
 import { loadTour, samplePoster, sampleUrl, type Tour } from "@/lib/tour/tour";
@@ -17,12 +18,13 @@ const STEPS = [
 // the right before anything is read, and two ways in of equal weight.
 export function FirstRunScreen() {
   const keyLocation = useKeyStore((s) => s.location);
+  const localEnabled = useEngineStore((s) => s.localEnabled);
   const characters = useCharacterCount();
   const [tour, setTour] = useState<Tour>();
   useEffect(() => {
     loadTour().then(setTour, () => undefined);
   }, []);
-  if (keyLocation !== "none" && characters !== undefined && characters > 0) {
+  if ((keyLocation !== "none" || localEnabled) && characters !== undefined && characters > 0) {
     return <Navigate to="/characters" replace />;
   }
   const recast = tour?.sections.flatMap((s) => s.items).find((i) => i.media.kind === "split");
@@ -43,6 +45,14 @@ export function FirstRunScreen() {
             Add your key
           </Link>
         </div>
+        {/* The local engine (Decisions, October 22): a quiet third way in, not a third button. */}
+        <p className="text-control text-ink-muted">
+          Have a GPU?{" "}
+          <Link to="/settings" className="font-semibold text-accent-text underline underline-offset-4">
+            Run it free on your own ComfyUI
+          </Link>
+          .
+        </p>
         {/* An explanation of the two buttons, not a second set of tasks. */}
         <section aria-labelledby="how-it-works" className="grid gap-3">
           <h2 id="how-it-works" className="text-control font-semibold text-ink-muted">

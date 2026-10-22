@@ -10,7 +10,10 @@ import { withPrice } from "@/lib/jobs/estimate";
 import { IMAGE_PRESETS, VIDEO_PRESETS, cameraOption, look, thumbnailUrl } from "@/lib/presets/load";
 import { CAMERA_GROUPS, type CameraGroup } from "@/lib/presets/schema";
 import { decodeRecipe, type RecipeFile } from "@/lib/recipes/share";
-import { MODEL_IDS, registryEntry } from "@/lib/registry/models";
+import { featureOptions } from "@/lib/registry/availability";
+import { MODEL_IDS, isLocalModel, registryEntry } from "@/lib/registry/models";
+import { reachOf, useEngineStore, useFeatureModels } from "@/lib/session/engine";
+import { useKeyStore } from "@/lib/session/key";
 import { isUsable } from "@/lib/store/characters";
 import { useCharacters } from "@/lib/store/hooks";
 import { matchingPreset, startRemix } from "@/lib/studio/remix";
@@ -75,7 +78,15 @@ function RecipeCard({ recipe }: { recipe: RecipeFile }) {
   const cast = recipe.slots.flatMap((s) => (picks[s.slot] ? [{ slot: s.slot, characterId: picks[s.slot]! }] : []));
   const ready = cast.length === recipe.slots.length;
   const p = recipe.params ?? {};
-  const runModel = image ? MODEL_IDS.nanoBanana : modelFor({ mode: (p.mode as VideoMode) ?? "text", cast, model: recipe.model as Parameters<typeof modelFor>[0]["model"] }, false);
+  // The recipe's own model when it can run here; otherwise the visitor's own
+  // for the feature, such as Qwen or Wan on their GPU (spec: Local engine).
+  const feature = image ? "image" : "video";
+  const engine = useEngineStore();
+  const hasKey = useKeyStore((s) => s.location !== "none");
+  const own = useFeatureModels(feature);
+  const recipeRuns = featureOptions(feature, reachOf(engine, hasKey)).some((o) => o.id === recipe.model && !o.blocked);
+  const chosen = recipeRuns ? recipe.model : own.modelId;
+  const runModel = image ? chosen : modelFor({ mode: (p.mode as VideoMode) ?? "text", cast, model: chosen as Parameters<typeof modelFor>[0]["model"] }, false);
   const price = useEstimateLabel(
     runModel,
     ready
@@ -104,7 +115,7 @@ function RecipeCard({ recipe }: { recipe: RecipeFile }) {
     setBusy(true);
     setError(undefined);
     try {
-      navigate(`/${await startRemix(recipe, cast)}`);
+      navigate(`/${await startRemix(recipe, cast, recipeRuns ? undefined : own.modelId)}`);
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);
@@ -134,6 +145,12 @@ function RecipeCard({ recipe }: { recipe: RecipeFile }) {
           ))}
         </ul>
         <p className="text-control text-ink-muted">A recipe holds no faces or photos. Your own characters fill its slots.</p>
+        {!recipeRuns && (
+          <p className="text-control">
+            Made with {registryEntry(recipe.model)?.label ?? recipe.model}. Here it runs on {registryEntry(own.modelId)?.label ?? own.modelId}
+            {isLocalModel(own.modelId) ? " on your GPU" : ""}, so the result can differ.
+          </p>
+        )}
       </article>
 
       {needsPerson && characters && !people.length ? (

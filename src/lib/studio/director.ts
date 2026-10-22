@@ -18,7 +18,7 @@ import { db } from "@/lib/store/db";
 import type { Job } from "@/lib/types/jobs";
 import { buildCast, dataUri, type CastBundle, type CastPick } from "./cast";
 import { startImages } from "./image";
-import { DEFAULT_MODEL, isDraft, lastFrameBlobId, renderFinal, startVideo } from "./video";
+import { DEFAULT_MODEL, isDraft, lastFrameBlobId, renderFinal, startVideo, type VideoModel } from "./video";
 
 export type SceneRatio = Extract<VideoRatio, "16:9" | "9:16" | "21:9">;
 
@@ -50,6 +50,7 @@ export interface Shot {
   lipSyncJobId?: string;          // the take (or final) lip-synced to a spoken line (Sync-3)
   fromTakeJobId?: string;         // continue: the previous shot's take this one started from
   waiting?: boolean;              // continue: animate once the previous shot's take is done
+  model?: VideoModel;             // continue: the model a waiting shot animates on, once it can
 }
 
 export interface Scene {
@@ -66,7 +67,7 @@ export interface Scene {
   shots: Shot[];
   exportGenerationIds: string[];
   oneTakeJobIds?: string[];       // Kling one-takes of the whole scene, newest first
-  agentRequest?: { requestId: string; startedAt: number };  // a "Draft with AI" plan still to collect
+  agentRequest?: { requestId: string; startedAt: number; modelId?: string };  // a "Draft with AI" plan still to collect (Claude when modelId is unset)
   exportInfo?: Record<string, { crossfade: boolean; durationSec: number }>;  // by export generation ID, for its label
   createdAt: number;
   updatedAt: number;
@@ -282,7 +283,7 @@ async function chainFrameBlobId(previous: Shot): Promise<string | undefined> {
 // Anchors: 2 to 4 stills with the cast references and the shot's camera
 // phrases (no movement: they're stills). 2K at the fast setting: "best"
 // (high thinking) hit the provider's deadline on half of six parallel stills.
-export async function drawAnchors(sceneId: string, shotId: string, count: number): Promise<string[]> {
+export async function drawAnchors(sceneId: string, shotId: string, count: number, modelId?: string): Promise<string[]> {
   const scene = await loadScene(sceneId);
   const shot = scene?.shots.find((s) => s.id === shotId);
   if (!scene || !shot) throw new Error("This shot is gone.");
@@ -295,6 +296,7 @@ export async function drawAnchors(sceneId: string, shotId: string, count: number
     quality: "fast",
     count: Math.min(4, Math.max(1, count)),
     camera: shotCamera(scene, shot, false),
+    ...(modelId ? { modelId } : {}),
   });
   await updateShot(sceneId, shotId, (s) => ({ ...s, anchorJobIds: [...s.anchorJobIds, ...ids] }));
   return ids;
@@ -325,8 +327,9 @@ async function anchorBlobId(jobId: string): Promise<string> {
 // previous shot's last frame. Seedance makes a 480p draft; a face in that
 // frame sends the shot to H3 instead (Seedance refuses people), which renders
 // once at 768P. A continued shot whose previous take isn't done yet waits for
-// it, so a whole chain can be started at once and runs in order.
-export async function animateShot(sceneId: string, shotId: string, reroll = false): Promise<string | undefined> {
+// it, so a whole chain can be started at once and runs in order. A shot on
+// the visitor's GPU stays on the Wan model picked (spec: Local engine).
+export async function animateShot(sceneId: string, shotId: string, reroll = false, model?: VideoModel): Promise<string | undefined> {
   const scene = await loadScene(sceneId);
   const shot = scene?.shots.find((s) => s.id === shotId);
   if (!scene || !shot) throw new Error("This shot is gone.");
@@ -335,7 +338,7 @@ export async function animateShot(sceneId: string, shotId: string, reroll = fals
   if (previous) {
     const frame = await chainFrameBlobId(previous);
     if (!frame) {
-      await updateShot(sceneId, shotId, (s) => ({ ...s, waiting: true }));
+      await updateShot(sceneId, shotId, (s) => ({ ...s, waiting: true, ...(model ? { model } : {}) }));
       // The previous take may have finished while this one was being marked.
       void resumeWaitingShots();
       return undefined;
@@ -348,7 +351,7 @@ export async function animateShot(sceneId: string, shotId: string, reroll = fals
   const rolled = reroll ? { ...shot, rolls: shot.rolls + 1 } : shot;
   const jobId = await startVideo({
     mode: "image",
-    model: DEFAULT_MODEL,
+    model: model ?? shot.model ?? DEFAULT_MODEL,
     scene: shotScene(scene, rolled),
     cast: shotCast(scene, rolled),
     sourceBlobId,
@@ -360,7 +363,7 @@ export async function animateShot(sceneId: string, shotId: string, reroll = fals
     camera: shotCamera(scene, rolled, true),
   });
   await updateShot(sceneId, shotId, (s) => {
-    const { finalJobId: _old, lipSyncJobId: _line, fromTakeJobId: _from, waiting: _w, ...rest } = s;
+    const { finalJobId: _old, lipSyncJobId: _line, fromTakeJobId: _from, waiting: _w, model: _m, ...rest } = s;
     return { ...rest, rolls: rolled.rolls, takeJobId: jobId, ...(previous?.takeJobId ? { fromTakeJobId: previous.takeJobId } : {}) };
   });
   return jobId;

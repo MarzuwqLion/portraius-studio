@@ -12,7 +12,7 @@ import { ScoreBadge } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
 import { useJob } from "@/lib/jobs/hooks";
 import { deleteGeneration, generationFiles, saveFile } from "@/lib/library/library";
-import { modelLabel } from "@/lib/registry/models";
+import { isLocalModel, modelLabel } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
 import { useBlobUrl, useCharacters, useCharacterThumbs, useGeneration } from "@/lib/store/hooks";
 import { castOfTake, type CastPick } from "@/lib/studio/cast";
@@ -87,7 +87,10 @@ export function GenerationScreen() {
           )}
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-control">
             <dt className="text-ink-muted">Model</dt>
-            <dd>{modelLabel(generation.modelId)}</dd>
+            <dd>
+              {modelLabel(generation.modelId)}
+              {isLocalModel(generation.modelId) ? ", on your GPU" : ""}
+            </dd>
             <dt className="text-ink-muted">Made</dt>
             <dd>{new Date(generation.createdAt).toLocaleString()}</dd>
             {names && names.length > 0 && (

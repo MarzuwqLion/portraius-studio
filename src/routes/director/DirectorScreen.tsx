@@ -16,7 +16,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useEstimateLabel, useJob, useJobImageUrl, useJobs } from "@/lib/jobs/hooks";
 import { withPrice } from "@/lib/jobs/estimate";
-import { MODEL_IDS, registryEntry } from "@/lib/registry/models";
+import { routerListed } from "@/lib/registry/availability";
+import { MODEL_IDS, isLocalModel, registryEntry } from "@/lib/registry/models";
+import { reachOf, useEngineStore, useFeatureModels } from "@/lib/session/engine";
+import { useKeyStore } from "@/lib/session/key";
+import type { VideoModel } from "@/lib/studio/video";
+import { ModelPicker } from "@/components/studio/ModelPicker";
 import { db } from "@/lib/store/db";
 import { useBlobUrl, useCharacters, useCharacterThumbs, useGeneration, useObjectUrl } from "@/lib/store/hooks";
 import {
@@ -321,6 +326,9 @@ function SceneEditor({ sceneId }: { sceneId: string }) {
         <Checkbox checked={scene.sound} onCheckedChange={(v) => set({ sound: v === true })} />
         Generate sound (Seedance shots)
       </label>
+      <ModelPicker feature="image" label="Stills drawn with" />
+      <ModelPicker feature="video" label="Shots animated with" />
+      <ModelPicker feature="plan" label="Shots drafted with" />
       <Button
         variant="ghost"
         className="justify-self-start text-drift"
@@ -490,8 +498,10 @@ function OpenShot({
   const chainFrame = useChainFrameUrl(chained ? previous : undefined);
   const canAnimate = chained || Boolean(shot.anchorJobId);
 
+  const stills = useFeatureModels("image");
+  const motion = useFeatureModels("video");
   const stillsPrice = useEstimateLabel(
-    MODEL_IDS.nanoBanana,
+    stills.modelId,
     ready
       ? async () =>
           (
@@ -503,12 +513,15 @@ function OpenShot({
               quality: "fast",
               count: 1,
               camera: shotCamera(scene, shot, false),
+              modelId: stills.modelId,
             })
           ).input
       : undefined,
-    `${shot.id}:${shot.action}:${castSlots.join()}:${scene.ratio}`,
+    `${stills.modelId}:${shot.id}:${shot.action}:${castSlots.join()}:${scene.ratio}`,
   );
-  const motionModel = castSlots.length ? MODEL_IDS.minimaxH3 : MODEL_IDS.seedance;
+  // On Comfy, a shot with people renders on H3 (Seedance refuses them); on the
+  // visitor's GPU it stays on the Wan model picked.
+  const motionModel = isLocalModel(motion.modelId) ? motion.modelId : castSlots.length ? MODEL_IDS.minimaxH3 : MODEL_IDS.seedance;
   const motionPrice = useEstimateLabel(
     motionModel,
     canAnimate
@@ -614,7 +627,7 @@ function OpenShot({
             <span className="w-32">
               <Select value={count} label="How many stills to draw" options={ANCHOR_COUNTS} onChange={(v) => setCount(v ?? "2")} />
             </span>
-            <Button size="sm" disabled={!ready || busy !== undefined} onClick={() => void run(`stills:${shot.id}`, () => drawAnchors(scene.id, shot.id, Number(count)))}>
+            <Button size="sm" disabled={!ready || busy !== undefined} onClick={() => void run(`stills:${shot.id}`, () => drawAnchors(scene.id, shot.id, Number(count), stills.modelId))}>
               {withPrice(shot.anchorJobIds.length ? "Draw more" : "Draw stills", stillsPrice)}
             </Button>
           </div>
@@ -653,12 +666,12 @@ function OpenShot({
                 Stop waiting
               </Button>
             ) : !shot.takeJobId ? (
-              <Button size="sm" disabled={!canAnimate || !ready || busy !== undefined} onClick={() => void run(`animate:${shot.id}`, () => animateShot(scene.id, shot.id))}>
+              <Button size="sm" disabled={!canAnimate || !ready || busy !== undefined} onClick={() => void run(`animate:${shot.id}`, () => animateShot(scene.id, shot.id, false, motion.modelId as VideoModel))}>
                 {withPrice("Animate", motionPrice)}
               </Button>
             ) : (
               <>
-                <Button size="sm" variant={stale ? "primary" : "secondary"} className={stale ? undefined : ON_SEAMLESS} disabled={busy !== undefined || !canAnimate} onClick={() => void run(`animate:${shot.id}`, () => animateShot(scene.id, shot.id, true))}>
+                <Button size="sm" variant={stale ? "primary" : "secondary"} className={stale ? undefined : ON_SEAMLESS} disabled={busy !== undefined || !canAnimate} onClick={() => void run(`animate:${shot.id}`, () => animateShot(scene.id, shot.id, true, motion.modelId as VideoModel))}>
                   {withPrice("Re-roll", motionPrice)}
                 </Button>
                 {canFinal && (
@@ -678,7 +691,12 @@ function OpenShot({
                 job={take}
                 alt={`Shot ${index + 1} take`}
                 aspect={aspect}
-                label={takeIsDraft(take) ? "Draft, 480p" : take.modelId === MODEL_IDS.minimaxH3 ? "MiniMax H3, 768p" : (registryEntry(take.modelId)?.label ?? "Take")}
+                label={
+                  isLocalModel(take.modelId) ? `${registryEntry(take.modelId)?.label ?? "Take"} · your GPU`
+                  : takeIsDraft(take) ? "Draft, 480p"
+                  : take.modelId === MODEL_IDS.minimaxH3 ? "MiniMax H3, 768p"
+                  : (registryEntry(take.modelId)?.label ?? "Take")
+                }
                 actions={
                   failed(take) ? (
                     <Button size="sm" variant="secondary" className={`justify-self-start ${ON_SEAMLESS}`} onClick={() => void run(`retry:${shot.id}`, () => retryShotJob(scene.id, shot.id, "take"))}>
@@ -885,17 +903,18 @@ function DraftWithAI({ scene, editor }: { scene: Scene; editor: Editor }) {
   const { run, busy } = editor;
   const ready = Boolean(scene.logline.trim());
   const key = JSON.stringify([scene.logline, scene.location, scene.cast, scene.film, scene.ratio, scene.shots.map((s) => s.action)]);
-  const price = useEstimateLabel(MODEL_IDS.directorAgent, ready ? () => agentInput(scene.id) : undefined, key);
+  const plan = useFeatureModels("plan");
+  const price = useEstimateLabel(plan.modelId, ready ? () => agentInput(scene.id, plan.modelId) : undefined, `${plan.modelId}:${key}`);
   const drafting = busy === "agent" || Boolean(scene.agentRequest);
   const n = scene.shots.length;
   return (
     <div className="grid gap-1">
-      <Button variant="secondary" size="sm" className="justify-self-start" disabled={!ready || busy !== undefined || drafting} onClick={() => void run("agent", () => draftShots(scene.id))}>
+      <Button variant="secondary" size="sm" className="justify-self-start" disabled={!ready || busy !== undefined || drafting || Boolean(plan.option?.blocked)} onClick={() => void run("agent", () => draftShots(scene.id, plan.modelId))}>
         {drafting ? "Drafting shots" : withPrice("Draft shots with AI", price)}
       </Button>
       <p className="text-control text-ink-muted">
         {!ready
-          ? "Write a logline, then Claude Sonnet 5.5 can plan the shots."
+          ? `Write a logline, then ${registryEntry(plan.modelId)?.label ?? "the agent"} can plan the shots.`
           : n
             ? `Adds 3 to 6 shots after the ${n} here; nothing is replaced.`
             : "Plans 3 to 6 shots from the scene card. Edit them after."}
@@ -907,7 +926,10 @@ function DraftWithAI({ scene, editor }: { scene: Scene; editor: Editor }) {
 // Kling shoots every shot as one clip (spec: One-take multi-shot).
 function OneTake({ scene, editor }: { scene: Scene; editor: Editor }) {
   const { run, busy } = editor;
-  const problem = oneTakeProblem(scene);
+  // Kling has no open-weight stand-in, so a one-take needs Comfy (spec: Local engine).
+  const engine = useEngineStore();
+  const hasKey = useKeyStore((s) => s.location !== "none");
+  const problem = routerListed(reachOf(engine, hasKey)) ? oneTakeProblem(scene) : "Needs Comfy credits.";
   const planned = scene.shots.reduce((t, s) => t + s.durationSec, 0);
   const length = oneTakeDurations(scene.shots.map((s) => s.durationSec)).reduce((t, d) => t + d, 0);
   const key = JSON.stringify([scene.shots.map((s) => [s.action, s.durationSec, s.size, s.angle, s.lens, s.movement, s.lighting]), scene.cast, scene.location, scene.film, scene.ratio, scene.sound]);

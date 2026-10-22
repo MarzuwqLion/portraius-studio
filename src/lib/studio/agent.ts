@@ -7,11 +7,18 @@
 //
 // It's queued like every model that supports the queue (M7: Claude runs on
 // it). The request ID waits on the scene, so a reload collects the draft.
+//
+// On the visitor's ComfyUI (spec: Local engine) Gemma 4 plans instead. Its
+// Generate Text node takes no JSON schema, so the allowed values go in the
+// prompt and the same checks catch the rest.
 import { z } from "zod";
 import { collectDirect, submitDirect } from "@/lib/jobs/direct";
 import { CAMERA, cameraOption, look } from "@/lib/presets/load";
 import { slotsIn } from "@/lib/prompts/compile";
-import { MODEL_IDS } from "@/lib/registry/models";
+import { localText } from "@/lib/adapters/local/graph";
+import type { LocalTextInput } from "@/lib/registry/inputs";
+import type { LocalResult } from "@/lib/registry/local-body";
+import { MODEL_IDS, isLocalModel, registryEntry } from "@/lib/registry/models";
 import { db } from "@/lib/store/db";
 import type { CastPick } from "./cast";
 import { PACING_SECONDS, loadScene, newShot, updateScene, type Scene, type Shot } from "./director";
@@ -97,6 +104,22 @@ export const AGENT_SYSTEM = [
   "Match lengths to the pacing: calm scenes hold longer, fast ones cut quicker.",
 ].join("\n");
 
+// Gemma's version: the schema as words, and JSON only in the reply.
+export function localAgentRequest(scene: Scene, cast: CastLine[]): LocalTextInput {
+  const allowed = (group: keyof typeof CAMERA) => ids(group).join(", ");
+  const format = [
+    'Answer with JSON only, no other text: {"shots":[{"action":"...","size":"...","angle":"...","lens":"...","aperture":"","movement":"...","lighting":"","durationSec":5,"continuity":"cut"}]}',
+    `size is one of: ${allowed("size")}.`,
+    `angle is one of: ${allowed("angle")}.`,
+    `lens is one of: ${allowed("lens")}.`,
+    `aperture is empty or one of: ${allowed("aperture")}.`,
+    `movement is one of: ${allowed("movement")}.`,
+    `lighting is empty or one of: ${allowed("lighting")}.`,
+    `durationSec is one of: ${SHOT_SECONDS.join(", ")}.`,
+  ].join("\n");
+  return { system: AGENT_SYSTEM, prompt: `${sceneBrief(scene, cast)}\n\n${format}`, maxTokens: 3000 };
+}
+
 export function agentRequest(scene: Scene, cast: CastLine[]): Record<string, unknown> {
   return {
     max_tokens: 16000,
@@ -119,6 +142,19 @@ const drafted = z.object({
   continuity: z.string(),
 });
 
+// Who planned, for messages.
+const planner = (modelId: string) => (isLocalModel(modelId) ? (registryEntry(modelId)?.label.split(" ").slice(0, 2).join(" ") ?? "The local model") : "Claude");
+
+// A local model's reply: the JSON object in its text, without any code fence
+// or words around it.
+export function localReplyText(raw: unknown): string {
+  const text = localText(raw as LocalResult);
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start < 0 || end < start) throw new Error("Gemma didn't return a plan. Try again.");
+  return text.slice(start, end + 1);
+}
+
 // The text of Claude's reply: its first text block, after the stop checks.
 export function replyText(raw: unknown): string {
   const message = (raw ?? {}) as { stop_reason?: string; content?: { type?: string; text?: string }[] };
@@ -133,12 +169,12 @@ const fit = (group: keyof typeof CAMERA, id: string | undefined, fallback?: stri
 
 // Turns the reply into shots for the scene: unknown slots and camera picks
 // never get through, and there are at most 6.
-export function shotsFromReply(raw: unknown, scene: Scene): Shot[] {
+export function shotsFromReply(raw: unknown, scene: Scene, modelId: string = MODEL_IDS.directorAgent): Shot[] {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(replyText(raw));
+    parsed = JSON.parse(isLocalModel(modelId) ? localReplyText(raw) : replyText(raw));
   } catch (err) {
-    if (err instanceof SyntaxError) throw new Error("Claude's plan wasn't readable. Try again.");
+    if (err instanceof SyntaxError) throw new Error(`${planner(modelId)}'s plan wasn't readable. Try again.`);
     throw err;
   }
   const list = Array.isArray((parsed as { shots?: unknown })?.shots) ? (parsed as { shots: unknown[] }).shots : [];
@@ -172,7 +208,7 @@ export function shotsFromReply(raw: unknown, scene: Scene): Shot[] {
     });
     base = { ...base, nextShot: base.nextShot + 1 };
   }
-  if (!shots.length) throw new Error("Claude's plan had no shots that fit this scene. Try again.");
+  if (!shots.length) throw new Error(`${planner(modelId)}'s plan had no shots that fit this scene. Try again.`);
   return shots;
 }
 
@@ -184,19 +220,20 @@ async function castLines(cast: CastPick[]): Promise<CastLine[]> {
   });
 }
 
-export async function agentInput(sceneId: string): Promise<Record<string, unknown>> {
+export async function agentInput(sceneId: string, modelId: string = MODEL_IDS.directorAgent): Promise<Record<string, unknown> | LocalTextInput> {
   const scene = await loadScene(sceneId);
   if (!scene) throw new Error("This scene is gone.");
   if (!scene.logline.trim()) throw new Error("Write a logline first: the plan is drawn from it.");
-  return agentRequest(scene, await castLines(scene.cast));
+  const cast = await castLines(scene.cast);
+  return isLocalModel(modelId) ? localAgentRequest(scene, cast) : agentRequest(scene, cast);
 }
 
 // Submits the scene card and keeps the request ID on the scene, then waits
 // for the plan.
-export async function draftShots(sceneId: string): Promise<Shot[]> {
-  const body = await agentInput(sceneId);
-  const requestId = await submitDirect(MODEL_IDS.directorAgent, body);
-  await updateScene(sceneId, (s) => ({ ...s, agentRequest: { requestId, startedAt: Date.now() } }));
+export async function draftShots(sceneId: string, modelId: string = MODEL_IDS.directorAgent): Promise<Shot[]> {
+  const body = await agentInput(sceneId, modelId);
+  const requestId = await submitDirect(modelId, body);
+  await updateScene(sceneId, (s) => ({ ...s, agentRequest: { requestId, startedAt: Date.now(), modelId } }));
   return collectDraft(sceneId);
 }
 
@@ -212,11 +249,12 @@ export async function collectDraft(sceneId: string): Promise<Shot[]> {
   };
   try {
     if (Date.now() - pending.startedAt > RESULT_TTL_MS) throw new Error("That plan expired before it was collected. Draft again.");
-    const raw = await collectDirect(MODEL_IDS.directorAgent, pending.requestId);
+    const modelId = pending.modelId ?? MODEL_IDS.directorAgent;
+    const raw = await collectDirect(modelId, pending.requestId);
     let added: Shot[] = [];
     await updateScene(sceneId, (s) => {
       if (s.agentRequest?.requestId !== pending.requestId) return s;
-      added = shotsFromReply(raw, s);
+      added = shotsFromReply(raw, s, modelId);
       return clear({ ...s, shots: [...s.shots, ...added], nextShot: s.nextShot + added.length });
     });
     return added;

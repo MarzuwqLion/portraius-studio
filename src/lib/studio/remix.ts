@@ -76,9 +76,10 @@ function pick<T>(value: unknown, allowed: readonly T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback;
 }
 
-// Runs a recipe with the visitor's picks (one per slot). Returns where the
-// result will appear.
-export async function startRemix(r: RecipeFile, cast: CastPick[]): Promise<"image" | "video"> {
+// Runs a recipe with the visitor's picks (one per slot), on modelId when it's
+// given: the visitor's own model for the feature, when the recipe's can't run
+// here (spec: Local engine). Returns where the result will appear.
+export async function startRemix(r: RecipeFile, cast: CastPick[], modelId?: string): Promise<"image" | "video"> {
   const remixOf = await recipeHash(r);
   const p = r.params ?? {};
   if (r.capability === "image.generate") {
@@ -91,10 +92,11 @@ export async function startRemix(r: RecipeFile, cast: CastPick[]): Promise<"imag
       count: 1,
       camera: r.camera ?? {},
       remixOf,
+      ...(modelId ? { modelId } : {}),
     });
     return "image";
   }
-  const model = pick<VideoModel>(r.model, VIDEO_MODELS.map((m) => m.id), DEFAULT_MODEL);
+  const model = pick<VideoModel>(modelId ?? r.model, VIDEO_MODELS.map((m) => m.id), DEFAULT_MODEL);
   await startVideo({
     mode: pick(p.mode, VIDEO_MODES, "text"),
     model,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { AGENT_SYSTEM, agentRequest, replyText, sceneBrief, shotListSchema, shotsFromReply } from "./agent";
+import { MODEL_IDS } from "@/lib/registry/models";
+import { AGENT_SYSTEM, agentRequest, localAgentRequest, localReplyText, replyText, sceneBrief, shotListSchema, shotsFromReply } from "./agent";
 import { newScene, type Scene } from "./director";
 
 function scene(): Scene {
@@ -77,5 +78,29 @@ describe("shotsFromReply", () => {
     expect(() => shotsFromReply({ stop_reason: "end_turn", content: [{ type: "text", text: "not json" }] }, scene())).toThrow(/wasn't readable/);
     expect(() => shotsFromReply(reply([shot({ action: "{nobody} sits" })]), scene())).toThrow(/no shots/);
     expect(() => replyText({ content: [] })).toThrow(/didn't return/);
+  });
+});
+
+describe("Gemma on the visitor's ComfyUI", () => {
+  const local = (text: string) => ({ outputs: { "3": { files: [], text: [text] } } });
+
+  it("puts the allowed camera values in the prompt, since Generate Text takes no schema", () => {
+    const input = localAgentRequest(scene(), [{ slot: "lead", name: "Walt Harmon", kind: "person" }]);
+    expect(input.system).toBe(AGENT_SYSTEM);
+    expect(input.prompt).toContain("Logline: A retired harbour pilot finds a letter he never sent.");
+    expect(input.prompt).toMatch(/size is one of: .*ECU/);
+    expect(input.prompt).toContain("Answer with JSON only");
+  });
+
+  it("reads a plan wrapped in a code fence and checks it like Claude's", () => {
+    const text = "Here is the plan:\n```json\n" + JSON.stringify({ shots: [shot(), shot({ action: "{stranger} walks in" })] }) + "\n```";
+    expect(localReplyText(local(text))).toMatch(/^\{"shots"/);
+    const shots = shotsFromReply(local(text), scene(), MODEL_IDS.localGemma);
+    expect(shots.map((s) => s.action)).toEqual(["{lead} turns the envelope over"]);
+  });
+
+  it("says Gemma, not Claude, when the plan doesn't fit", () => {
+    expect(() => shotsFromReply(local("no plan today"), scene(), MODEL_IDS.localGemma)).toThrow(/^Gemma didn't return a plan/);
+    expect(() => shotsFromReply(local('{"shots": []}'), scene(), MODEL_IDS.localGemma)).toThrow(/^Gemma 4's plan had no shots/);
   });
 });
