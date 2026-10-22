@@ -55,7 +55,8 @@ scene with `sampleScene()`, so the Tour and the workflows can't drift apart.
 
 ## Found along the way
 
-- **The Director's shot prompt has no full stop before the location.** `shotScene` joins the action and
-  `Location: …` with a space, so the app sends "…rain on the window Location: A late-night diner with red vinyl
-  booths." The graphs send the same. It isn't fixed here: it changes every Director prompt, which is the app's
-  call, not the workflows'.
+- **The Director's shot prompt had no full stop before the location** when the action didn't end with one:
+  `shotScene` joined them with a space, so the Tour's sample shots sent "…rain on the window Location: A
+  late-night diner with red vinyl booths." Fixed on Marzuwq's go-ahead: an action without a full stop gets one
+  before the location (tested), and director-scene was regenerated. It changes the anchor and take prompts for
+  such shots; the Kling one-take already wrote the location as its own sentence.

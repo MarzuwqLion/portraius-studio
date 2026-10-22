@@ -214,10 +214,13 @@ export function shotCast(scene: Scene, shot: Shot): CastPick[] {
 }
 
 // Film settings and the location ride on every shot, word for word
-// (spec: Continuity rules).
+// (spec: Continuity rules). An action without a full stop gets one before
+// the location, so the two don't run together.
 export function shotScene(scene: Scene, shot: Shot): string {
   const location = scene.location.trim();
-  return [shot.action.trim(), location ? `Location: ${location}.` : ""].filter(Boolean).join(" ");
+  const action = shot.action.trim();
+  if (!location) return action;
+  return [action && !/[.!?]$/.test(action) ? `${action}.` : action, `Location: ${location}.`].filter(Boolean).join(" ");
 }
 
 export function shotCamera(scene: Scene, shot: Shot, withMovement: boolean): CameraSelection {

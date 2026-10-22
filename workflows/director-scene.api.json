@@ -20,7 +20,7 @@
   "4": {
     "class_type": "GeminiNanoBanana2V2",
     "inputs": {
-      "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD sits alone in a corner booth of a late-night diner, rain on the window Location: A late-night diner with red vinyl booths.\nWide shot showing the full figure in the setting, eye-level camera, 35mm lens, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+      "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD sits alone in a corner booth of a late-night diner, rain on the window. Location: A late-night diner with red vinyl booths.\nWide shot showing the full figure in the setting, eye-level camera, 35mm lens, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
       "model": "Gemini Nano Banana 2.1",
       "model.aspect_ratio": "16:9",
       "model.resolution": "2K",
@@ -60,7 +60,7 @@
     "class_type": "MinimaxHailuo03FirstLastFrameNode",
     "inputs": {
       "model": "MiniMax H3",
-      "model.prompt": "Walt Harmon sits alone in a corner booth of a late-night diner, rain on the window Location: A late-night diner with red vinyl booths.\nWide shot showing the full figure in the setting, eye-level camera, 35mm lens, locked-off static camera, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
+      "model.prompt": "Walt Harmon sits alone in a corner booth of a late-night diner, rain on the window. Location: A late-night diner with red vinyl booths.\nWide shot showing the full figure in the setting, eye-level camera, 35mm lens, locked-off static camera, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
       "model.resolution": "768P",
       "model.duration": 5,
       "seed": 1000,
@@ -77,7 +77,7 @@
   "7": {
     "class_type": "GeminiNanoBanana2V2",
     "inputs": {
-      "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD slides an old envelope out of his coat and turns it over in his hands Location: A late-night diner with red vinyl booths.\nMedium close-up from the chest up, eye-level camera, 50mm lens with a natural perspective, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+      "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD slides an old envelope out of his coat and turns it over in his hands. Location: A late-night diner with red vinyl booths.\nMedium close-up from the chest up, eye-level camera, 50mm lens with a natural perspective, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
       "model": "Gemini Nano Banana 2.1",
       "model.aspect_ratio": "16:9",
       "model.resolution": "2K",
@@ -117,7 +117,7 @@
     "class_type": "MinimaxHailuo03FirstLastFrameNode",
     "inputs": {
       "model": "MiniMax H3",
-      "model.prompt": "Walt Harmon slides an old envelope out of his coat and turns it over in his hands Location: A late-night diner with red vinyl booths.\nMedium close-up from the chest up, eye-level camera, 50mm lens with a natural perspective, the camera slowly pushes in toward the subject, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
+      "model.prompt": "Walt Harmon slides an old envelope out of his coat and turns it over in his hands. Location: A late-night diner with red vinyl booths.\nMedium close-up from the chest up, eye-level camera, 50mm lens with a natural perspective, the camera slowly pushes in toward the subject, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
       "model.resolution": "768P",
       "model.duration": 5,
       "seed": 1001,
@@ -134,7 +134,7 @@
   "10": {
     "class_type": "GeminiNanoBanana2V2",
     "inputs": {
-      "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD looks up toward the diner door and almost smiles Location: A late-night diner with red vinyl booths.\nClose-up of the face, eye-level camera, 85mm portrait lens with a compressed background, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
+      "prompt": "Image 1 is the reference sheet for LEAD (Walt Harmon). Image 2 is a front portrait of LEAD.\nKeep LEAD's exact face, skin tone, skin texture and hair from images 1 and 2. Do not beautify or change their age.\nLEAD: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nLEAD looks up toward the diner door and almost smiles. Location: A late-night diner with red vinyl booths.\nClose-up of the face, eye-level camera, 85mm portrait lens with a compressed background, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.\nNatural skin texture with visible pores, real lens imperfections.",
       "model": "Gemini Nano Banana 2.1",
       "model.aspect_ratio": "16:9",
       "model.resolution": "2K",
@@ -174,7 +174,7 @@
     "class_type": "MinimaxHailuo03FirstLastFrameNode",
     "inputs": {
       "model": "MiniMax H3",
-      "model.prompt": "Walt Harmon looks up toward the diner door and almost smiles Location: A late-night diner with red vinyl booths.\nClose-up of the face, eye-level camera, 85mm portrait lens with a compressed background, locked-off static camera, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
+      "model.prompt": "Walt Harmon looks up toward the diner door and almost smiles. Location: A late-night diner with red vinyl booths.\nClose-up of the face, eye-level camera, 85mm portrait lens with a compressed background, locked-off static camera, shot on a digital cinema camera, clean and detailed, set in the present day, a grounded, dramatic tone.",
       "model.resolution": "768P",
       "model.duration": 5,
       "seed": 1002,

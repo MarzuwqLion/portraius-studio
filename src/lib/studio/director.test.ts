@@ -52,6 +52,15 @@ describe("shots", () => {
     expect(shotScene({ ...s, location: " " }, s.shots[0]!)).toBe("Rain streaks the window.");
   });
 
+  it("end the action before the location when it has no full stop", () => {
+    const s = scene();
+    const shot = { ...s.shots[1]!, action: "{lead} turns the envelope over" };
+    expect(shotScene(s, shot)).toBe("{lead} turns the envelope over. Location: A late-night diner.");
+    expect(shotScene(s, { ...shot, action: "{lead} looks up!" })).toBe("{lead} looks up! Location: A late-night diner.");
+    // No location: the prompt compiler ends the sentence.
+    expect(shotScene({ ...s, location: "" }, shot)).toBe("{lead} turns the envelope over");
+  });
+
   it("take the film settings, and movement only when animating", () => {
     const s = scene();
     const still = shotCamera(s, s.shots[1]!, false);
