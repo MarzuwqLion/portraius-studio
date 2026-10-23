@@ -21,7 +21,10 @@ runs on Comfy credits, and Settings keeps a default for each feature.
 Any of these works:
 
 - **ComfyUI Desktop**: install it from [comfy.org](https://www.comfy.org/download) and let it update.
-- **Portable (Windows)**: unzip the latest NVIDIA portable build, then run `update/update_comfyui.bat`.
+- **Portable (Windows)**: unzip the latest NVIDIA portable build (`ComfyUI_windows_portable_nvidia.7z` from
+  [ComfyUI's releases](https://github.com/Comfy-Org/ComfyUI/releases); v0.42.1 of October 19 has every node). To
+  update an older one, run `update/update_comfyui.bat`. If your ComfyUI has many custom nodes, a fresh unzip in a
+  new folder is the easier path: the app needs none of them, and an update can break some.
 - **From git**: `git pull` in your ComfyUI folder, then `pip install -r requirements.txt` in its Python
   environment, with a CUDA build of PyTorch.
 
@@ -125,6 +128,8 @@ For example, from the ComfyUI folder: `python main.py --enable-cors-header https
 ComfyUI Desktop has the same CORS header option in its server settings.
 
 The hosted site can only reach a ComfyUI on the same computer (`127.0.0.1` or `localhost`): browsers let an https
+On Windows portable, open `run_nvidia_gpu.bat` in a text editor (or a copy of it) and add the flag to the end of
+the `python_embeded\python.exe ... --windows-standalone-build` line, then start ComfyUI with that file.
 page call plain http on its own machine, and nowhere else. For a ComfyUI on another computer, run the app locally
 with `npm run dev` and start ComfyUI with `--listen` as well. Chrome may ask once whether the page can reach
 devices on your local network: allow it.
@@ -148,7 +153,9 @@ npm run local:smoke -- qwen      # only the Qwen samples
 
 Both read `OBJECT_INFO_URL` or `LOCAL_COMFY_URL` if your ComfyUI isn't at `http://127.0.0.1:8188`. The smoke run
 uses the Tour's designed character and sample clips, prints how long each step took, and saves the stills, clips
-and plans so you can look at them.
+and plans so you can look at them. It doesn't score likeness or design a face from text, so check those in the app
+(`npm run dev`): a character made from photos shows an identity score on each view, and "Design from a
+description" draws candidate faces from text.
 
 ## What runs where
 
