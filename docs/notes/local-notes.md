@@ -38,6 +38,9 @@ path, for speed.
 
 ## To check on the 4090 (npm run local:smoke)
 
+`npm run local:smoke` answers every row but 2 and 4: it prints no identity scores and has no design-from-text
+sample, so those two are checked in the app (`npm run dev`).
+
 | # | Question | If it fails |
 | --- | --- | --- |
 | 1 | Qwen draws a 16:9 sheet with consistent panels from 3 photos | Draw the four views first from the photos, and assemble the composite in the browser from the views (the plan discussed with Marzuwq on October 22) |
@@ -50,6 +53,76 @@ path, for speed.
 | 8 | SeedVR2's restore reads as "real" next to Freepik's | Lower the target size, or drop Make it real locally |
 | 9 | Gemma 4 12B returns the shot list as JSON | Lower the temperature, or ask for fewer shots |
 | 10 | Every file name in `lib/registry/local-models.ts` matches Hugging Face | Fix the name; `npm run local:models` fails loudly on a 404 |
+
+## The 4090 run (October 23)
+
+A fresh ComfyUI portable v0.42.1 (October 19, no custom nodes) on Marzuwq's RTX 4090 (24 GB, 64 GB RAM).
+`npm run local:check` passed on the stock release, and all 14 smoke samples finished.
+
+| Sample | Time | Output |
+| --- | --- | --- |
+| Qwen sheet composite | 50 s | 16:9, front, profile, full body, four expressions |
+| Qwen view, still with a cast, edit | 16 s, 8 s, 10 s | |
+| Wan 5B text, first frame | 96 s, 86 s | 3 s at 1280×704, 24 fps |
+| Wan 14B text, first frame, first and last frame | 89 s, 95 s, 78 s | 3 s at 1280×720, 16 fps |
+| Wan Animate recast | 852 s | 7.9 s at 848×480 with the clip's sound (the sample's 8 s clip, uncut) |
+| Wan S2V speaking clip | 62 s | 4.9 s at 848×480, 16 fps |
+| SeedVR2 | 10 s | 1289×1600 to 1838×2282 |
+| Gemma plan, judge | 16 s, 2 s | JSON inside a json code fence, which `localReplyText` strips |
+
+By question:
+
+1. Pass. The sheet's panels are one consistent man and read as Walt.
+2. Not run: needs the app (identity scores).
+3. Not judged separately; the smoke draws 1K.
+4. Not run: needs the app (Design from a description).
+5. Likely pass, not measured as asked: the samples are 3 s, and 14B took about 90 s for 3 s at 720p.
+6. Fail with the front view; fixed in part. Wan Animate 2 copies its reference's framing and background and
+   ignores the prompt's "Background description". Four runs of the same 8 s dance clip (about 14 minutes each):
+   - Front view (a headshot): a smiling close-up of Walt on grey, none of the dance, no jazz club.
+   - Full-body view padded white to 16:9: the dance comes through, but in a 9:16 panel between white bars.
+   - Full-body view on studio grey (now in `wan-animate.ts`, and Recast sends the full-body view): no bars, but
+     Walt is stopped at the panel's edge when he moves sideways, and the set is still the grey studio.
+   - Two steps: Qwen draws Walt full body in the jazz club at 16:9 from his full-body view (37 s), and that still
+     is the reference. Walt dances across the stage, full body, in the setting, with the clip's sound. Best by far.
+     Qwen wrote the prompt's role word ("LEAD") on the back wall as a sign, so the still's prompt should name
+     the person by image, not by role.
+7. Not judged: the smoke speaks the concert clip's sound (music), and Walt barely moves his mouth to it. Needs a
+   recorded spoken line.
+8. Open: SeedVR2 sharpens hair, beard and skin texture without changing the face; compare with Freepik's by eye.
+9. Pass, with the app's real request (`localAgentRequest`, three seeds): Gemma drafted 4 to 5 shots and
+   `shotsFromReply` kept all of them, with valid camera IDs. Seeds 1 and 2 gave the same plan.
+10. Pass: all 25 files downloaded and match Hugging Face's sizes.
+
+Fixed from this run:
+
+- Load Video reports the clip it loaded as an output (type `input`), so a local recast returned the visitor's own
+  clip as its first asset. `normaliseOutputs` in `lib/router/local.ts` now drops input files as it drops previews.
+- `npm run local:models` lost 4 of the 25 files to dropped connections on the first try (Hugging Face drops long
+  downloads) and started each over. It now resumes the `.part` with a Range request, retries up to 10 times, checks
+  the size before renaming, and refuses a portable build's top folder.
+- Local Recast sends the performer's full-body view (`buildCast`'s `view` option) and puts it whole on studio
+  grey the shape of the clip, instead of center-cropping the front view.
+
+- Local Recast runs in two steps (Decisions, October 22, item 6, added October 23): a Qwen still of the performer
+  in the clip's first frame and the preset's setting (`lib/studio/recast-stage.ts`), then Wan Animate on that
+  still. The second job starts from `afterRecast` once the still is saved, guarded against done firing twice.
+
+Run through the app (`npm run dev`, Tour's Walt, the sample clip, Concert stage), October 23: the still took about
+40 s (likeness 85), Wan Animate started on its own as the still's child and took 850 s. Walt dances the clip's moves
+full body across a concert stage with crowd lights and haze, with the clip's sound, in one card. Exactly one Wan
+Animate job ran.
+
+Still open:
+
+- The still follows the setting but only loosely the first frame's position and pose (the dancer stood left of
+  centre mid-step; Walt stands right of centre). Wan Animate takes the motion from the clip either way.
+- The clip gets no likeness score: at 848×480 a full-body face is under the scorer's 80 px minimum in every frame,
+  so each is skipped. The still's score is the only one. Showing it on the final card would help.
+- Stunt double asks for "practical stunt clothing" in its motion prompt, but the still keeps the performer's
+  clothes and Wan Animate copies the still, so the outfit doesn't change locally.
+- A script error (a `TypeError`) reaches the visitor as "Couldn't reach Comfy", which sends them to check a
+  connection that's fine.
 
 ## Add a line without text-to-speech
 
