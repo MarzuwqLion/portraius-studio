@@ -7,11 +7,13 @@
 // style run on MiniMax H3, which kept motion, timing and camera in M4's test.
 // Object Swap runs on HappyHorse 1.0 video edit, the A/B winner over Kling
 // (which retimes the clip), Wan 2.7 and BFL (docs/notes/recast-ab.md).
-// On the visitor's ComfyUI (spec: Local engine), Motion Transfer runs on Wan
-// Animate 2, which draws the setting from the prompt in the same pass; the
-// other modes stay on Comfy.
+// On the visitor's ComfyUI (spec: Local engine), Motion Transfer runs in two
+// steps: Qwen draws the performer into the clip's first frame, in the preset's
+// setting, and Wan Animate 2 moves that still through the clip. Wan Animate
+// copies its reference's framing and background and ignores the prompt's (4090
+// run, October 23), so the still is the set. The other modes stay on Comfy.
 import { onJobDone, onRestart, startJob, type JobInput } from "@/lib/jobs/runner";
-import { prepareImage } from "@/lib/media/image-prep";
+import { prepareImage, toInlineImage } from "@/lib/media/image-prep";
 import { loadFfmpeg, type ClipInfo } from "@/lib/media/video-prep";
 import { preset as findPreset } from "@/lib/presets/load";
 import type { Preset } from "@/lib/presets/schema";
@@ -23,7 +25,8 @@ import { uploadAsset, uploadLocalInput } from "@/lib/router/client";
 import { ANIMATE_DURATION } from "@/lib/adapters/local/wan-animate";
 import { db } from "@/lib/store/db";
 import type { Job } from "@/lib/types/jobs";
-import { buildCast, dataUri, type CastPick } from "./cast";
+import { buildCast, dataUri, describeCast, type CastPick } from "./cast";
+import { stageStillInput } from "./recast-stage";
 
 export type RecastMode = "motion" | "swap" | "style";
 
@@ -134,8 +137,9 @@ export function recastNeeds(form: RecastForm): string | undefined {
 }
 
 // H3 needs a concrete ratio with reference media; pick the nearest it supports.
-export function nearestRatio(width: number, height: number): VideoRatio {
-  const options: [VideoRatio, number][] = [["16:9", 16 / 9], ["4:3", 4 / 3], ["1:1", 1], ["3:4", 3 / 4], ["9:16", 9 / 16], ["21:9", 21 / 9]];
+// (Each is an image ratio too, for the local still.)
+export function nearestRatio(width: number, height: number): Exclude<VideoRatio, "9:21"> {
+  const options: [Exclude<VideoRatio, "9:21">, number][] = [["16:9", 16 / 9], ["4:3", 4 / 3], ["1:1", 1], ["3:4", 3 / 4], ["9:16", 9 / 16], ["21:9", 21 / 9]];
   const r = width / height;
   return options.reduce((best, o) => (Math.abs(Math.log(o[1] / r)) < Math.abs(Math.log(best[1] / r)) ? o : best))[0];
 }
@@ -152,6 +156,7 @@ export interface RecastRequest {
   h3Resolution: H3Input["resolution"];
   seed: number;
   settingStep?: boolean;     // the second step of a setting-change preset
+  animateStep?: boolean;     // local: Wan Animate on the first step's still
   modelId?: string;          // a local model; Comfy's per-mode engines when unset
 }
 
@@ -163,38 +168,69 @@ export function animatePrompt(name: string, description: string | undefined, set
   return [who, where, direction.trim()].filter(Boolean).join("\n");
 }
 
+const settingOf = (p: Preset) => (typeof p.recipe.params?.setting === "string" ? p.recipe.params.setting : undefined);
+
+// Step one: Qwen draws the still (recast-stage.ts). Step two starts when it's saved (afterRecast).
 async function startLocalRecast(request: RecastRequest, p: Preset, clip: Blob, parentJobId?: string): Promise<string> {
-  const mode = modeOf(p);
-  const unsupported = localUnsupported(mode);
+  const unsupported = localUnsupported(modeOf(p));
   if (unsupported) throw new Error(unsupported);
-  const modelId = request.modelId!;
-  // One image per performer: their front view.
-  const cast = await buildCast(request.cast.slice(0, 1), { compact: true });
-  const member = cast.members[0];
-  if (!member || !cast.images[0]) throw new Error("Pick who performs.");
-  const setting = p.recipe.params?.setting;
-  const model: AnimateInput = {
-    prompt: animatePrompt(member.name, member.description, typeof setting === "string" ? setting : undefined, request.direction ?? ""),
-    motion: p.recipe.prompt.replace(/\{([a-z][a-z0-9_-]*)\}/g, "a person"),
-    performer: cast.images[0],
-    clip: `${LOCAL_INPUT}${await uploadLocalInput(clip, "mp4")}`,
-    durationSec: request.clipDurationSec,
-    aspect: request.clipWidth / request.clipHeight,
-    seed: request.seed,
-  };
+  const cast = await buildCast(request.cast.slice(0, 1), { compact: true, view: "fullBody" });
+  if (!cast.members[0] || !cast.images[0]) throw new Error("Pick who performs.");
+  const { firstFrame } = await import("@/lib/media/video-frames");
+  const frame = await toInlineImage((await firstFrame(clip)).jpeg);
+  const { animateStep: _step, ...first } = request;
   const job = await startJob({
     kind: "recast",
-    modelId,
-    input: { model, characterIds: cast.characterIds, prompt: p.title, request } satisfies RecastJobInput,
+    modelId: MODEL_IDS.localQwenEdit,
+    input: {
+      model: stageStillInput(cast.images[0], frame, { setting: settingOf(p), direction: request.direction ?? "", aspectRatio: nearestRatio(request.clipWidth, request.clipHeight), seed: request.seed }),
+      characterIds: cast.characterIds,
+      prompt: p.title,
+      request: first,
+    } satisfies RecastJobInput,
     ...(parentJobId ? { parentJobId } : {}),
   });
   return job.id;
 }
 
-// A recast job whose result is the first of two steps (a setting change follows).
+// Step two: Wan Animate moves the still's performer through the clip, keeping the clip's sound.
+async function startAnimateStep(still: Job, parentJobId = still.id): Promise<Job | undefined> {
+  const input = still.input as RecastJobInput;
+  const request = input.request;
+  const p = findPreset(request.presetId);
+  const generation = await db.generations.get(still.generationIds[0] ?? "");
+  const asset = generation?.assets.find((a) => a.kind === "image");
+  const [image, clip] = await Promise.all([asset ? db.blobs.get(asset.blobId) : undefined, db.blobs.get(request.clipBlobId)]);
+  const [member] = await describeCast(request.cast.slice(0, 1), { compact: true });
+  if (!p || !image || !clip || !member || !request.modelId) return undefined;
+  const model: AnimateInput = {
+    prompt: animatePrompt(member.name, member.description, settingOf(p), request.direction ?? ""),
+    motion: p.recipe.prompt.replace(/\{([a-z][a-z0-9_-]*)\}/g, "a person"),
+    performer: await toInlineImage(image.blob),
+    clip: `${LOCAL_INPUT}${await uploadLocalInput(clip.blob, "mp4")}`,
+    durationSec: request.clipDurationSec,
+    aspect: request.clipWidth / request.clipHeight,
+    seed: request.seed,
+  };
+  return startJob({
+    kind: "recast",
+    modelId: request.modelId,
+    parentJobId,
+    input: { model, characterIds: input.characterIds, prompt: input.prompt, request: { ...request, animateStep: true } } satisfies RecastJobInput,
+  });
+}
+
+// The still of a local recast, which Wan Animate moves next.
+export function isLocalStill(job: Job): boolean {
+  return job.kind === "recast" && job.modelId === MODEL_IDS.localQwenEdit;
+}
+
+// A recast job whose result is the first of two steps: a local still, or a
+// Comfy recast whose setting change follows.
 export function isFirstOfTwo(job: Job): boolean {
+  if (isLocalStill(job)) return true;
   const request = (job.input as Partial<RecastJobInput>).request;
-  return Boolean(request && !request.settingStep && typeof findPreset(request.presetId)?.recipe.params?.setting === "string");
+  return Boolean(request && !isLocalModel(job.modelId) && !request.settingStep && typeof findPreset(request.presetId)?.recipe.params?.setting === "string");
 }
 
 type RecastJobInput = JobInput & { request: RecastRequest };
@@ -311,9 +347,23 @@ async function startSettingStep(job: Job, input: RecastJobInput, setting: string
   });
 }
 
+// Stills whose second step is starting. Done fires when the assets are saved
+// and again when the scores are, and the second step uploads the clip first.
+const animating = new Set<string>();
+
 async function afterRecast(job: Job): Promise<void> {
-  // A local recast drew its setting and kept the clip's sound in one pass.
-  if (job.kind !== "recast" || isLocalModel(job.modelId)) return;
+  if (job.kind !== "recast") return;
+  // A local recast's still goes on to Wan Animate, which keeps the clip's sound itself.
+  if (isLocalModel(job.modelId)) {
+    if (!isLocalStill(job) || animating.has(job.id)) return;
+    animating.add(job.id);
+    try {
+      if (!(await db.jobs.where("parentJobId").equals(job.id).count())) await startAnimateStep(job);
+    } finally {
+      animating.delete(job.id);
+    }
+    return;
+  }
   const input = job.input as RecastJobInput;
   const p = findPreset(input.request?.presetId);
   const setting = p?.recipe.params?.setting;
@@ -332,10 +382,15 @@ async function afterRecast(job: Job): Promise<void> {
 }
 
 // Retry: the clip (or, for a setting step, the first step's result) is
-// hosted again, since the old links went when the job ended.
+// hosted again, since the old links went when the job ended. A local
+// animate step runs again on the same still.
 async function restartRecast(job: Job): Promise<Job | undefined> {
   if (job.kind !== "recast") return undefined;
   const input = job.input as RecastJobInput;
+  if (input.request.animateStep) {
+    const still = await db.jobs.get(job.parentJobId ?? "");
+    return still ? startAnimateStep(still, job.id) : undefined;
+  }
   if (input.request.settingStep) {
     const first = await db.jobs.get(job.parentJobId ?? "");
     const setting = findPreset(input.request.presetId)?.recipe.params?.setting;

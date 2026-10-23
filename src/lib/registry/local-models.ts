@@ -54,7 +54,11 @@ export const LOCAL_MODEL_FILES: Record<string, readonly ModelFile[]> = {
     FILES.wanT2vLoraHigh, FILES.wanT2vLoraLow, FILES.wanI2vLoraHigh, FILES.wanI2vLoraLow,
     FILES.umt5, FILES.wan21Vae,
   ],
-  [MODEL_IDS.localWanAnimate]: [FILES.wanAnimate, FILES.umt5, FILES.clipVisionH, FILES.wanAnimateVae],
+  // Recast draws the performer into the clip's first frame with Qwen before Wan Animate moves them.
+  [MODEL_IDS.localWanAnimate]: [
+    FILES.wanAnimate, FILES.umt5, FILES.clipVisionH, FILES.wanAnimateVae,
+    FILES.qwenEdit, FILES.qwenEncoder, FILES.qwenVae, FILES.qwenLightning4,
+  ],
   [MODEL_IDS.localWanSpeech]: [FILES.wanS2v, FILES.wav2vec2, FILES.umt5, FILES.wan21Vae, FILES.wanT2vLoraHigh],
   [MODEL_IDS.localSeedVR2]: [FILES.seedvr2, FILES.seedvr2Vae],
   [MODEL_IDS.localGemma]: [FILES.gemma],

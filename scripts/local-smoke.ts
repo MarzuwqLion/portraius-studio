@@ -23,9 +23,9 @@ const filters = process.argv.slice(2).map((f) => f.toLowerCase());
 const outDir = ".local-smoke";
 mkdirSync(outDir, { recursive: true });
 
-const image = (file: string) => ({ mime: "image/jpeg" as const, base64: readFileSync(`public/samples/${file}`).toString("base64") });
+const image = (file: string) => ({ mime: file.endsWith(".webp") ? ("image/webp" as const) : ("image/jpeg" as const), base64: readFileSync(`public/samples/${file}`).toString("base64") });
 const clip = `data:video/mp4;base64,${readFileSync("public/samples/concert-original.mp4").toString("base64")}`;
-const samples = localSamples({ front: image("walt-front.jpg"), sheet: image("walt-sheet.jpg"), still: image("walt-diner.jpg"), clip, line: clip })
+const samples = localSamples({ front: image("walt-front.jpg"), fullBody: image("walt-full-body.jpg"), firstFrame: image("concert-original.webp"), sheet: image("walt-sheet.jpg"), still: image("walt-diner.jpg"), clip, line: clip })
   .filter((s) => !filters.length || filters.some((f) => s.name.includes(f)));
 
 const seconds = (since: number) => `${((Date.now() - since) / 1000).toFixed(0)} s`;

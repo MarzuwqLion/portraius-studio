@@ -85,6 +85,9 @@ and VAE; you need each file once.
 
 ### Wan Animate 2: Recast's motion transfer (about 18 GB more)
 
+Recast also uses Qwen-Image-Edit 2511 (above) to draw the performer into the clip's first frame first, so get both.
+`npm run local:models -- "D:\ComfyUI" animate` downloads both.
+
 | Folder | File | Size |
 | --- | --- | --- |
 | `models/diffusion_models/` | [wan_animate_2_distill_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/Wan-Animate-2/resolve/main/diffusion_models/wan_animate_2_distill_int8_convrot.safetensors) | 16.7 GB |
@@ -125,11 +128,11 @@ ComfyUI refuses calls from other web pages unless you allow the page's address. 
 | `npm run preview` | `--enable-cors-header http://localhost:4173` |
 
 For example, from the ComfyUI folder: `python main.py --enable-cors-header https://marzuwqlion.github.io`.
+On Windows portable, open `run_nvidia_gpu.bat` in a text editor (or a copy of it) and add the flag to the end of
+the `python_embeded\python.exe ... --windows-standalone-build` line, then start ComfyUI with that file.
 ComfyUI Desktop has the same CORS header option in its server settings.
 
 The hosted site can only reach a ComfyUI on the same computer (`127.0.0.1` or `localhost`): browsers let an https
-On Windows portable, open `run_nvidia_gpu.bat` in a text editor (or a copy of it) and add the flag to the end of
-the `python_embeded\python.exe ... --windows-standalone-build` line, then start ComfyUI with that file.
 page call plain http on its own machine, and nowhere else. For a ComfyUI on another computer, run the app locally
 with `npm run dev` and start ComfyUI with `--listen` as well. Chrome may ask once whether the page can reach
 devices on your local network: allow it.
@@ -164,7 +167,7 @@ description" draws candidate faces from text.
 | Character sheets, design from text | Qwen-Image-Edit 2511 | Takes 3 images: the first 3 good photos for the sheet, 2 plus the sheet for each view. |
 | Image studio | Qwen-Image-Edit 2511 | One image per cast member (a person's front view, an element's sheet), 3 in all with an edit's source. |
 | Video studio | Wan 2.2 14B, or 5B for fast drafts | 2 to 5 s. A 5B draft's "Render final" draws it again on 14B with the same seed, so it can differ. People aren't sent to MiniMax H3. "Use references" needs Comfy. |
-| Recast | Wan Animate 2 | Motion transfer only, 2 to 10 s clips; the preset's setting is drawn in the same pass and the clip's sound is kept. Object swap and Style swap need Comfy. |
+| Recast | Qwen-Image-Edit 2511, then Wan Animate 2 | Motion transfer only, 2 to 10 s clips, in two steps: Qwen draws the performer into the clip's first frame, in the preset's setting, then Wan Animate moves them through the clip and keeps its sound. Object swap and Style swap need Comfy. |
 | Make it real | SeedVR2 7B | A restore to about 4 megapixels; no strength slider. |
 | Add a line | Wan 2.2 S2V | A speaking clip from the clip's first frame and your recorded line. ComfyUI has no text-to-speech, so stock voices and lip sync need Comfy. |
 | Director | Qwen for stills, Wan for takes, Gemma 4 for plans | Kling's one-take needs Comfy. |

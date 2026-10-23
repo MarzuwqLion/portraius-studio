@@ -1,7 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { RECAST_PRESETS } from "@/lib/presets/load";
+import { MODEL_IDS } from "@/lib/registry/models";
 import type { Job } from "@/lib/types/jobs";
-import { LIMITS, defaultRange, fitsLimits, isFirstOfTwo, modeOf, nearestRatio, recastNeeds, settingPrompt, tooShort, type RecastForm } from "./recast";
+import {
+  LIMITS,
+  defaultRange,
+  fitsLimits,
+  isFirstOfTwo,
+  isLocalStill,
+  modeOf,
+  nearestRatio,
+  recastNeeds,
+  settingPrompt,
+  tooShort,
+  type RecastForm,
+} from "./recast";
+import { stagePrompt, stageStillInput } from "./recast-stage";
 
 const recastJob = (request: object): Job => ({ id: "j", kind: "recast", input: { request } }) as unknown as Job;
 
@@ -116,10 +130,44 @@ describe("setting-change presets", () => {
     expect(isFirstOfTwo(({ id: "j", kind: "recast", input: {} }) as unknown as Job)).toBe(false);
   });
 
+  it("on the visitor's GPU: the still first, then Wan Animate, with no setting edit after", () => {
+    const local = (modelId: string, request: object) => ({ ...recastJob(request), modelId }) as Job;
+    expect(isFirstOfTwo(local(MODEL_IDS.localQwenEdit, { presetId: "swap-me-in" }))).toBe(true);
+    expect(isLocalStill(local(MODEL_IDS.localQwenEdit, { presetId: "swap-me-in" }))).toBe(true);
+    expect(isFirstOfTwo(local(MODEL_IDS.localWanAnimate, { presetId: "same-move-new-city", animateStep: true }))).toBe(false);
+    expect(isLocalStill(local(MODEL_IDS.localWanAnimate, { presetId: "same-move-new-city", animateStep: true }))).toBe(false);
+  });
+
   it("names the whole surroundings, not just the background", () => {
     const prompt = settingPrompt("a large concert stage");
     expect(prompt).toContain("a large concert stage");
     expect(prompt).toMatch(/walls, windows, furniture and props/);
     expect(prompt).toMatch(/motion exactly as they are/);
+  });
+});
+
+describe("the local still", () => {
+  const performer = { mime: "image/jpeg" as const, base64: "cGVyZm9ybWVy" };
+  const frame = { mime: "image/jpeg" as const, base64: "ZnJhbWU=" };
+
+  it("puts the performer where the clip's person stands, in the setting or the clip's own place", () => {
+    const moved = stagePrompt("a large concert stage", "");
+    expect(moved).toContain("The place is a large concert stage");
+    expect(moved).toMatch(/same position, at the same size in the frame and in the same pose/);
+    expect(stagePrompt(undefined, "")).toContain("Keep the place, the light and the camera of image 2.");
+    expect(stagePrompt(undefined, "Wearing a red scarf.")).toMatch(/Wearing a red scarf\.$/);
+  });
+
+  it("names people by image, never by role, and asks for no lettering", () => {
+    const prompt = stagePrompt("a dark stage", "");
+    expect(prompt).not.toMatch(/\b[A-Z]{3,}\b/);
+    expect(prompt).toContain("No text, signs or lettering.");
+  });
+
+  it("sends the full-body view then the first frame, in the clip's shape", () => {
+    const input = stageStillInput(performer, frame, { setting: "a large concert stage", direction: "", aspectRatio: nearestRatio(1344, 768), seed: 9 });
+    expect(input.references).toEqual([performer, frame]);
+    expect(input).toMatchObject({ aspectRatio: "16:9", size: "1K", quality: "fast", seed: 9 });
+    expect(input.prompt).toContain("a large concert stage");
   });
 });

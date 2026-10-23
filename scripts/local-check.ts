@@ -13,9 +13,9 @@ import { checkPrompt, loadCatalog, type ApiPrompt } from "./lib/object-info.ts";
 const source = process.env.OBJECT_INFO_URL?.trim() || "http://127.0.0.1:8188/object_info";
 const catalog = await loadCatalog(source);
 
-const image = (file: string) => ({ mime: "image/jpeg" as const, base64: readFileSync(`public/samples/${file}`).toString("base64") });
+const image = (file: string) => ({ mime: file.endsWith(".webp") ? ("image/webp" as const) : ("image/jpeg" as const), base64: readFileSync(`public/samples/${file}`).toString("base64") });
 const clip = `data:video/mp4;base64,${readFileSync("public/samples/concert-original.mp4").toString("base64")}`;
-const samples = localSamples({ front: image("walt-front.jpg"), sheet: image("walt-sheet.jpg"), still: image("walt-diner.jpg"), clip, line: clip });
+const samples = localSamples({ front: image("walt-front.jpg"), fullBody: image("walt-full-body.jpg"), firstFrame: image("concert-original.webp"), sheet: image("walt-sheet.jpg"), still: image("walt-diner.jpg"), clip, line: clip });
 
 // Uploads and model files are whatever the visitor has, so their option lists
 // can't know them.
