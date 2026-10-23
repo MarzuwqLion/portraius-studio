@@ -117,6 +117,7 @@ describe("local status and result", () => {
         "9": { images: [{ filename: "portraius_00001_.png", subfolder: "portraius", type: "output" }] },
         "10": { images: [{ filename: "preview.png", subfolder: "", type: "temp" }] },
         "11": { text: ["a plan"] },
+        "12": { images: [{ filename: "portraius-clip.mp4", subfolder: "", type: "input" }], animated: [true] },
       },
     });
     await expect(status(ID)).resolves.toMatchObject({ status: "COMPLETED", completed: true });
@@ -126,6 +127,7 @@ describe("local status and result", () => {
     ]);
     expect(res.outputs["10"]!.files).toEqual([]);
     expect(res.outputs["11"]!.text).toEqual(["a plan"]);
+    expect(res.outputs["12"]!.files).toEqual([]);
   });
 
   it("fails a job the ComfyUI forgot (it restarted) with local_lost", async () => {

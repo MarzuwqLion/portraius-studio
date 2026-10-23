@@ -204,8 +204,9 @@ export function normaliseOutputs(outputs: Job["outputs"]): LocalResult {
       for (const item of items) {
         if (!item || typeof item !== "object" || typeof (item as { filename?: unknown }).filename !== "string") continue;
         const f = item as { filename: string; subfolder?: string; type?: string };
-        // Previews (type "temp") are what ComfyUI shows while it works, not results.
-        if (f.type === "temp") continue;
+        // Previews (type "temp") are what ComfyUI shows while it works, not results, and Load Video
+        // reports the clip it loaded (type "input"): the visitor's own clip, not a recast of it.
+        if (f.type === "temp" || f.type === "input") continue;
         files.push({ filename: f.filename, subfolder: f.subfolder ?? "", type: f.type ?? "output", url: viewUrl(f) });
       }
     }
