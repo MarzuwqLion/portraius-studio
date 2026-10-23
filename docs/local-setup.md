@@ -34,8 +34,11 @@ npm install
 npm run local:models -- "D:\ComfyUI"
 ```
 
-Use the folder that has `models/` in it. It downloads every file into the right `models/` subfolder and skips files
-you already have. To get only some models, add words from their IDs:
+Use the folder that has `models/` in it. For Windows portable that's the `ComfyUI` folder inside
+`ComfyUI_windows_portable`, for example `"D:\ComfyUI_windows_portable\ComfyUI"`. It downloads every file into the
+right `models/` subfolder and skips files you already have. Hugging Face often drops long downloads; the command
+picks a dropped file up where it stopped and tries again, and if it still gives up, running it again resumes. To get
+only some models, add words from their IDs:
 
 ```
 npm run local:models -- "D:\ComfyUI" qwen wan2.2-14b
