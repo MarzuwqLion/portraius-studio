@@ -179,11 +179,18 @@ async function startLocalRecast(request: RecastRequest, p: Preset, clip: Blob, p
   const { firstFrame } = await import("@/lib/media/video-frames");
   const frame = await toInlineImage((await firstFrame(clip)).jpeg);
   const { animateStep: _step, ...first } = request;
+  const description = cast.members[0].description;
   const job = await startJob({
     kind: "recast",
     modelId: MODEL_IDS.localQwenEdit,
     input: {
-      model: stageStillInput(cast.images[0], frame, { setting: settingOf(p), direction: request.direction ?? "", aspectRatio: nearestRatio(request.clipWidth, request.clipHeight), seed: request.seed }),
+      model: stageStillInput(cast.images[0], frame, {
+        setting: settingOf(p),
+        direction: request.direction ?? "",
+        ...(description ? { description } : {}),
+        aspectRatio: nearestRatio(request.clipWidth, request.clipHeight),
+        seed: request.seed,
+      }),
       characterIds: cast.characterIds,
       prompt: p.title,
       request: first,

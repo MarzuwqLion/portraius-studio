@@ -158,6 +158,13 @@ describe("the local still", () => {
     expect(stagePrompt(undefined, "Wearing a red scarf.")).toMatch(/Wearing a red scarf\.$/);
   });
 
+  it("dresses the performer from their description, since a full-body view wears neutral clothing", () => {
+    expect(stagePrompt(undefined, "", "Lean build, usually in a green canvas field jacket")).toContain(
+      "About them: Lean build, usually in a green canvas field jacket. Dress them as described there; anything it leaves out comes from image 1.",
+    );
+    expect(stagePrompt(undefined, "")).toContain("Keep the clothes from image 1.");
+  });
+
   it("names people by image, never by role, and asks for no lettering", () => {
     const prompt = stagePrompt("a dark stage", "");
     expect(prompt).not.toMatch(/\b[A-Z]{3,}\b/);
