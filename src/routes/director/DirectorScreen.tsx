@@ -207,13 +207,14 @@ function useSceneEditor(id: string) {
   const pending = useRef<Scene | undefined>(undefined);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  // The stored scene, read again whenever it's written, including by work
+  // that finishes in the background: a waiting shot's take starting kept
+  // reading "Waiting" until a reload (4090 app checks, October 24). An edit
+  // not yet saved wins; its own save brings the stored scene back.
+  const stored = useLiveQuery(async () => (await loadScene(id)) ?? null, [id]);
   useEffect(() => {
-    let live = true;
-    void loadScene(id).then((s) => live && setScene(s ?? null));
-    return () => {
-      live = false;
-    };
-  }, [id]);
+    if (stored !== undefined && !pending.current) setScene(stored);
+  }, [stored]);
 
   const flush = useCallback(async () => {
     clearTimeout(timer.current);

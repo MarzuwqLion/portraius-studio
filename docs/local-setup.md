@@ -133,9 +133,16 @@ the `python_embeded\python.exe ... --windows-standalone-build` line, then start 
 ComfyUI Desktop has the same CORS header option in its server settings.
 
 The hosted site can only reach a ComfyUI on the same computer (`127.0.0.1` or `localhost`): browsers let an https
-page call plain http on its own machine, and nowhere else. For a ComfyUI on another computer, run the app locally
-with `npm run dev` and start ComfyUI with `--listen` as well. Chrome may ask once whether the page can reach
-devices on your local network: allow it.
+page call plain http on its own machine, and nowhere else. The first time the hosted site reaches your ComfyUI,
+Chrome asks whether it can access devices on your local network (or apps on this computer): choose **Allow**,
+then press **Check again** in Settings. Until you allow it, Settings says it couldn't reach your ComfyUI even
+though ComfyUI is running.
+
+For a ComfyUI on another computer, run the app locally with `npm run dev` and start ComfyUI with `--listen` as
+well.
+
+ComfyUI allows one page address at a time, so if you use both the hosted site and `npm run dev`, keep two
+launchers (two copies of `run_nvidia_gpu.bat`, one per address) and start the one you need.
 
 ## 4. Point the app at it
 

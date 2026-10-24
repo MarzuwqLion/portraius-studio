@@ -171,6 +171,44 @@ Found, and fixed the same day (each checked in the app or by a test):
 Still open: with the description, Qwen framed Samir from the thighs up rather than head to feet, so a recast
 could lose the feet; Stunt double's "practical stunt clothing" still doesn't reach the local still.
 
-Not run: characters from photos (needs a webcam check of the person in them), Director's scene export and its
-continue-from-last-frame shots, the automatic retry, the 3-image block, mixed Router and local lists (needs a key),
-and the GitHub Pages site against a loopback ComfyUI (needs a deploy).
+Not run: characters from photos (needs a webcam check of the person in them).
+
+## The rest of the app checks (October 24)
+
+- **Automatic retry.** Walt with "seen only from directly behind, never his face": the take scored 0 (no face),
+  one retry started on its own with a new seed ("Automatic retry" on the take), scored 0 too, and no third run.
+  Locally the retry can't add the front view as an extra reference, since a local run already sends only it.
+- **3-image block.** Walt plus a prop and a location (elements made locally from one photo each) is 3 images and
+  runs; adding a source image disables Generate with "Qwen on your GPU takes 3 images: the source and 2 cast
+  members at most."
+- **Director, continue and export.** Two shots on Wan 5B, the second starting from the first's last frame: shot
+  2 read "Starts as soon as shot 1's take is done", started on its own when it was (169 s, then 122 s), and its
+  first frame is shot 1's last (the same frame; the takes came out 1248 and 1280 wide). Export scene joined them
+  with 6-frame crossfades in 12 s: "Export 1 · 9 s · crossfades". Fixed on the way: the open scene kept showing
+  shot 2 as "Waiting", with Export disabled, until a reload; it now follows the stored scene.
+- **GitHub Pages against a loopback ComfyUI: works.** With ComfyUI on the 4090 started for
+  `https://marzuwqlion.github.io`, Marzuwq opened the live site in Chrome on that desktop, allowed Chrome's
+  local network prompt, and Settings read "Connected to ComfyUI 0.42.1 on NVIDIA GeForce RTX 4090"; an image on
+  Qwen-Image-Edit 2511 ("Free · your GPU") came back. Before the prompt is allowed, every request to `127.0.0.1`
+  fails at once and Settings says it couldn't reach ComfyUI, so the setup guide now says to allow it and press
+  Check again. Chrome 152 has two permissions here, "local network access" and "loopback network"; neither is
+  granted to a tab driven by Claude in Chrome (they stay at "prompt" and never show one), and the app's built-in
+  browser denies them outright (`ERR_BLOCKED_BY_CLIENT`), so this check needs a person's own Chrome.
+
+## A key and a ComfyUI together (October 24)
+
+`npm run smoke` passed against the deployed `main` (89 s: catalog, estimate, a Nano Banana image, a Seedance
+draft through the Worker, a resumed job). Then, in the dev app with the 4090's ComfyUI and a Comfy key, no
+generation spent:
+
+- Settings: every feature lists its local model ("· your GPU") and its Router one ("· Comfy credits").
+- Automatic with a key picks Router: Nano Banana for Image and Character design ("≈ $0.08"), H3 and HappyHorse
+  for Recast, Claude for Director's plans ("≈ $0.03"), and Kling's one-take is offered. A saved default wins
+  (Video and Director kept Wan 5B).
+- Pickers group "On your GPU, free" and "Comfy credits" on Image, Video, Recast, Character design and all three
+  of Director's.
+- A default set in Settings (Image on Qwen) is what the screen picks ("Free · your GPU"), and a pick on the
+  screen (Nano Banana) becomes the saved default.
+- Never spend credits leaves only local models in Settings and every picker (a single model hides the picker),
+  prices Image "Free · your GPU", drafts Director's shots with Gemma, and puts one-take back to "Needs Comfy
+  credits."; turning it off brings the Router models back.
