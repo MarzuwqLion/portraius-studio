@@ -171,8 +171,7 @@ Found, and fixed the same day (each checked in the app or by a test):
 Still open: with the description, Qwen framed Samir from the thighs up rather than head to feet, so a recast
 could lose the feet; Stunt double's "practical stunt clothing" still doesn't reach the local still.
 
-Not run: characters from photos (needs a webcam check of the person in them), and the GitHub Pages site against a
-loopback ComfyUI (below).
+Not run: characters from photos (needs a webcam check of the person in them).
 
 ## The rest of the app checks (October 24)
 
@@ -187,10 +186,14 @@ loopback ComfyUI (below).
   first frame is shot 1's last (the same frame; the takes came out 1248 and 1280 wide). Export scene joined them
   with 6-frame crossfades in 12 s: "Export 1 · 9 s · crossfades". Fixed on the way: the open scene kept showing
   shot 2 as "Waiting", with Export disabled, until a reload; it now follows the stored scene.
-- **GitHub Pages against a loopback ComfyUI.** Not possible in the app's built-in browser: with ComfyUI started
-  for `https://marzuwqlion.github.io`, the page's requests to `127.0.0.1` fail with `ERR_BLOCKED_BY_CLIENT`, and
-  Chrome 152's local-network-access permission reads "denied" with no prompt. In a regular Chrome the page asks
-  once (`docs/local-setup.md` says to allow it); that still needs checking there.
+- **GitHub Pages against a loopback ComfyUI: works.** With ComfyUI on the 4090 started for
+  `https://marzuwqlion.github.io`, Marzuwq opened the live site in Chrome on that desktop, allowed Chrome's
+  local network prompt, and Settings read "Connected to ComfyUI 0.42.1 on NVIDIA GeForce RTX 4090"; an image on
+  Qwen-Image-Edit 2511 ("Free · your GPU") came back. Before the prompt is allowed, every request to `127.0.0.1`
+  fails at once and Settings says it couldn't reach ComfyUI, so the setup guide now says to allow it and press
+  Check again. Chrome 152 has two permissions here, "local network access" and "loopback network"; neither is
+  granted to a tab driven by Claude in Chrome (they stay at "prompt" and never show one), and the app's built-in
+  browser denies them outright (`ERR_BLOCKED_BY_CLIENT`), so this check needs a person's own Chrome.
 
 ## A key and a ComfyUI together (October 24)
 
