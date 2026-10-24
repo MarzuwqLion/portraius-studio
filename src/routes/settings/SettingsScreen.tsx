@@ -157,19 +157,27 @@ function formatBytes(bytes: number): string {
 }
 
 function StorageSection() {
-  const [usage, setUsage] = useState<{ used: number; quota: number } | null>(null);
+  // undefined while the browser works it out, which can take a while with a
+  // big library; null when it can't say.
+  const [usage, setUsage] = useState<{ used: number; quota: number } | null>();
   const [credits, setCredits] = useState<number | null>(null);
   useEffect(() => {
-    navigator.storage
-      ?.estimate()
-      .then((e) => setUsage({ used: e.usage ?? 0, quota: e.quota ?? 0 }))
-      .catch(() => setUsage(null));
+    if (!navigator.storage?.estimate) setUsage(null);
+    else
+      navigator.storage
+        .estimate()
+        .then((e) => setUsage({ used: e.usage ?? 0, quota: e.quota ?? 0 }))
+        .catch(() => setUsage(null));
     return onSessionCredits(setCredits);
   }, []);
   return (
     <Section title="Storage and spend">
       <p className="text-body">
-        {usage ? `Using ${formatBytes(usage.used)} of about ${formatBytes(usage.quota)} this browser allows.` : "Storage use isn't available in this browser."}
+        {usage === undefined
+          ? "Checking how much this browser holds."
+          : usage
+            ? `Using ${formatBytes(usage.used)} of about ${formatBytes(usage.quota)} this browser allows.`
+            : "Storage use isn't available in this browser."}
       </p>
       {credits !== null && <p className="text-body">Spent this session: ${(credits / CREDITS_PER_DOLLAR).toFixed(2)}.</p>}
     </Section>
