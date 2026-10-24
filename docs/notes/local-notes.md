@@ -171,9 +171,26 @@ Found, and fixed the same day (each checked in the app or by a test):
 Still open: with the description, Qwen framed Samir from the thighs up rather than head to feet, so a recast
 could lose the feet; Stunt double's "practical stunt clothing" still doesn't reach the local still.
 
-Not run: characters from photos (needs a webcam check of the person in them), Director's scene export and its
-continue-from-last-frame shots, the automatic retry, the 3-image block, and the GitHub Pages site against a
-loopback ComfyUI.
+Not run: characters from photos (needs a webcam check of the person in them), and the GitHub Pages site against a
+loopback ComfyUI (below).
+
+## The rest of the app checks (October 24)
+
+- **Automatic retry.** Walt with "seen only from directly behind, never his face": the take scored 0 (no face),
+  one retry started on its own with a new seed ("Automatic retry" on the take), scored 0 too, and no third run.
+  Locally the retry can't add the front view as an extra reference, since a local run already sends only it.
+- **3-image block.** Walt plus a prop and a location (elements made locally from one photo each) is 3 images and
+  runs; adding a source image disables Generate with "Qwen on your GPU takes 3 images: the source and 2 cast
+  members at most."
+- **Director, continue and export.** Two shots on Wan 5B, the second starting from the first's last frame: shot
+  2 read "Starts as soon as shot 1's take is done", started on its own when it was (169 s, then 122 s), and its
+  first frame is shot 1's last (the same frame; the takes came out 1248 and 1280 wide). Export scene joined them
+  with 6-frame crossfades in 12 s: "Export 1 · 9 s · crossfades". Fixed on the way: the open scene kept showing
+  shot 2 as "Waiting", with Export disabled, until a reload; it now follows the stored scene.
+- **GitHub Pages against a loopback ComfyUI.** Not possible in the app's built-in browser: with ComfyUI started
+  for `https://marzuwqlion.github.io`, the page's requests to `127.0.0.1` fail with `ERR_BLOCKED_BY_CLIENT`, and
+  Chrome 152's local-network-access permission reads "denied" with no prompt. In a regular Chrome the page asks
+  once (`docs/local-setup.md` says to allow it); that still needs checking there.
 
 ## A key and a ComfyUI together (October 24)
 
