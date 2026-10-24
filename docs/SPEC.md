@@ -1011,7 +1011,7 @@ Decided October 22 (Decisions, October 22). A visitor who doesn't want to spend 
 
 - The visitor runs a current ComfyUI (October 2026 or newer) with `--enable-cors-header <app origin>`. Without it ComfyUI refuses cross-origin calls. Settings has a "Your ComfyUI" card: its URL (default `http://127.0.0.1:8188`), a Check button and the model files it found.
 - `lib/router/local.ts` talks to it, and only `lib/router/client.ts` calls that module:
-  - submit: `POST /api/prompt` with the job's idempotency key as `prompt_id`. Before a resubmit it asks `GET /api/jobs/{id}`, so a repeat never queues a second run.
+  - submit: `POST /api/prompt` with the job's idempotency key as `prompt_id`. Before it, `GET /api/history/{id}` and `GET /api/queue` say whether that prompt already landed, so a repeat never queues a second run (not `GET /api/jobs/{id}`, whose 404 for a new prompt the browser logs on every submit; October 23).
   - status: `GET /api/jobs/{id}` (`pending`, `in_progress`, `completed`, `failed`, `cancelled`), and the queue position from `GET /api/queue`.
   - cancel: `POST /api/jobs/{id}/cancel`.
   - inputs: `POST /api/upload/image` into `input/portraius/` (images, clips and audio alike), named by a hash of the bytes, so a retry reuses the file.

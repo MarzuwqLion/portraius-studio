@@ -45,6 +45,11 @@ function fakeComfy(fake: Fake) {
       fake.pending.push(String(body.prompt_id));
       return reply({ prompt_id: body.prompt_id, number: fake.prompts.length, node_errors: {} });
     }
+    if ((m = path.match(/^\/api\/history\/([^/]+)$/))) {
+      // 200 with {} for a prompt it hasn't finished, never a 404.
+      const job = fake.jobs.get(m[1]!);
+      return reply(job && !["pending", "in_progress"].includes(String(job.status)) ? { [m[1]!]: { status: { status_str: "success" } } } : {});
+    }
     if (path === "/api/queue") {
       return reply({ queue_running: [[0, "someone-else", {}, {}, []]], queue_pending: fake.pending.map((id, i) => [i + 1, id, {}, {}, []]) });
     }
@@ -83,10 +88,19 @@ describe("local submit", () => {
     expect(fake.prompts).toEqual([{ prompt: BODY.prompt, prompt_id: ID, client_id: "portraius-studio" }]);
   });
 
-  it("never queues a second run for a repeated submit", async () => {
+  it("never queues a second run for a repeated submit, queued or finished", async () => {
     await submit(BODY, { idempotencyKey: ID });
+    await submit(BODY, { idempotencyKey: ID });
+    fake.pending = [];
+    fake.jobs.get(ID)!.status = "completed";
     await submit(BODY, { idempotencyKey: ID });
     expect(fake.prompts).toHaveLength(1);
+  });
+
+  it("looks for an earlier submit without asking for a job that 404s", async () => {
+    await submit(BODY, { idempotencyKey: ID });
+    const asked = vi.mocked(fetch).mock.calls.map(([url]) => new URL(String(url)).pathname);
+    expect(asked).not.toContain(`/api/jobs/${ID}`);
   });
 
   it("names a missing model file", async () => {
