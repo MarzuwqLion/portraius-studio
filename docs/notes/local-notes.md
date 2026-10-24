@@ -149,19 +149,27 @@ Haddad, drawn locally from a description) beside the Tour's Walt.
 | Library and export | Local models named and filterable; Export 9:16 works on a local clip. |
 | Built site | `npm run build` and `npm run preview`: the CSP allows loopback ComfyUI, the card connects and an image runs with no CSP error. |
 
-To fix:
+Found, and fixed the same day (each checked in the app or by a test):
 
-- Readiness is checked only at start and from Settings. After ComfyUI was down, every screen kept saying "Your
-  ComfyUI isn't reachable" once it was back, until Check again in Settings; a visitor who opens the app before
-  starting ComfyUI hits the same. A re-check on focus, or every so often while unreachable, would cover both.
-- A running job shows "Generating" with no warning while ComfyUI is unreachable.
-- Local labels that say Router things: Director's "Render final 1080p" (a local final is 14B at 720p), "Make it
-  real, strength 80" (SeedVR2 has no strength), and Director lengths past 5 s (shot 5 reads 8 s; its take is 5 s).
-- The 14B final's label doesn't say it can differ from the draft (Local engine, Models).
-- A designed person's full-body view is drawn in "simple neutral clothing" (Samir: a beige T-shirt, barefoot), and
-  local Recast now sends that view, so the performer loses their outfit.
-- Settings once read "Storage use isn't available in this browser" after showing 72 KB earlier.
-- Each local submit logs a 404 in the console: the duplicate check `GET /api/jobs/{id}` before `POST /api/prompt`.
+- Readiness was checked only at start and from Settings, so once ComfyUI had been down every screen kept saying
+  "isn't reachable" after it was back. It's now checked when the tab comes back into view, every 15 s while
+  unreachable and every minute while fine: in the app it noticed a stopped ComfyUI in about 75 s and a restarted
+  one in under 35 s, with no click (both with the pane hidden, where the browser slows timers).
+- A running job read "Generating" while ComfyUI was down. Its Activity frame now reads "Waiting for your ComfyUI"
+  (seen about 85 s after a stop), and a restart still ends it with `local_lost` and Retry.
+- Local labels that said Router things: Director's final is "Render final on Wan 14B" and its result "Wan 14B
+  final · your GPU · may differ from the take"; a SeedVR2 pass reads "Make it real, on your GPU"; a local 14B final
+  in Video says it may differ from the draft; Director's Length says when the model fits a shot's length ("Wan 2.2
+  5B (fast) on your GPU makes 2 to 5 s clips, so this take runs 5 s"), and the timeline shows a take's own length.
+- The full-body view stays "in simple neutral clothing" (spec), so local Recast's still now carries the character's
+  description: Samir, beige T-shirt and bare feet without it, wears his green field jacket with it.
+- The storage line said "isn't available" while the browser's estimate was still running; it now says it's
+  checking until then.
+- Each local submit logged a 404: the duplicate check now reads `/api/history/{id}` (`{}` for a new prompt) and
+  the queue instead of `/api/jobs/{id}`. No 404 on a submit in the app.
+
+Still open: with the description, Qwen framed Samir from the thighs up rather than head to feet, so a recast
+could lose the feet; Stunt double's "practical stunt clothing" still doesn't reach the local still.
 
 Not run: characters from photos (needs a webcam check of the person in them), Director's scene export and its
 continue-from-last-frame shots, the automatic retry, the 3-image block, mixed Router and local lists (needs a key),
