@@ -129,3 +129,40 @@ Still open:
 ComfyUI has no native text-to-speech node, so a visitor with only their GPU records the line for "Add a line"
 themselves. The other options were a TTS custom node (an extra install for every local user) or a small TTS model
 such as Kokoro in the browser (about 90 MB of weights the page would host). Marzuwq kept the recording, October 22.
+
+## App checks on the 4090 (October 23)
+
+Every local feature run through its own screen with `npm run dev`, no Comfy key, and a designed character (Samir
+Haddad, drawn locally from a description) beside the Tour's Walt.
+
+| Area | Result |
+| --- | --- |
+| Design from a description | Pass (question 4). Four faces in about 40 s, all usable but much alike. The sheet and views keep the likeness: composite 100, front 100, three-quarter 95, profile 83, full body 100. `sheet.model` records `local/qwen-image-edit-2511`. |
+| Image studio | Pass. Two 2K Best stills (1152×1456, question 3) in 15 to 19 s, likeness 86 and 97; an edit of a take kept Samir. Automatic retry under 60 and the 3-image block weren't triggered. |
+| Make it real | Works: 10 s, 1822×2302, before/after slider, re-scored. SeedVR2 sharpens rather than adding skin texture like Freepik's (question 8, for Marzuwq to judge). |
+| Video | Pass. A 5 s 5B draft (1248×704, 169 s, likeness 85) and its 14B final (1280×720, 181 s, likeness 100; question 5). "Use references" is blocked with "needs Comfy credits". Fixed: a preset longer than the model allows (Night walk's 6 s on Wan) showed its own length until the model changed; `startVideo` already clamped what was sent. |
+| Add a line | Runs from an uploaded recording: 4.9 s at 848×480 in 63 s, with sound. The mouth moves but slightly; sync needs watching with sound (question 7). |
+| Director | Pass. Gemma planned 5 shots in 24 s with valid camera fields (question 9 in the app); stills and a 5B take ran; one-take shows "Needs Comfy credits". The scene wasn't exported. |
+| Recast | Pass (two steps, above). |
+| Settings and pickers | Every model ready; one default per feature. A hidden file shows "(not ready)" with its download link, and Make it real is disabled with "Missing on your ComfyUI: {file}" (as a tooltip only). |
+| Errors | Cancel interrupts the ComfyUI run. A stopped ComfyUI, or one started without the CORS flag, gives "Couldn't reach your ComfyUI" in Settings. A restart mid-job fails it with `local_lost` and a Retry in the footer. |
+| Library and export | Local models named and filterable; Export 9:16 works on a local clip. |
+| Built site | `npm run build` and `npm run preview`: the CSP allows loopback ComfyUI, the card connects and an image runs with no CSP error. |
+
+To fix:
+
+- Readiness is checked only at start and from Settings. After ComfyUI was down, every screen kept saying "Your
+  ComfyUI isn't reachable" once it was back, until Check again in Settings; a visitor who opens the app before
+  starting ComfyUI hits the same. A re-check on focus, or every so often while unreachable, would cover both.
+- A running job shows "Generating" with no warning while ComfyUI is unreachable.
+- Local labels that say Router things: Director's "Render final 1080p" (a local final is 14B at 720p), "Make it
+  real, strength 80" (SeedVR2 has no strength), and Director lengths past 5 s (shot 5 reads 8 s; its take is 5 s).
+- The 14B final's label doesn't say it can differ from the draft (Local engine, Models).
+- A designed person's full-body view is drawn in "simple neutral clothing" (Samir: a beige T-shirt, barefoot), and
+  local Recast now sends that view, so the performer loses their outfit.
+- Settings once read "Storage use isn't available in this browser" after showing 72 KB earlier.
+- Each local submit logs a 404 in the console: the duplicate check `GET /api/jobs/{id}` before `POST /api/prompt`.
+
+Not run: characters from photos (needs a webcam check of the person in them), Director's scene export and its
+continue-from-last-frame shots, the automatic retry, the 3-image block, mixed Router and local lists (needs a key),
+and the GitHub Pages site against a loopback ComfyUI (needs a deploy).
