@@ -20,6 +20,8 @@ competition (#OpenSourceHiggsfield).
 - **With a key:** paste a Comfy API key with Router access in **Settings**. It stays in your browser and goes
   only to Comfy. The Tour can add Walt to your vault, so a first image needs only the key; or make a character
   from your photos (with a webcam consent check), or design one from a description.
+- **With a GPU and no key:** run the open-weight models on your own ComfyUI for free
+  ([`docs/local-setup.md`](docs/local-setup.md)), then tick **Use my ComfyUI** in Settings.
 
 ## Why it's different
 
@@ -70,6 +72,151 @@ tick "Remember on this device". There's no `.env` key and no server to hold one.
 | `npm run nodepack` | Rebuilds the ComfyUI node pack's presets, prompt cases and example workflow from the app |
 | `npm run voices:check` | Speaks one line in every voice in `presets/voices.json` through Router (costs cents) |
 | `npm run build` | The static site in `dist/`, as GitHub Pages serves it |
+| `npm run local:models -- <ComfyUI folder>` | Downloads the open-weight model files into a ComfyUI ([`docs/local-setup.md`](docs/local-setup.md)) |
+| `npm run local:check` / `local:smoke` | Checks every local graph against your ComfyUI's nodes / runs each local model once on your GPU |
+
+## Using Portraius Studio
+
+Everything happens in one browser tab. Your characters, results and settings live in that browser's storage
+(IndexedDB), so use the same browser each time, and export what you want to keep.
+
+### 1. Set up where things run
+
+Open **Settings** (bottom of the left rail).
+
+- **Comfy API key.** Paste a key with Router access from [platform.comfy.org](https://platform.comfy.org) and
+  press **Save key**. It's kept for this tab only, unless you tick **Remember on this device**. It's sent only to
+  `api.comfy.org` and to the project's upload Worker, which checks it with Comfy and never stores it.
+- **Your ComfyUI** (optional, free). Start ComfyUI with `--enable-cors-header` and this page's address, tick
+  **Use my ComfyUI**, and check the address (`http://127.0.0.1:8188` by default). The card shows your GPU and
+  marks each local model ready or lists the files it's missing, with download links. The app notices on its own
+  when ComfyUI starts, stops or comes back; **Check again** asks at once. Setup steps are in
+  [`docs/local-setup.md`](docs/local-setup.md).
+- **Where things run.** With both a key and a ComfyUI, each feature (Character sheets, Image, Video, Recast,
+  Make it real, Add a line, Director agent) has a default model; **Automatic** picks the Comfy model with a key and
+  the local one without. **Never spend credits** hides every Comfy model, even with a key saved.
+- **Generation.** Retry an image once, automatically, when its likeness drops under 60; keep a video's 480p draft
+  after its final renders.
+- **Your data.** How much this browser holds, and **Delete all data**.
+
+Every Generate button shows its price first: dollars for Comfy models, "Free · your GPU" for local ones.
+
+### 2. Make a character
+
+Open **Cast** and choose how to make one:
+
+- **From your photos.** Add 3 to 10 clear photos of one person (you, or someone making their own character with
+  you). A short webcam check follows: three random prompts, a head turn and a face match against the photos,
+  then the person's typed name and an 18+ statement. Without it, a character can't be used in anything.
+- **Design from a description.** Describe an original person who isn't real (age, build, hair, skin, style).
+  Pick one of four faces, then the app draws the turnaround sheet.
+- **An element.** An outfit, prop or location from 1 to 6 photos, saved like a character and usable in any shot.
+
+The **turnaround sheet** is one composite (front, three-quarter, profile, full body, four expressions) plus four
+single views. Each view gets a likeness score; **Redraw** any one you don't like. Then add a **name**, a
+**description** (what a face doesn't show: build, style, a usual outfit; it goes into every prompt with this
+character), optional **tags** and an optional **stock voice**, and save.
+
+A character's page has **Use in an image / a video / a recast**, its views, its voice, **Export file** (a
+`.portraius` file with the photos, sheet, face data and consent record) and **Delete character**. To bring a
+character in, use **Import a .portraius file** on the Cast page; one without a consent record can be viewed but
+not used.
+
+### 3. Images
+
+Open **Image**.
+
+1. Pick a **preset** (it fills the scene and camera; your cast stays yours) or write your own **prompt**.
+2. Add **cast**: choose characters in **Cast**, or type `@` in the prompt to put someone from your vault in the
+   shot.
+3. Optional **source image**: upload one, or use **Edit again** on a take, and the prompt describes the change.
+4. Choose **aspect ratio**, **count** (1 to 4), **size** (1K, 2K, 4K), **quality** (Fast or Best) and, under
+   **Camera and look**, shot size, angle, lens, aperture, lighting and look.
+5. Press **Generate**. Takes appear on the right as they finish, each with its likeness score.
+
+Pick a take to **Edit again**, **Animate** it into a video, **Save as element**, or **Make it real** (a realism
+pass that adds skin texture, shown as a before/after wipe and scored again).
+
+### 4. Video
+
+Open **Video** and choose a mode:
+
+- **Text**: a clip from a prompt alone.
+- **Image, then animate**: draws an opening still with your cast first, then animates it. Best for people.
+- **Use references**: the cast's sheets set who is in the shot (Comfy models only).
+- **Animate an image**: upload a first frame.
+
+Set the **model**, **duration**, **aspect ratio**, **seed** and **camera and look**. Without people, Seedance makes
+a cheap 480p **draft**; press **Render final** for 1080p once you like it. Videos with a person go to MiniMax H3.
+On your GPU, Wan 2.2 5B (fast) drafts and Wan 2.2 14B renders the final (720p, redrawn with the same seed, so it
+can differ). Each clip offers **Continue from last frame** (the next clip starts where this one ends) and
+**Speak a line**.
+
+### 5. Speak a line
+
+On a clip (in Video or in the Library), open **Speak a line**: write the line (up to about 40 words) and pick a
+stock voice, or bring your own recording (MP3 or WAV, up to 15 s; on your GPU this is the only way, since ComfyUI
+has no text-to-speech). Hear it, then either **lip-sync this clip** to it or make a **new speaking clip** of the
+same cast. Stock voices only: no voice cloning.
+
+### 6. Recast
+
+Open **Recast**.
+
+1. **Clip**: drop a clip, **Upload a clip**, pick one from the library, or **Try the sample**. **Trim** it to the
+   length the mode allows (shown under the button).
+2. **Preset**, in four groups: **Motion transfer** (a character from your vault performs the clip's moves, timing
+   and camera; some presets also move them to a new setting), **Object swap** (replace one thing, from an image
+   you upload), **Setting** (replace the surroundings) and **Style swap** (claymation, 1970s film and more).
+3. **Performer** (or the replacement image), and optional **direction** words.
+4. Tick that you filmed the clip or have the rights to use it (the sample needs no check), then **Recast**.
+
+The result plays original and recast side by side; drag the line to compare. **Re-roll** appears when likeness
+drifts, and **Export 9:16** puts both in one vertical frame. On your GPU, Recast does motion transfer in two
+steps: Qwen draws the performer into the clip's first frame and setting, then Wan Animate 2 moves them through the
+clip with its sound (about 15 minutes for 8 seconds on an RTX 4090).
+
+### 7. Director
+
+Open **Director** and start from the sample scene or **New scene**.
+
+1. **Title**, **logline**, **cast** and **location** (added to every shot word for word), plus the **film**:
+   genre, camera, era and pacing.
+2. **Draft shots with AI** plans 3 to 6 shots from the logline (Claude with a key, Gemma 4 on your GPU); or
+   **Add shot** and write each one.
+3. For each shot: the **action** (type `@` for a cast member), the **camera** (size, angle, lens, movement,
+   lighting), the **length**, and whether it **starts with** a cut or the previous shot's last frame. If the video
+   model can't make that length, the field says what the take will run.
+4. **Draw stills**, pick an **anchor**, then **Animate**. **Re-roll** a take, **Render final**, or give the shot a
+   line.
+5. When every shot has a finished take, **Export scene** joins them into one MP4, with 6-frame crossfades if
+   ticked. **Shoot as one take** (Kling, with a key) makes the whole scene as one quick clip.
+
+### 8. Library, sharing and the Tour
+
+- **Library** holds every result, filterable by type, cast member, model, likeness band and date. A result's page
+  has **Download**, **Export 9:16** (with an optional end card), **Speak a line**, **Animate**, **Make it real**,
+  **Copy remix link**, **Save as preset** and **Delete**. **Select to export** saves several results as one zip.
+- A **remix link** carries a result's recipe, never a face: whoever opens it picks their own characters for each
+  slot and runs it with one click.
+- The **activity bar** at the bottom shows what's working and what failed, with **Cancel** and **Retry**; today's
+  finished results fold into **N done**. Jobs pick up where they stopped after a reload.
+- The **Tour** plays pre-made samples of every feature with Walt Harmon, and **Try this with Walt** opens the same
+  thing with him cast.
+
+### Likeness scores
+
+Each output with a cast member gets a score from 0 to 100 against that character's own references: **80 and up**
+is a strong match, **60 to 79** is worth a look, and **under 60** has drifted (an image gets one automatic retry).
+Videos are scored a frame a second, with the lowest frame shown too. Faces too small or turned away aren't scored,
+and stylised looks (anime, claymation) show "Score not available". The score measures likeness, not identity.
+
+### When something goes wrong
+
+A failed job says why, in plain words, with **Retry** when a retry can help. The usual ones: a missing or invalid
+key (Settings), not enough credits, a provider refusing an input (change it and retry), and, on your GPU,
+"Couldn't reach your ComfyUI" (start it with the CORS flag), "missing {file}" (Settings lists the link), "ran out
+of memory" (shorter clip, smaller size or the faster model) and "restarted before this finished" (retry it).
 
 ## Models
 
