@@ -172,5 +172,23 @@ Still open: with the description, Qwen framed Samir from the thighs up rather th
 could lose the feet; Stunt double's "practical stunt clothing" still doesn't reach the local still.
 
 Not run: characters from photos (needs a webcam check of the person in them), Director's scene export and its
-continue-from-last-frame shots, the automatic retry, the 3-image block, mixed Router and local lists (needs a key),
-and the GitHub Pages site against a loopback ComfyUI (needs a deploy).
+continue-from-last-frame shots, the automatic retry, the 3-image block, and the GitHub Pages site against a
+loopback ComfyUI.
+
+## A key and a ComfyUI together (October 24)
+
+`npm run smoke` passed against the deployed `main` (89 s: catalog, estimate, a Nano Banana image, a Seedance
+draft through the Worker, a resumed job). Then, in the dev app with the 4090's ComfyUI and a Comfy key, no
+generation spent:
+
+- Settings: every feature lists its local model ("· your GPU") and its Router one ("· Comfy credits").
+- Automatic with a key picks Router: Nano Banana for Image and Character design ("≈ $0.08"), H3 and HappyHorse
+  for Recast, Claude for Director's plans ("≈ $0.03"), and Kling's one-take is offered. A saved default wins
+  (Video and Director kept Wan 5B).
+- Pickers group "On your GPU, free" and "Comfy credits" on Image, Video, Recast, Character design and all three
+  of Director's.
+- A default set in Settings (Image on Qwen) is what the screen picks ("Free · your GPU"), and a pick on the
+  screen (Nano Banana) becomes the saved default.
+- Never spend credits leaves only local models in Settings and every picker (a single model hides the picker),
+  prices Image "Free · your GPU", drafts Director's shots with Gemma, and puts one-take back to "Needs Comfy
+  credits."; turning it off brings the Router models back.
