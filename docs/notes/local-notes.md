@@ -194,6 +194,12 @@ Not run: characters from photos (needs a webcam check of the person in them).
   Check again. Chrome 152 has two permissions here, "local network access" and "loopback network"; neither is
   granted to a tab driven by Claude in Chrome (they stay at "prompt" and never show one), and the app's built-in
   browser denies them outright (`ERR_BLOCKED_BY_CLIENT`), so this check needs a person's own Chrome.
+- **Edge and Firefox against the live site: both work.** Edge 156, driven by Playwright from a fresh profile,
+  kept Settings on "Checking your ComfyUI." until local network access was granted (it waits on the prompt rather
+  than failing), then connected to the 4090 and drew a Qwen image in 13 s. Firefox 157 (installed with winget;
+  this Playwright can't drive a stock Firefox) was run by Marzuwq: it connected and the Qwen image came back.
+  Whether it asked for a permission first wasn't noted. Safari is untried. The live site's page has no icon
+  link, so browsers ask for `/favicon.ico` at the domain root and log one 404.
 
 ## A key and a ComfyUI together (October 24)
 
