@@ -12,7 +12,7 @@ import { registerRecastStudio } from "@/lib/studio/recast";
 import { registerRemix } from "@/lib/studio/remix";
 import { registerVideoStudio, resumeChains } from "@/lib/studio/video";
 import { registerVoice } from "@/lib/studio/voice";
-import { restoreEngine } from "@/lib/session/engine";
+import { restoreEngine, watchLocal } from "@/lib/session/engine";
 import { restoreKey, useKeyStore } from "@/lib/session/key";
 import { applyTheme } from "@/lib/session/theme";
 import { getSettings } from "@/lib/store/settings";
@@ -28,6 +28,7 @@ async function bootstrap() {
     applyTheme(settings.theme);
     await restoreKey();
     await restoreEngine();
+    watchLocal();
   } catch {
     // IndexedDB unavailable (private mode in some browsers): start without a saved key.
   }

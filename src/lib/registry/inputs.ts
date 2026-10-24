@@ -131,7 +131,7 @@ export interface WanInput {
 export interface AnimateInput {
   prompt: string;              // the performer's looks and the new setting, no motion words
   motion: string;              // what happens in the clip, e.g. "a person dancing"
-  performer: InlineImage;      // their front view
+  performer: InlineImage;      // their full-body view
   clip: string;
   durationSec: number;         // the clip's length
   aspect: number;              // the clip's width / height

@@ -4,7 +4,7 @@
 import { cameraPhrases, isStylised, type CameraSelection } from "./camera";
 import { SLOT, slotsIn } from "./slots";
 
-export type ReferenceKind = "sheet" | "photo" | "front";
+export type ReferenceKind = "sheet" | "photo" | "front" | "fullBody";
 
 export interface CastMember {
   slot: string; // "lead", written {lead} in the scene
@@ -47,6 +47,7 @@ function legendLine(n: number, ref: ReferenceKind, member: CastMember, prefix: s
   if (member.kind === "element") return `${prefix} ${n} is the ${who}.`;
   if (ref === "sheet") return `${prefix} ${n} is the reference sheet for ${who} (${member.name}).`;
   if (ref === "photo") return `${prefix} ${n} is a photo of ${who}.`;
+  if (ref === "fullBody") return `${prefix} ${n} is a full-body portrait of ${who}.`;
   return `${prefix} ${n} is a front portrait of ${who}.`;
 }
 

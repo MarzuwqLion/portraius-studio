@@ -4,6 +4,8 @@ import { ChevronRight } from "lucide-react";
 import { jobStatusText } from "@/components/studio/JobTake";
 import { useRecentJobs } from "@/lib/jobs/hooks";
 import { cancelJob, retryJob } from "@/lib/jobs/runner";
+import { isLocalModel } from "@/lib/registry/models";
+import { useEngineStore } from "@/lib/session/engine";
 import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
 import type { Job } from "@/lib/types/jobs";
 import { cn } from "@/lib/utils";
@@ -36,16 +38,22 @@ function Frame({ job }: { job: Job }) {
   const working = WORKING.includes(job.status);
   const canCancel = job.status === "queued" || job.status === "running";
   const canRetry = (job.status === "failed" || job.status === "expired") && job.error?.retry !== "never";
+  // A local job keeps polling while the visitor's ComfyUI is down, so say so
+  // instead of "Generating" (4090 app checks, October 23).
+  const unreachable = useEngineStore((s) => s.check === "unreachable");
+  const waiting = unreachable && working && job.status !== "downloading" && job.status !== "scoring" && isLocalModel(job.modelId);
+  const status = job.status === "failed" ? "Failed" : waiting ? "Waiting for your ComfyUI" : jobStatusText(job);
+  const title = job.status === "failed" ? jobStatusText(job) : waiting ? "Your ComfyUI isn't answering. This picks up when it's back; Settings can check it." : undefined;
 
   return (
     <li className="flex h-14 shrink-0 items-center gap-2 rounded-media border border-rule pr-2">
-      <Link to={job.kind === "enhance" && job.status === "done" ? `/library/${job.generationIds[0]}` : (STUDIO[job.kind] ?? "/library")} className="flex h-full items-center gap-2" title={job.status === "failed" ? jobStatusText(job) : undefined}>
+      <Link to={job.kind === "enhance" && job.status === "done" ? `/library/${job.generationIds[0]}` : (STUDIO[job.kind] ?? "/library")} className="flex h-full items-center gap-2" title={title}>
         <span className="relative h-full w-12 overflow-hidden rounded-l-media bg-seamless">
           {url && <img src={url} alt="" className="develop absolute inset-0 size-full object-cover" />}
           {videoUrl && <video src={`${videoUrl}#t=0.1`} muted playsInline preload="metadata" aria-hidden className="develop absolute inset-0 size-full object-cover" />}
         </span>
         <span className="flex flex-col text-control">
-          <span className={cn("font-semibold", job.status === "failed" && "text-drift")}>{job.status === "failed" ? "Failed" : jobStatusText(job)}</span>
+          <span className={cn("font-semibold", (job.status === "failed" || waiting) && "text-drift")}>{status}</span>
           <span className="text-ink-muted">{KIND_LABEL[job.kind] ?? job.kind}</span>
         </span>
       </Link>

@@ -61,7 +61,8 @@ function clipLabel(job: Job): string {
   if (job.kind === "image") return "Opening still";
   if (job.modelId === MODEL_IDS.minimaxH3) return `H3 ${resolutionLabel((job.input as JobInput<H3Input>).model.resolution)}`;
   if (job.modelId === MODEL_IDS.localWanFast) return "Wan 5B draft · your GPU";
-  if (job.modelId === MODEL_IDS.localWanBest) return isFinal(job) ? "Wan 14B final · your GPU" : "Wan 14B · your GPU";
+  // A local final is drawn again on 14B with the draft's seed (spec: Local engine, Models).
+  if (job.modelId === MODEL_IDS.localWanBest) return isFinal(job) ? "Wan 14B final · your GPU · may differ from the draft" : "Wan 14B · your GPU";
   return isFinal(job) ? "Final 1080p" : "Draft 480p";
 }
 
@@ -195,11 +196,12 @@ export function VideoScreen() {
     // Only a change in cast size should flip the mode, not every mode change.
   }, [cast.length]);
 
-  // Durations past a model's range clamp to it.
+  // Durations past a model's range clamp to it, including a preset's (Night
+  // walk's 6 s on local Wan, which takes 2 to 5).
   useEffect(() => {
     const [min, max] = spec.duration;
     setDurationSec((d) => Math.min(max, Math.max(min, d)));
-  }, [effective]);
+  }, [effective, durationSec]);
 
   const request: VideoRequest = { mode, model: effective, scene, cast, ...(sourceBlobId ? { sourceBlobId } : {}), durationSec, ratio, audio, seed, h3Resolution, camera, stillModel: stillModels.modelId };
   const needsCast = mode === "still" || mode === "references";

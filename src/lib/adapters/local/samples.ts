@@ -5,9 +5,12 @@
 import { SHEET_PROMPT, viewPrompt } from "@/lib/characters/sheet";
 import type { AnimateInput, EnhanceImageInput, GenerateImageInput, InlineImage, LocalTextInput, SpeakInput, WanInput } from "@/lib/registry/inputs";
 import { MODEL_IDS } from "@/lib/registry/models";
+import { stageStillInput } from "@/lib/studio/recast-stage";
 
 export interface SampleFiles {
   front: InlineImage;   // walt-front.jpg
+  fullBody: InlineImage; // walt-full-body.jpg, Recast's performer
+  firstFrame: InlineImage; // concert-original.webp, the clip's first frame
   sheet: InlineImage;   // walt-sheet.jpg
   still: InlineImage;   // walt-diner.jpg, a finished 16:9 still
   clip: string;         // concert-original.mp4 as a data URI (or local-input:)
@@ -44,7 +47,7 @@ export function localSamples(files: SampleFiles): LocalSample[] {
   const animate: AnimateInput = {
     prompt: "Character appearance description: the man in the reference image, same face and hair. Background description: a small jazz club stage under warm spotlights.",
     motion: "a person performing on stage",
-    performer: files.front,
+    performer: files.fullBody,
     clip: files.clip,
     durationSec: 4,
     aspect: 16 / 9,
@@ -75,6 +78,7 @@ export function localSamples(files: SampleFiles): LocalSample[] {
     { name: "qwen sheet composite", modelId: MODEL_IDS.localQwenEdit, kind: "image", input: still(SHEET_PROMPT, [files.front, files.sheet, files.still], { quality: "best" }) },
     { name: "qwen sheet view", modelId: MODEL_IDS.localQwenEdit, kind: "image", input: still(viewPrompt("profile"), [files.front, files.sheet], { aspectRatio: "4:5" }) },
     { name: "qwen still with a cast", modelId: MODEL_IDS.localQwenEdit, kind: "image", input: still("Image 1 is a front portrait of LEAD. Keep LEAD's exact face. LEAD stands on a pier at dawn, wind in his coat.", [files.front]) },
+    { name: "qwen recast still", modelId: MODEL_IDS.localQwenEdit, kind: "image", input: stageStillInput(files.fullBody, files.firstFrame, { setting: "a small jazz club stage under warm spotlights", direction: "", aspectRatio: "16:9", seed: 7 }) },
     { name: "qwen edit", modelId: MODEL_IDS.localQwenEdit, kind: "image", input: still("Image 1 is the image to edit. Make it night outside the window, with rain.", [], { source: files.still }) },
     { name: "wan 5B text", modelId: MODEL_IDS.localWanFast, kind: "video", input: wan({}) },
     { name: "wan 5B first frame", modelId: MODEL_IDS.localWanFast, kind: "video", input: wan({ firstFrame: dataUri(files.still) }) },

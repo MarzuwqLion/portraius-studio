@@ -41,8 +41,9 @@ export async function restoreEngine(): Promise<void> {
   if (localEnabled) void verifyLocal();
 }
 
-export async function verifyLocal(): Promise<boolean> {
-  useEngineStore.setState({ check: "checking", error: undefined });
+// quiet: a background re-check, which leaves the card as it is until the answer comes.
+export async function verifyLocal(options: { quiet?: boolean } = {}): Promise<boolean> {
+  if (!options.quiet) useEngineStore.setState({ check: "checking", error: undefined });
   try {
     const info = await checkLocal(FOLDERS);
     useEngineStore.setState({ check: "ok", info });
@@ -51,6 +52,33 @@ export async function verifyLocal(): Promise<boolean> {
     useEngineStore.setState({ check: "unreachable", info: undefined, error: errorText(toAppError(err)) });
     return false;
   }
+}
+
+// The ComfyUI was only checked at start and from Settings, so one started
+// after the app, or back after a restart, read "isn't reachable" everywhere
+// until Check again (4090 app checks, October 23). It's checked again when
+// the tab comes back into view, every 15 s while it's unreachable, and every
+// minute while it's fine, which is how a running job learns it went away.
+const RECHECK_UNREACHABLE_MS = 15_000;
+const RECHECK_OK_MS = 60_000;
+
+export function watchLocal(): () => void {
+  let last = 0;
+  const recheck = (force: boolean) => {
+    const { localEnabled, check } = useEngineStore.getState();
+    if (!localEnabled || check === "checking") return;
+    const due = check === "unreachable" ? RECHECK_UNREACHABLE_MS : RECHECK_OK_MS;
+    if (!force && Date.now() - last < due) return;
+    last = Date.now();
+    void verifyLocal({ quiet: true });
+  };
+  const onVisible = () => document.visibilityState === "visible" && recheck(true);
+  document.addEventListener("visibilitychange", onVisible);
+  const timer = setInterval(() => recheck(false), 5_000);
+  return () => {
+    document.removeEventListener("visibilitychange", onVisible);
+    clearInterval(timer);
+  };
 }
 
 export async function saveLocal(patch: { enabled?: boolean; url?: string }): Promise<void> {

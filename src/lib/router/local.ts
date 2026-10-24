@@ -121,6 +121,16 @@ async function getJob(id: string, signal?: AbortSignal): Promise<Job | null> {
   return json<Job>(response);
 }
 
+// Whether ComfyUI has this prompt queued, running or finished. /jobs/{id}
+// answers 404 for a new one, which the browser logs on every submit; history
+// answers {} and the queue lists the rest.
+async function hasPrompt(id: string, signal?: AbortSignal): Promise<boolean> {
+  const history = await json<Record<string, unknown>>(await api(`/history/${encodeURIComponent(id)}`, { signal }));
+  if (id in history) return true;
+  const queue = await json<{ queue_running?: unknown[][]; queue_pending?: unknown[][] }>(await api("/queue", { signal }));
+  return [...(queue.queue_running ?? []), ...(queue.queue_pending ?? [])].some((item) => item[1] === id);
+}
+
 function uploadBlob(upload: LocalUpload): Blob {
   return base64ToBlob(upload.data, upload.mime);
 }
@@ -141,7 +151,7 @@ export async function submit(body: LocalBody, options: { idempotencyKey: string;
   const id = options.idempotencyKey;
   // A repeat of a submit that already landed: ComfyUI has no idempotency
   // keys of its own, so look before queueing a second run.
-  if (await getJob(id, options.signal)) return { requestId: id };
+  if (await hasPrompt(id, options.signal)) return { requestId: id };
   for (const upload of body.uploads) await uploadInput(uploadBlob(upload), upload.name, options.signal);
   const response = await api("/prompt", {
     method: "POST",
@@ -204,8 +214,9 @@ export function normaliseOutputs(outputs: Job["outputs"]): LocalResult {
       for (const item of items) {
         if (!item || typeof item !== "object" || typeof (item as { filename?: unknown }).filename !== "string") continue;
         const f = item as { filename: string; subfolder?: string; type?: string };
-        // Previews (type "temp") are what ComfyUI shows while it works, not results.
-        if (f.type === "temp") continue;
+        // Previews (type "temp") are what ComfyUI shows while it works, not results, and Load Video
+        // reports the clip it loaded (type "input"): the visitor's own clip, not a recast of it.
+        if (f.type === "temp" || f.type === "input") continue;
         files.push({ filename: f.filename, subfolder: f.subfolder ?? "", type: f.type ?? "output", url: viewUrl(f) });
       }
     }

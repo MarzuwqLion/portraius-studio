@@ -37,6 +37,7 @@ import {
   facesInClip,
   fitsLimits,
   isFirstOfTwo,
+  isLocalStill,
   modeOf,
   recastNeeds,
   startRecast,
@@ -59,6 +60,8 @@ function RecastResult({ job }: { job: Job }) {
   const generation = useGeneration(job.status === "done" ? job.generationIds[0] : undefined);
   const original = useBlobUrl(request?.clipBlobId);
   const recast = useBlobUrl(generation?.assets.find((a) => a.kind === "video")?.blobId);
+  // A local recast's first step: the performer drawn into the clip's first frame.
+  const still = useBlobUrl(isLocalStill(job) ? generation?.assets.find((a) => a.kind === "image")?.blobId : undefined);
   const aspect = request ? `${request.clipWidth} / ${request.clipHeight}` : "16 / 9";
   const preset = RECAST_PRESETS.find((p) => p.id === request?.presetId);
   return (
@@ -66,10 +69,11 @@ function RecastResult({ job }: { job: Job }) {
       {original && recast ? (
         <SplitView original={original} recast={recast} aspect={aspect} label={isFirstOfTwo(job) ? `${preset?.title}: changing the setting next` : preset?.title} />
       ) : (
-        <Take alt={preset?.title ?? "Recast"} aspect={aspect}>
-          {jobStatusText(job)}
+        <Take src={still} alt={`${preset?.title ?? "Recast"}: the performer in place`} aspect={aspect}>
+          {isLocalStill(job) ? `Placing the performer: ${jobStatusText(job)}` : jobStatusText(job)}
         </Take>
       )}
+      {still && <p className="text-control text-on-seamless">Step 1 of 2: the performer in place. Wan Animate moves them next.</p>}
       <div className="flex flex-wrap items-center gap-3">
         {generation?.scoreNote === "stylised" ? (
           <span className="text-control text-on-seamless">Score not available for stylised looks</span>
@@ -570,7 +574,7 @@ export function RecastScreen() {
       local={local}
       onRun={() => void recast()}
       note={
-        local ? "Runs on Wan Animate 2 on your GPU, with the setting drawn in the same pass."
+        local ? "Runs on your GPU in two steps: Qwen draws the performer into the clip's first frame, then Wan Animate 2 moves them."
         : mode === "swap" ? "Object Swap runs on HappyHorse 1.0 video edit."
         : "Recasts with people run on MiniMax H3."
       }

@@ -5,6 +5,7 @@ import { useEstimateLabel, useJob } from "@/lib/jobs/hooks";
 import { withPrice } from "@/lib/jobs/estimate";
 import { retryJob } from "@/lib/jobs/runner";
 import { toInlineImage } from "@/lib/media/image-prep";
+import { isLocalModel } from "@/lib/registry/models";
 import { useFeatureModels } from "@/lib/session/engine";
 import { db } from "@/lib/store/db";
 import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
@@ -117,7 +118,10 @@ export function RealismTake({ job, linkToLibrary = true }: { job: Job; linkToLib
     <div className="grid content-start gap-2">
       {before && after ? <BeforeAfter before={before} after={after} aspect={aspect} alt={alt} /> : <Take src={undefined} alt={alt} aspect={aspect}>{jobStatusText(job)}</Take>}
       <div className="flex flex-wrap items-center gap-3">
-        <span className={cn("text-control font-semibold", muted)}>Make it real{strength !== undefined ? `, strength ${strength}` : ""}</span>
+        {/* SeedVR2 on the visitor's GPU has no strength. */}
+        <span className={cn("text-control font-semibold", muted)}>
+          Make it real{isLocalModel(job.modelId) ? ", on your GPU" : strength !== undefined ? `, strength ${strength}` : ""}
+        </span>
         {result?.scoreNote === "stylised" ? (
           <span className={cn("text-control", muted)}>Score not available for stylised looks</span>
         ) : cast && result ? (

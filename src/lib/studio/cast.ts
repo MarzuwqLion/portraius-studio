@@ -39,7 +39,9 @@ export interface CastBundle {
 // each person's front view too (the drift retry). compact sends one image per
 // member, for a model that takes few (Qwen on the visitor's ComfyUI takes 3):
 // a person's front view, an element's sheet.
-export async function buildCast(picks: readonly CastPick[], options: { withFront?: boolean; compact?: boolean } = {}): Promise<CastBundle> {
+// compact sends one view per person: the front view, or the one `view` names.
+export async function buildCast(picks: readonly CastPick[], options: { withFront?: boolean; compact?: boolean; view?: "front" | "fullBody" } = {}): Promise<CastBundle> {
+  const view = options.view ?? "front";
   const members: CastMember[] = [];
   const images: InlineImage[] = [];
   for (const pick of picks) {
@@ -53,7 +55,7 @@ export async function buildCast(picks: readonly CastPick[], options: { withFront
       return blob;
     };
     const refs: { kind: ReferenceKind; blob: Blob }[] =
-      options.compact && record.kind === "person" ? [{ kind: "front", blob: file(record.file.sheet.views.front) }] : [{ kind: "sheet", blob: file(record.file.sheet.composite) }];
+      options.compact && record.kind === "person" ? [{ kind: view, blob: file(record.file.sheet.views[view]) }] : [{ kind: "sheet", blob: file(record.file.sheet.composite) }];
     if (record.kind === "person" && !options.compact) {
       const photo = record.file.photos[0];
       refs.push(photo ? { kind: "photo", blob: file(photo.path) } : { kind: "front", blob: file(record.file.sheet.views.front) });

@@ -79,7 +79,7 @@ describe("Wan 2.2", () => {
 });
 
 describe("the rest", () => {
-  const files = { front: JPEG, sheet: OTHER, still: JPEG, clip: `${LOCAL_INPUT}portraius-clip.mp4`, line: "data:audio/wav;base64,UklGRg" };
+  const files = { front: JPEG, fullBody: JPEG, firstFrame: JPEG, sheet: OTHER, still: JPEG, clip: `${LOCAL_INPUT}portraius-clip.mp4`, line: "data:audio/wav;base64,UklGRg" };
 
   it("builds every sample", () => {
     for (const sample of localSamples(files)) expect(Object.keys(body(sample.modelId, sample.input).prompt).length, sample.name).toBeGreaterThan(2);
@@ -95,6 +95,16 @@ describe("the rest", () => {
     const sample = localSamples(files).find((s) => s.modelId === MODEL_IDS.localWanAnimate)!;
     expect(nodes(body(MODEL_IDS.localWanAnimate, sample.input), "ContextWindowsManual")).toHaveLength(1);
     expect(nodes(body(MODEL_IDS.localWanAnimate, { ...(sample.input as object), durationSec: 2 }), "ContextWindowsManual")).toHaveLength(0);
+  });
+
+  it("keeps the whole Recast performer, on grey as wide as the clip", () => {
+    const sample = localSamples(files).find((s) => s.modelId === MODEL_IDS.localWanAnimate)!;
+    const b = body(MODEL_IDS.localWanAnimate, sample.input);
+    const [animate] = nodes(b, "WanAnimate2ToVideo");
+    expect(nodes(b, "EmptyImage")[0]!.inputs).toMatchObject({ width: animate!.inputs.width, height: animate!.inputs.height });
+    const composite = Object.keys(b.prompt).find((id) => b.prompt[id]!.class_type === "ImageCompositeMasked");
+    expect(animate!.inputs.reference_image).toEqual([composite, 0]);
+    expect(nodes(b, "ResizeImageMaskNode").some((n) => n.inputs.resize_type === "scale height")).toBe(true);
   });
 });
 

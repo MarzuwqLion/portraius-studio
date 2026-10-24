@@ -2,7 +2,7 @@
 // Recast performer drawn into a clip's motion, the background from the
 // prompt, the clip's own sound kept. Wired as Comfy's
 // video_wan_animate_2_distilled template: the raw frames drive the motion (no
-// pose extraction), the performer's front view sets who it is. A clip longer
+// pose extraction), the performer's full-body view sets who it is. A clip longer
 // than one 81-frame window runs in context windows, with the template's own
 // settings, instead of copied subgraphs.
 import type { AdapterImpl } from "@/lib/registry/capabilities";
@@ -15,6 +15,9 @@ export const ANIMATE_DURATION: [number, number] = [2, 10];
 
 // One window is 81 frames; the clip's frame rate decides how long that is.
 const WINDOW_SEC = 2.6;
+
+// The grey of a sheet's studio backdrop (Walt's full-body view is RGB 142, 139, 142).
+const STUDIO_GREY = 0x8c8b8c;
 
 export const wanAnimate: AdapterImpl<AnimateInput, LocalResult> = {
   capabilities: ["video.edit"],
@@ -57,7 +60,13 @@ export const wanAnimate: AdapterImpl<AnimateInput, LocalResult> = {
     const resize = (image: Link) =>
       out(g.add("ResizeImageMaskNode", { input: image, resize_type: "scale dimensions", "resize_type.width": width, "resize_type.height": height, "resize_type.crop": "center", scale_method: "area" }));
 
-    const performer = resize(out(loadImage(g, input.performer)));
+    // The whole performer at the clip's height, centred on studio grey as wide as the clip. Wan Animate frames
+    // its result like the reference: a crop cuts off the head and feet, and white or black padding comes
+    // through as bars (4090 run, October 23).
+    const scaled = g.add("ResizeImageMaskNode", { input: out(loadImage(g, input.performer)), resize_type: "scale height", "resize_type.height": height, scale_method: "area" });
+    const left = g.add("ComfyMathExpression", { expression: `max(0, floor((${width} - a) / 2))`, "values.a": out(g.add("GetImageSize", { image: out(scaled) }), 0) });
+    const canvas = g.add("EmptyImage", { width, height, batch_size: 1, color: STUDIO_GREY });
+    const performer = out(g.add("ImageCompositeMasked", { destination: out(canvas), source: out(scaled), x: out(left, 1), y: 0, resize_source: false }));
     const video = g.add("GetVideoComponents", { video: out(loadVideo(g, input.clip)) });
     const frames = resize(out(video, 0));
     const firstFrame = g.add("ImageFromBatch", { image: frames, batch_index: 0, length: 1 });
