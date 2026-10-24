@@ -144,6 +144,10 @@ press **Check again**. The card shows your GPU and lists any model files still m
 model is ready, its picker shows it under "On your GPU, free". With no Comfy key, only your GPU's models are
 listed. **Never spend credits** hides Comfy's models even with a key saved.
 
+You can start ComfyUI before or after the app: it checks again when you come back to the tab, every 15 seconds
+while it can't reach ComfyUI, and every minute while it can. A job that's running while ComfyUI is down shows
+"Waiting for your ComfyUI" at the bottom of the screen.
+
 ## Check it from the command line
 
 With ComfyUI running, from a clone of this repo:
@@ -178,7 +182,7 @@ A character file records which model drew its sheet.
 ## When something goes wrong
 
 - **"Couldn't reach your ComfyUI"**: it isn't running, the address is wrong, or it was started without
-  `--enable-cors-header` for this page's address.
+  `--enable-cors-header` for this page's address. Once it's fixed, the app picks it up within 15 seconds.
 - **"Your ComfyUI is missing ..."**: a model file isn't in its folder. Settings lists it with its link.
 - **"Your ComfyUI doesn't have the ... node"**: ComfyUI is older than the models need. Update it.
 - **"Your GPU ran out of memory"**: try a shorter clip, Fast, or Wan 5B. Closing other GPU programs helps.
