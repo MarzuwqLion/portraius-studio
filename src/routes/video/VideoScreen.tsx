@@ -61,7 +61,8 @@ function clipLabel(job: Job): string {
   if (job.kind === "image") return "Opening still";
   if (job.modelId === MODEL_IDS.minimaxH3) return `H3 ${resolutionLabel((job.input as JobInput<H3Input>).model.resolution)}`;
   if (job.modelId === MODEL_IDS.localWanFast) return "Wan 5B draft · your GPU";
-  if (job.modelId === MODEL_IDS.localWanBest) return isFinal(job) ? "Wan 14B final · your GPU" : "Wan 14B · your GPU";
+  // A local final is drawn again on 14B with the draft's seed (spec: Local engine, Models).
+  if (job.modelId === MODEL_IDS.localWanBest) return isFinal(job) ? "Wan 14B final · your GPU · may differ from the draft" : "Wan 14B · your GPU";
   return isFinal(job) ? "Final 1080p" : "Draft 480p";
 }
 

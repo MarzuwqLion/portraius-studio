@@ -20,7 +20,7 @@ import { routerListed } from "@/lib/registry/availability";
 import { MODEL_IDS, isLocalModel, registryEntry } from "@/lib/registry/models";
 import { reachOf, useEngineStore, useFeatureModels } from "@/lib/session/engine";
 import { useKeyStore } from "@/lib/session/key";
-import type { VideoModel } from "@/lib/studio/video";
+import { VIDEO_MODELS, type VideoModel } from "@/lib/studio/video";
 import { ModelPicker } from "@/components/studio/ModelPicker";
 import { db } from "@/lib/store/db";
 import { useBlobUrl, useCharacters, useCharacterThumbs, useGeneration, useObjectUrl } from "@/lib/store/hooks";
@@ -591,7 +591,9 @@ function OpenShot({
             />
           )}
         </div>
-        <Field label="Length">{(id) => <Select id={id} value={String(shot.durationSec)} options={DURATIONS} onChange={(v) => onChange({ durationSec: Number(v ?? 5) })} />}</Field>
+        <Field label="Length" hint={lengthHint(shot.durationSec, motion.modelId)}>
+          {(id) => <Select id={id} value={String(shot.durationSec)} options={DURATIONS} onChange={(v) => onChange({ durationSec: Number(v ?? 5) })} />}
+        </Field>
         {index > 0 && (
           <Field label="Starts with" hint={shot.continuity === "continue" ? `Picks up from the last frame of shot ${index}, with no anchor still.` : undefined}>
             {() => (
@@ -676,7 +678,7 @@ function OpenShot({
                 </Button>
                 {canFinal && (
                   <Button size="sm" disabled={busy !== undefined} onClick={() => void run(`final:${shot.id}`, () => finalizeShot(scene.id, shot.id))}>
-                    Render final 1080p
+                    {take && isLocalModel(take.modelId) ? "Render final on Wan 14B" : "Render final 1080p"}
                   </Button>
                 )}
               </>
@@ -711,7 +713,7 @@ function OpenShot({
                 job={final}
                 alt={`Shot ${index + 1} final`}
                 aspect={aspect}
-                label="Final, 1080p"
+                label={isLocalModel(final.modelId) ? `${LOCAL_FINAL} · may differ from the take` : "Final, 1080p"}
                 actions={
                   failed(final) ? (
                     <Button size="sm" variant="secondary" className={`justify-self-start ${ON_SEAMLESS}`} onClick={() => void run(`retry:${shot.id}`, () => retryShotJob(scene.id, shot.id, "final"))}>
@@ -977,6 +979,23 @@ function OneTake({ scene, editor }: { scene: Scene; editor: Editor }) {
   );
 }
 
+// A take's own length once it has one: startVideo fits a shot's length to the
+// model, so an 8 s shot animated by Wan on the visitor's GPU runs 5 s.
+function takeSeconds(shot: Shot, job: Job | undefined): number {
+  return (job?.input as { model?: { durationSec?: number } } | undefined)?.model?.durationSec ?? shot.durationSec;
+}
+
+// Why the take will be shorter or longer than the shot, when it will.
+function lengthHint(seconds: number, modelId: string): string | undefined {
+  const model = VIDEO_MODELS.find((m) => m.id === modelId);
+  if (!model) return undefined;
+  const [min, max] = model.duration;
+  const fitted = Math.min(max, Math.max(min, seconds));
+  return fitted === seconds ? undefined : `${model.label}${isLocalModel(modelId) ? " on your GPU" : ""} makes ${min} to ${max} s clips, so this take runs ${fitted} s.`;
+}
+
+const LOCAL_FINAL = "Wan 14B final · your GPU";
+
 // Where a shot stands, in a word or two.
 function shotStatus(shot: Shot, job: Job | undefined, chained: boolean): string {
   if (!job) return chained ? (shot.waiting ? "Waiting" : "Not animated") : !shot.anchorJobId ? "No anchor" : "Not animated";
@@ -1003,7 +1022,7 @@ function StripFrame({ shot, index, chained, aspect, open }: { shot: Shot; index:
         )}
       </span>
       <span className="text-control">
-        <span className="font-semibold">{index + 1}</span> · {shot.durationSec} s · <span className={cn(job?.status === "done" && "font-semibold")}>{status}</span>
+        <span className="font-semibold">{index + 1}</span> · {takeSeconds(shot, job)} s · <span className={cn(job?.status === "done" && "font-semibold")}>{status}</span>
       </span>
     </span>
   );
