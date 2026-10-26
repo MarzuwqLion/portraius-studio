@@ -4,10 +4,11 @@
 // end card is on unless the user turns it off.
 import type { JobInput } from "@/lib/jobs/runner";
 import { fileName } from "@/lib/library/library";
-import { drawEndCard, drawLabels, ffmpegColour, tokenColour } from "@/lib/media/social-card";
+import { drawEndCard, drawLabels, ffmpegColour, tokenColour, type CardLikeness } from "@/lib/media/social-card";
 import { exportSocial, socialLayout, type SocialSource } from "@/lib/media/social";
 import { clipInfo } from "@/lib/media/video-prep";
 import { db } from "@/lib/store/db";
+import type { Generation } from "@/lib/types/records";
 import type { RecastRequest } from "./recast";
 
 async function source(blob: Blob): Promise<SocialSource & { durationSec: number }> {
@@ -15,7 +16,14 @@ async function source(blob: Blob): Promise<SocialSource & { durationSec: number 
   return { blob, width: info.width, height: info.height, durationSec: info.durationSec };
 }
 
-export async function socialExport(generationId: string, options: { endCard: boolean }, onProgress?: (share: number) => void): Promise<{ blob: Blob; name: string }> {
+// The likeness to put on the end card: the clip's score and the people in it.
+async function cardLikeness(generation: Generation): Promise<CardLikeness | undefined> {
+  if (generation.identityScore === undefined || generation.scoreNote === "stylised") return undefined;
+  const people = (await db.characters.bulkGet(generation.characterIds)).filter((c) => c?.kind === "person");
+  return { score: generation.identityScore, names: people.map((c) => c!.name) };
+}
+
+export async function socialExport(generationId: string, options: { endCard: boolean; likeness?: boolean }, onProgress?: (share: number) => void): Promise<{ blob: Blob; name: string }> {
   const generation = await db.generations.get(generationId);
   const asset = generation?.assets.find((a) => a.kind === "video");
   const video = asset ? (await db.blobs.get(asset.blobId))?.blob : undefined;
@@ -35,13 +43,14 @@ export async function socialExport(generationId: string, options: { endCard: boo
   }
 
   const layout = socialLayout(sources);
+  const likeness = options.endCard && options.likeness ? await cardLikeness(generation) : undefined;
   const blob = await exportSocial(
     sources,
     {
       durationSec: result.durationSec,
       background: ffmpegColour(tokenColour("--seamless")),
       ...(labels ? { overlay: await drawLabels(layout.cells, layout.clips, labels) } : {}),
-      ...(options.endCard ? { endCard: await drawEndCard() } : {}),
+      ...(options.endCard ? { endCard: await drawEndCard(likeness) } : {}),
       // A recast keeps its own sound, or the original's when it has none.
       audioOrder: sources.length === 2 ? [1, 0] : [0],
     },

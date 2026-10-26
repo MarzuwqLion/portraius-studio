@@ -1,9 +1,26 @@
 // The end card and the Recast labels for the 9:16 export, drawn on a canvas
 // in the app's own fonts and token colours (spec: Visual direction), then
 // laid over the video by ffmpeg.
+import { band, type Band } from "@/lib/identity/score";
 import { SOCIAL_HEIGHT, SOCIAL_WIDTH, type Box } from "./social";
 
 export const END_CARD_LINES = { lead: "Made with", name: ["Portraius", "Studio"], tail: "Open source" } as const;
+
+// The clip's likeness score, which only this studio measures, as a line on
+// the end card (contest polish, October 25): "Likeness 92" and who it's of.
+export interface CardLikeness {
+  score: number;
+  names: string[];
+}
+
+const BAND_WORD: Record<Band, string> = { match: "Strong match", check: "Close match", drift: "Loose match" };
+const BAND_TOKEN: Record<Band, string> = { match: "--match", check: "--check", drift: "--drift" };
+
+export function likenessLines(likeness: CardLikeness): { score: string; detail: string; token: string } {
+  const b = band(likeness.score);
+  const who = likeness.names.length > 2 ? `${likeness.names.slice(0, -1).join(", ")} and ${likeness.names.at(-1)}` : likeness.names.join(" and ");
+  return { score: `Likeness ${Math.round(likeness.score)}`, detail: who ? `${BAND_WORD[b]} to ${who}` : BAND_WORD[b], token: BAND_TOKEN[b] };
+}
 
 // A token's current value as the browser resolves it, e.g. --seamless.
 export function tokenColour(name: string): string {
@@ -37,8 +54,9 @@ async function fonts(): Promise<void> {
   await Promise.all([document.fonts.load(`800 120px ${DISPLAY}`), document.fonts.load(`600 36px ${BODY}`)]).catch(() => undefined);
 }
 
-// "Made with Portraius Studio, open source" on Studio grey.
-export async function drawEndCard(): Promise<Blob> {
+// "Made with Portraius Studio, open source" on Studio grey, with the clip's
+// likeness under it when asked for.
+export async function drawEndCard(likeness?: CardLikeness): Promise<Blob> {
   await fonts();
   const { c, g } = canvas();
   g.fillStyle = tokenColour("--seamless");
@@ -52,6 +70,21 @@ export async function drawEndCard(): Promise<Blob> {
   END_CARD_LINES.name.forEach((line, i) => g.fillText(line, c.width / 2, 640 + i * 132));
   g.font = `600 36px ${BODY}`;
   g.fillText(END_CARD_LINES.tail, c.width / 2, 870);
+  if (likeness) {
+    // On a proof chip, as the app's badges are: the band colours are made to read on proof, not on Studio grey.
+    const lines = likenessLines(likeness);
+    g.font = `800 72px ${DISPLAY}`;
+    const width = g.measureText(lines.score).width + 64;
+    g.fillStyle = tokenColour("--proof");
+    g.beginPath();
+    g.roundRect((c.width - width) / 2, 940, width, 96, 6);
+    g.fill();
+    g.fillStyle = tokenColour(lines.token);
+    g.fillText(lines.score, c.width / 2, 1013);
+    g.fillStyle = tokenColour("--on-seamless");
+    g.font = `600 30px ${BODY}`;
+    g.fillText(lines.detail, c.width / 2, 1090, c.width - 96);
+  }
   return png(c);
 }
 
