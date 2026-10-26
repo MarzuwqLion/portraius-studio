@@ -1,0 +1,3 @@
+# Windows launchers are stored with CRLF so a raw download from GitHub runs as is; shell scripts need LF.
+*.bat -text
+*.sh text eol=lf

@@ -11,10 +11,13 @@ import { CONSENT_CLIP } from "@/lib/characters/format";
 import { applyRedraw, exportFile, setVoice, startRedraw } from "@/lib/characters/manage";
 import { SHEET_PATHS, SHEET_VIEWS, viewAspect, viewLabel, type SheetView } from "@/lib/characters/sheet";
 import { useJobs } from "@/lib/jobs/hooks";
+import { saveFile } from "@/lib/library/library";
+import { canShareFile, shareFile } from "@/lib/media/share";
 import { voice } from "@/lib/presets/load";
 import { deleteCharacter, isUsable, loadBundle } from "@/lib/store/characters";
 import { useBlobUrl, useCharacter } from "@/lib/store/hooks";
 import { nextSlot } from "@/lib/studio/cast";
+import { makeLikenessSheet } from "@/lib/studio/likeness-sheet";
 import type { Launch } from "@/lib/studio/launch";
 import type { CharacterRecord } from "@/lib/types/records";
 import { CharacterBadges } from "./CharactersScreen";
@@ -215,6 +218,60 @@ function VoicePanel({ record }: { record: CharacterRecord }) {
   );
 }
 
+// The likeness sheet (contest polish, October 25): this person's best-scored
+// shots in one picture, each with its score, to download or share.
+function LikenessSheetPanel({ record }: { record: CharacterRecord }) {
+  const [sheet, setSheet] = useState<{ url: string; file: File }>();
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string>();
+  useEffect(() => () => sheet && URL.revokeObjectURL(sheet.url), [sheet]);
+
+  async function make() {
+    setBusy(true);
+    setNote(undefined);
+    try {
+      const made = await makeLikenessSheet(record);
+      if (!made) {
+        setNote(`No stills of ${record.name} with a likeness of 60 or more yet. Make a few images with them first.`);
+        return;
+      }
+      setSheet({ url: URL.createObjectURL(made.blob), file: new File([made.blob], made.name, { type: "image/png" }) });
+    } catch (err) {
+      setNote((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="grid gap-3">
+      <h2 className="text-panel font-semibold">Likeness sheet</h2>
+      <p className="max-w-[70ch] text-body text-ink-muted">
+        {record.name}&apos;s best-scored shots from your library in one picture, each with its likeness score, ready to post.
+      </p>
+      <Button variant="secondary" onClick={() => void make()} disabled={busy} className="justify-self-start">
+        {busy ? "Drawing the sheet" : sheet ? "Draw it again" : "Make a likeness sheet"}
+      </Button>
+      {note && <p className="text-control">{note}</p>}
+      {sheet && (
+        <div className="grid max-w-md gap-3">
+          <img src={sheet.url} alt={`Likeness sheet for ${record.name}`} className="w-full rounded-media border border-rule" />
+          <div className="flex flex-wrap gap-3">
+            {canShareFile(sheet.file) && (
+              <Button size="sm" onClick={() => void shareFile(sheet.file).catch((err: Error) => setNote(err.message))}>
+                Share
+              </Button>
+            )}
+            <Button size="sm" variant="secondary" onClick={() => saveFile(sheet.file, sheet.file.name)}>
+              Download
+            </Button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function DeletePanel({ record }: { record: CharacterRecord }) {
   const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
@@ -315,6 +372,7 @@ export function CharacterDetailScreen() {
           </p>
         )}
         {record.kind === "person" && <VoicePanel record={record} />}
+        {record.kind === "person" && !record.locked && <LikenessSheetPanel record={record} />}
         <ExportPanel record={record} />
         <DeletePanel record={record} />
       </div>

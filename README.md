@@ -6,22 +6,26 @@ and scenes that still look like them, with a number that says how much.
 ![Recast: a dancer's clip, then the same moves, timing and camera performed by Walt Harmon, a designed character](docs/media/recast-side-by-side.gif)
 
 Portraius Studio is an open-source studio that runs in your browser on the
-[Comfy Developer Platform](https://docs.comfy.org). Every generation goes through Comfy Router with your own
-Comfy key; your characters and outputs stay in your browser. Built for Comfy's Open Source Higgsfield
-competition (#OpenSourceHiggsfield).
+[Comfy Developer Platform](https://docs.comfy.org): on Comfy's models with your own Comfy key, on open-weight
+models on your own GPU through ComfyUI for free, or both. Your characters and outputs stay in your browser. Built
+for Comfy's Open Source Higgsfield competition (#OpenSourceHiggsfield).
 
-## Try it
+## Start here
 
-**[marzuwqlion.github.io/portraius-studio](https://marzuwqlion.github.io/portraius-studio/)**
+Open **[marzuwqlion.github.io/portraius-studio](https://marzuwqlion.github.io/portraius-studio/)** and pick one:
 
-- **No key?** Open the [Tour](https://marzuwqlion.github.io/portraius-studio/#/tour). It plays pre-made samples
-  made with Walt Harmon, a designed character: his sheet, scored stills, a realism pass, video drafts and
-  finals, a Recast, a Director scene and an element. Nothing calls a model.
-- **With a key:** paste a Comfy API key with Router access in **Settings**. It stays in your browser and goes
-  only to Comfy. The Tour can add Walt to your vault, so a first image needs only the key; or make a character
-  from your photos (with a webcam consent check), or design one from a description.
-- **With a GPU and no key:** run the open-weight models on your own ComfyUI for free
-  ([`docs/local-setup.md`](docs/local-setup.md)), then tick **Use my ComfyUI** in Settings.
+| You have | Do this | Time |
+| --- | --- | --- |
+| Nothing | Open the [Tour](https://marzuwqlion.github.io/portraius-studio/#/tour): pre-made samples of every feature with Walt Harmon, a designed character. Nothing runs, nothing to set up. | 1 minute |
+| A Comfy API key | Paste it in **Settings**, then **Try this with Walt** in the Tour for a first image with a character already made. | 3 minutes |
+| An NVIDIA GPU (24 GB is best) | Install ComfyUI and the model files ([`docs/local-setup.md`](docs/local-setup.md)), start it with the CORS flag (or a ready-made launcher from [`launchers/`](launchers)), tick **Use my ComfyUI** in Settings. Everything is free after that. | about an hour, mostly downloading |
+
+To run the code yourself instead, see [Quick start](#quick-start).
+
+**Contents:** [Why it's different](#why-its-different) · [Quick start](#quick-start) ·
+[Using Portraius Studio](#using-portraius-studio) · [FAQ](#faq) · [Which model keeps a face?](#which-model-keeps-a-face) · [Models](#models) · [Costs](#costs) ·
+[How it works](#how-it-works) · [ComfyUI workflows](#comfyui-workflows) · [Responsible use](#responsible-use) ·
+[Contributing presets](#contributing-presets) · [License](#license)
 
 ## Why it's different
 
@@ -87,8 +91,9 @@ Open **Settings** (bottom of the left rail).
 - **Comfy API key.** Paste a key with Router access from [platform.comfy.org](https://platform.comfy.org) and
   press **Save key**. It's kept for this tab only, unless you tick **Remember on this device**. It's sent only to
   `api.comfy.org` and to the project's upload Worker, which checks it with Comfy and never stores it.
-- **Your ComfyUI** (optional, free). Start ComfyUI with `--enable-cors-header` and this page's address, tick
-  **Use my ComfyUI**, and check the address (`http://127.0.0.1:8188` by default). The card shows your GPU and
+- **Your ComfyUI** (optional, free). Start ComfyUI with `--enable-cors-header` and this page's address (Windows
+  portable and Linux or Mac have ready-made launchers in [`launchers/`](launchers)), tick **Use my ComfyUI**, and
+  check the address (`http://127.0.0.1:8188` by default, `:8000` for ComfyUI Desktop). The card shows your GPU and
   marks each local model ready or lists the files it's missing, with download links. The app notices on its own
   when ComfyUI starts, stops or comes back; **Check again** asks at once. Setup steps are in
   [`docs/local-setup.md`](docs/local-setup.md).
@@ -117,8 +122,11 @@ single views. Each view gets a likeness score; **Redraw** any one you don't like
 **description** (what a face doesn't show: build, style, a usual outfit; it goes into every prompt with this
 character), optional **tags** and an optional **stock voice**, and save.
 
-A character's page has **Use in an image / a video / a recast**, its views, its voice, **Export file** (a
-`.portraius` file with the photos, sheet, face data and consent record) and **Delete character**. To bring a
+![A character's page: the turnaround sheet with front, three-quarter, profile, full body and four expressions](docs/media/screens/character.jpg)
+
+A character's page has **Use in an image / a video / a recast**, its views, its voice, a **likeness sheet** (their
+best-scored shots in one picture, each with its score, to download or share), **Export file** (a `.portraius`
+file with the photos, sheet, face data and consent record) and **Delete character**. To bring a
 character in, use **Import a .portraius file** on the Cast page; one without a consent record can be viewed but
 not used.
 
@@ -171,6 +179,8 @@ Open **Recast**.
 3. **Performer** (or the replacement image), and optional **direction** words.
 4. Tick that you filmed the clip or have the rights to use it (the sample needs no check), then **Recast**.
 
+![Recast: the sample clip, the Motion transfer presets and the performer, priced before it runs](docs/media/screens/recast.jpg)
+
 The result plays original and recast side by side; drag the line to compare. **Re-roll** appears when likeness
 drifts, and **Export 9:16** puts both in one vertical frame. On your GPU, Recast does motion transfer in two
 steps: Qwen draws the performer into the clip's first frame and setting, then Wan Animate 2 moves them through the
@@ -192,10 +202,15 @@ Open **Director** and start from the sample scene or **New scene**.
 5. When every shot has a finished take, **Export scene** joins them into one MP4, with 6-frame crossfades if
    ticked. **Shoot as one take** (Kling, with a key) makes the whole scene as one quick clip.
 
+![Director: a shot with its anchor still, its take scored frame by frame, and the timeline](docs/media/screens/director.jpg)
+
 ### 8. Library, sharing and the Tour
 
+![A result in the Library: its likeness score, model, cast and what you can do with it](docs/media/screens/library-take.jpg)
+
 - **Library** holds every result, filterable by type, cast member, model, likeness band and date. A result's page
-  has **Download**, **Export 9:16** (with an optional end card), **Speak a line**, **Animate**, **Make it real**,
+  has **Download**, **Export 9:16** (with an optional end card that can carry the likeness score, and **Share** on
+  phones), **Speak a line**, **Animate**, **Make it real**,
   **Copy remix link**, **Save as preset** and **Delete**. **Select to export** saves several results as one zip.
 - A **remix link** carries a result's recipe, never a face: whoever opens it picks their own characters for each
   slot and runs it with one click.
@@ -208,8 +223,25 @@ Open **Director** and start from the sample scene or **New scene**.
 
 Each output with a cast member gets a score from 0 to 100 against that character's own references: **80 and up**
 is a strong match, **60 to 79** is worth a look, and **under 60** has drifted (an image gets one automatic retry).
-Videos are scored a frame a second, with the lowest frame shown too. Faces too small or turned away aren't scored,
-and stylised looks (anime, claymation) show "Score not available". The score measures likeness, not identity.
+Videos are scored a frame a second, with the lowest frame shown too; frames where the face is too small (under 80
+px) or turned away are skipped. In an image, a cast member whose face isn't found scores 0. Stylised looks (anime,
+claymation) show "Score not available". The score measures likeness, not identity.
+
+### Which model keeps a face?
+
+We ran the same character and prompts through Comfy's models and the open-weight ones on an RTX 4090 and read
+off the app's own scores ([full report](docs/likeness-report.md)):
+
+| Task | Comfy | Your GPU |
+| --- | --- | --- |
+| Stills, 10 each | Nano Banana 2.1: median 89, all 77 or more | Qwen-Image-Edit 2511: median 99, nine of ten 85 or more |
+| 5 s video, 2 each | MiniMax H3: 83 and 100 | Wan 2.2 14B: 82 and 85 |
+| Recast of a dance | MiniMax H3: 59 | Wan Animate 2: 63 |
+
+One character and a few runs, so a first look rather than a benchmark: both paths keep the face, H3 holds it best
+through movement, and the free local path is competitive.
+
+![Same character, same prompts: Nano Banana's takes and Qwen's, with their likeness scores](docs/media/likeness/images.jpg)
 
 ### When something goes wrong
 
@@ -217,6 +249,24 @@ A failed job says why, in plain words, with **Retry** when a retry can help. The
 key (Settings), not enough credits, a provider refusing an input (change it and retry), and, on your GPU,
 "Couldn't reach your ComfyUI" (start it with the CORS flag), "missing {file}" (Settings lists the link), "ran out
 of memory" (shorter clip, smaller size or the faster model) and "restarted before this finished" (retry it).
+
+## FAQ
+
+- **Do I have to pay?** No. The Tour is free, and on your own GPU everything is free. With a Comfy key you pay
+  Comfy per generation, and every Generate button shows the price before it runs.
+- **Do I need a GPU?** No. With a Comfy key everything runs on Comfy's models. A GPU lets you run open-weight
+  models for free instead, or as well.
+- **Where do my photos and characters go?** They stay in your browser. A generation sends Comfy only what it
+  needs (a prompt and reference images); on your GPU nothing leaves your computer. Export a character as a
+  `.portraius` file to keep it or move it to another browser.
+- **Can I make a character of someone else?** Not from their photos: a character from photos needs a webcam check
+  of that person. They make their own and send you the file. Designed characters (from a description) are
+  original people who don't exist.
+- **Is it safe to let the site use my ComfyUI?** Mostly, with a few habits; see
+  [Is it safe?](docs/local-setup.md#is-it-safe) in the setup guide.
+- **Which browsers?** Chrome, Edge and Firefox on Windows were tested with a local ComfyUI. Safari hasn't been
+  tried.
+- **What does the likeness number mean?** See [Likeness scores](#likeness-scores).
 
 ## Models
 
@@ -237,6 +287,22 @@ call sends `fallback_provider=false`), so each model is served by its own provid
 | Sync-3 | `synclabs/sync-3` | Lip sync: moves the mouth of a finished clip to a line |
 | Claude Sonnet 5.5 | `anthropic/claude-sonnet-5-5` | Director's "Draft shots with AI" |
 | Wan 2.7, BFL video edit | `wan/wan2.7-videoedit`, `bfl/video-edit-v1` | Object swap alternatives, compared with Kling in [`docs/notes/recast-ab.md`](docs/notes/recast-ab.md) |
+
+### Built with MiniMax H3
+
+MiniMax H3 is the core video model wherever a person is on screen. Seedance refuses photoreal people as input,
+so every clip of a character from your vault runs on H3:
+
+- **Image, then animate** and **Use references** in Video: the character's still or sheet becomes an H3 clip,
+  with the person's identity scored frame by frame.
+- **Recast's Motion transfer**: a character from your vault takes over a clip's moves, timing and camera on H3
+  reference mode, with the clip's own sound kept.
+- **Speak a line**: a new clip of the character saying the line, with H3's native audio.
+- **Director**: every shot with a cast member is an H3 take, and shots can continue from the last frame of the
+  one before.
+
+The same H3 graphs ship as ComfyUI workflows: `still-first-video`, `recast` and `add-a-line` in
+[`workflows/`](workflows/README.md).
 
 ### On your own GPU, free
 

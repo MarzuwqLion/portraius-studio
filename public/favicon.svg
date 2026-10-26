@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Portraius Studio: a portrait bust in a frame. Colours are the tokens.css values of accent (#a65c35) and
+       on-accent (#ffffff), since an icon file can't read CSS variables. -->
+  <rect width="64" height="64" rx="12" fill="#a65c35"/>
+  <circle cx="32" cy="25" r="11" fill="#ffffff"/>
+  <path d="M12 54c2-11 10-17 20-17s18 6 20 17z" fill="#ffffff"/>
+  <path d="M8 18V8h10M46 8h10v10M56 46v10H46M18 56H8V46" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+</svg>
