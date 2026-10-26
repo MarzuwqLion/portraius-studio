@@ -24,6 +24,7 @@ import { VIDEO_MODELS, type VideoModel } from "@/lib/studio/video";
 import { ModelPicker } from "@/components/studio/ModelPicker";
 import { db } from "@/lib/store/db";
 import { useBlobUrl, useCharacters, useCharacterThumbs, useGeneration, useObjectUrl } from "@/lib/store/hooks";
+import { isAnimatedCast } from "@/lib/studio/cast";
 import {
   animateShot,
   chainStale,
@@ -490,7 +491,10 @@ function OpenShot({
   const lipSync = useJob(shot.lipSyncJobId);
   const lineGenerationId = lineSource?.status === "done" ? lineSource.generationIds[0] : undefined;
   const anchors = useAnchorJobs(shot.anchorJobIds);
-  const castSlots = shotCast(scene, shot).map((c) => c.slot);
+  const castPicks = shotCast(scene, shot);
+  const castSlots = castPicks.map((c) => c.slot);
+  const characters = useCharacters();
+  const animatedCast = isAnimatedCast(castPicks.map((c) => characters?.find((r) => r.id === c.characterId)));
   const aspect = aspectOf(scene.ratio);
   const ready = Boolean(shot.action.trim());
   const chained = continues(scene, shot);
@@ -520,9 +524,10 @@ function OpenShot({
       : undefined,
     `${stills.modelId}:${shot.id}:${shot.action}:${castSlots.join()}:${scene.ratio}`,
   );
-  // On Comfy, a shot with people renders on H3 (Seedance refuses them); on the
-  // visitor's GPU it stays on the Wan model picked.
-  const motionModel = isLocalModel(motion.modelId) ? motion.modelId : castSlots.length ? MODEL_IDS.minimaxH3 : MODEL_IDS.seedance;
+  // On Comfy, a shot with real people renders on H3 (Seedance refuses them),
+  // and one with only animated characters on Seedance; on the visitor's GPU it
+  // stays on the Wan model picked.
+  const motionModel = isLocalModel(motion.modelId) ? motion.modelId : castSlots.length && !animatedCast ? MODEL_IDS.minimaxH3 : MODEL_IDS.seedance;
   const motionPrice = useEstimateLabel(
     motionModel,
     canAnimate

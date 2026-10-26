@@ -65,8 +65,9 @@ export const REGISTRY: readonly RegistryEntry[] = [
 ];
 
 // Seedance 2.5 is the default for video without people. It refuses photoreal
-// people as input images (M3 notes), so every video with a person in it
-// renders on MiniMax H3 (Marzuwq's decision, October 19).
+// people as input images (M3 notes), so every video with a real person in it
+// renders on MiniMax H3 (Marzuwq's decision, October 19). A cast of animated
+// characters may stay on Seedance (October 26, studio/video.ts).
 export const DEFAULT_IMAGE_MODEL = MODEL_IDS.nanoBanana;
 export const DEFAULT_VIDEO_MODEL = MODEL_IDS.seedance;
 export const PEOPLE_VIDEO_MODEL = MODEL_IDS.minimaxH3;

@@ -326,7 +326,7 @@ async function anchorBlobId(jobId: string): Promise<string> {
 // Animate: the anchor is the first frame, or for a continued shot the
 // previous shot's last frame. Seedance makes a 480p draft; a face in that
 // frame sends the shot to H3 instead (Seedance refuses people), which renders
-// once at 768P. A continued shot whose previous take isn't done yet waits for
+// once at 768P, unless the shot's cast is all animated (studio/video.ts). A continued shot whose previous take isn't done yet waits for
 // it, so a whole chain can be started at once and runs in order. A shot on
 // the visitor's GPU stays on the Wan model picked (spec: Local engine).
 export async function animateShot(sceneId: string, shotId: string, reroll = false, model?: VideoModel): Promise<string | undefined> {

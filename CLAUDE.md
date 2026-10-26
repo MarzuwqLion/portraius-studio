@@ -9,8 +9,12 @@
 - All generation goes through src/lib/router/client.ts. No other file imports @comfyorg/sdk.
 - Model IDs live only in src/lib/registry/models.ts. Never add a higgsfield/* ID. Never send model_provider.
 - Nano Banana means vertexai/gemini-nano-banana-2.1. Never vertexai/gemini-3.1-flash-image.
-- Video: Seedance 2.5 is the default for videos without people. Any video with a cast or a face in its
-  first frame renders on MiniMax H3 (Seedance refuses photoreal people; Marzuwq decided October 19).
+- Video: Seedance 2.5 is the default for videos without people. Any video with a real person in its cast
+  or a face in its first frame renders on MiniMax H3 (Seedance refuses photoreal people; Marzuwq decided
+  October 19). A cast that is all animated characters keeps the chosen model, Seedance by default
+  (October 26). Recast stays on H3.
+- Characters are Real (the default) or Animated. Never put photoreal wording in an animated
+  character's prompts.
 - Queue every model that supports it. Sync only for byte-returning models, with fallback_provider=false.
 - Download every asset on completion. Never persist a provider URL as the asset.
 - Only src/lib/jobs/machine.ts changes a job's status.

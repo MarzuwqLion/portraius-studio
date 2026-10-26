@@ -20,6 +20,14 @@ describe("modelFor", () => {
     expect(modelFor({ mode: "image", cast: [], model: MODEL_IDS.seedance }, true)).toBe(MODEL_IDS.minimaxH3);
   });
 
+  it("keeps the chosen model for a cast of animated characters (October 26)", () => {
+    expect(modelFor({ mode: "still", cast: walt, model: MODEL_IDS.seedance }, false, true)).toBe(MODEL_IDS.seedance);
+    expect(modelFor({ mode: "references", cast: walt, model: MODEL_IDS.seedance }, false, true)).toBe(MODEL_IDS.seedance);
+    // Director: an anchor of an animated cast is theirs, face or not.
+    expect(modelFor({ mode: "image", cast: walt, model: MODEL_IDS.seedance }, true, true)).toBe(MODEL_IDS.seedance);
+    expect(modelFor({ mode: "still", cast: walt, model: MODEL_IDS.minimaxH3 }, false, true)).toBe(MODEL_IDS.minimaxH3);
+  });
+
   it("leaves an explicit H3 choice alone", () => {
     expect(modelFor({ mode: "text", cast: [], model: MODEL_IDS.minimaxH3 }, false)).toBe(MODEL_IDS.minimaxH3);
   });

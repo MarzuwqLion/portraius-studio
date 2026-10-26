@@ -16,7 +16,7 @@ import { db } from "@/lib/store/db";
 import { getSettings } from "@/lib/store/settings";
 import type { Job } from "@/lib/types/jobs";
 import type { GenerationAsset } from "@/lib/types/records";
-import { buildCast, dataUri, type CastPick } from "./cast";
+import { buildCast, castIsAnimated, dataUri, type CastPick } from "./cast";
 import { imageModel, isCompact, randomSeed, tooManyImages } from "./image";
 
 export type VideoMode = "text" | "still" | "references" | "image";
@@ -62,9 +62,12 @@ type VideoJobInput = JobInput & { request: VideoRequest; final?: true };
 // Seedance refuses photoreal people as input images, so anything with a
 // person goes to H3: a cast (Still first, References) or a face in the first
 // frame. Text to video keeps the chosen model, and so does a local model:
-// Wan refuses nobody.
-export function modelFor(request: Pick<VideoRequest, "mode" | "cast" | "model">, firstFrameHasPerson: boolean): VideoModel {
+// Wan refuses nobody. A cast whose people are all animated keeps the chosen
+// model too, Seedance by default, and a face in its first frame is theirs
+// (Marzuwq's decision, October 26); H3 stays one pick away.
+export function modelFor(request: Pick<VideoRequest, "mode" | "cast" | "model">, firstFrameHasPerson: boolean, animatedCast = false): VideoModel {
   if (isLocalModel(request.model)) return request.model;
+  if (animatedCast && request.cast.length) return request.model;
   if ((request.mode === "still" || request.mode === "references") && request.cast.length) return PEOPLE_VIDEO_MODEL;
   if (request.mode === "image" && firstFrameHasPerson) return PEOPLE_VIDEO_MODEL;
   return request.model;
@@ -75,8 +78,8 @@ export async function blobHasPerson(blobId: string | undefined): Promise<boolean
   return row ? hasFace(await drawToCanvas(row.blob, 1024)) : false;
 }
 
-function routed(request: VideoRequest, person: boolean): VideoRequest {
-  const model = modelFor(request, person);
+function routed(request: VideoRequest, person: boolean, animatedCast: boolean): VideoRequest {
+  const model = modelFor(request, person, animatedCast);
   const [min, max] = VIDEO_MODELS.find((m) => m.id === model)!.duration;
   return { ...request, model, durationSec: Math.min(max, Math.max(min, request.durationSec)) };
 }
@@ -154,7 +157,8 @@ function stillAspect(ratio: VideoRatio): ImageAspectRatio {
 }
 
 export async function startVideo(asked: VideoRequest): Promise<string> {
-  const request = routed(asked, asked.mode === "image" && (await blobHasPerson(asked.sourceBlobId)));
+  const animatedCast = await castIsAnimated(asked.cast);
+  const request = routed(asked, !animatedCast && asked.mode === "image" && (await blobHasPerson(asked.sourceBlobId)), animatedCast);
   if (request.mode === "still") {
     const stillModel = imageModel({ modelId: request.stillModel });
     const tooMany = tooManyImages(stillModel, request.cast.length, false);

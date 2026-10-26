@@ -23,8 +23,8 @@ import type { CameraSelection } from "@/lib/prompts/camera";
 import type { H3Input, VideoRatio } from "@/lib/registry/inputs";
 import { MODEL_IDS, isLocalModel, registryEntry } from "@/lib/registry/models";
 import { useFeatureModels } from "@/lib/session/engine";
-import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
-import type { CastPick } from "@/lib/studio/cast";
+import { useBlobUrl, useCharacters, useGeneration } from "@/lib/store/hooks";
+import { isAnimatedCast, type CastPick } from "@/lib/studio/cast";
 import { randomSeed } from "@/lib/studio/image";
 import { generationImageBlobId, storeUpload } from "@/lib/studio/uploads";
 import {
@@ -158,8 +158,11 @@ export function VideoScreen() {
     if (typeof d === "number") setDurationSec(d);
     if (typeof r === "string") setRatio(r as VideoRatio);
   }
-  // People go to H3 whatever is chosen: Seedance refuses them (M3 notes).
-  const effective = modelFor({ mode, cast, model }, sourcePerson);
+  // Real people go to H3 whatever is chosen: Seedance refuses them (M3
+  // notes). A cast of animated characters keeps the chosen model.
+  const characters = useCharacters();
+  const animatedCast = isAnimatedCast(cast.map((c) => characters?.find((r) => r.id === c.characterId)));
+  const effective = modelFor({ mode, cast, model }, sourcePerson, animatedCast);
   const routedForPeople = effective !== model;
   const spec = VIDEO_MODELS.find((m) => m.id === effective)!;
 
@@ -300,7 +303,7 @@ export function VideoScreen() {
       )}
 
       {/* The picker and the takes agree: people always render on H3 (Decisions, October 21, item 9), unless the clip runs on the visitor's GPU. */}
-      <Field label="Model" hint={videoModels.option?.blocked ?? (local ? "Runs on your GPU, free." : "People in the shot render on MiniMax H3.")}>
+      <Field label="Model" hint={videoModels.option?.blocked ?? (local ? "Runs on your GPU, free." : animatedCast ? "Animated characters can render on Seedance or MiniMax H3." : "Real people in the shot render on MiniMax H3.")}>
         {(id) =>
           routedForPeople ? (
             <Select id={id} value={effective} onChange={() => undefined} options={VIDEO_MODELS.filter((m) => m.id === effective).map((m) => ({ value: m.id, label: m.label }))} />

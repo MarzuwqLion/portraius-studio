@@ -16,6 +16,7 @@ import { reachOf, useEngineStore, useFeatureModels } from "@/lib/session/engine"
 import { useKeyStore } from "@/lib/session/key";
 import { isUsable } from "@/lib/store/characters";
 import { useCharacters } from "@/lib/store/hooks";
+import { isAnimatedCast } from "@/lib/studio/cast";
 import { matchingPreset, startRemix } from "@/lib/studio/remix";
 import { modelFor, type VideoMode } from "@/lib/studio/video";
 
@@ -86,7 +87,8 @@ function RecipeCard({ recipe }: { recipe: RecipeFile }) {
   const own = useFeatureModels(feature);
   const recipeRuns = featureOptions(feature, reachOf(engine, hasKey)).some((o) => o.id === recipe.model && !o.blocked);
   const chosen = recipeRuns ? recipe.model : own.modelId;
-  const runModel = image ? chosen : modelFor({ mode: (p.mode as VideoMode) ?? "text", cast, model: chosen as Parameters<typeof modelFor>[0]["model"] }, false);
+  const animatedCast = isAnimatedCast(cast.map((c) => characters?.find((r) => r.id === c.characterId)));
+  const runModel = image ? chosen : modelFor({ mode: (p.mode as VideoMode) ?? "text", cast, model: chosen as Parameters<typeof modelFor>[0]["model"] }, false, animatedCast);
   const price = useEstimateLabel(
     runModel,
     ready
