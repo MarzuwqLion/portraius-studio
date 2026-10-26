@@ -54,7 +54,11 @@ export function DesignStep({ draft, update, onNext }: { draft: WizardDraft; upda
           <textarea
             id={id}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              // Kept as typed, so leaving and coming back keeps the words.
+              update({ personDescription: e.target.value });
+            }}
             rows={4}
             maxLength={600}
             placeholder={

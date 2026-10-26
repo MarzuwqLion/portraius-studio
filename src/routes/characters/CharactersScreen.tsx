@@ -1,15 +1,19 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router";
+import { useLiveQuery } from "dexie-react-hooks";
 import { Screen } from "@/components/shell/Screen";
 import { Badge } from "@/components/studio/Badge";
 import { Take } from "@/components/studio/Take";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { draftThumbBlobId } from "@/lib/characters/create";
+import { loadStartedDrafts, type WizardDraft } from "@/lib/characters/draft";
 import { ELEMENT_TYPE_LABEL } from "@/lib/characters/element-sheet";
 import { THUMB } from "@/lib/characters/format";
 import { addImport, readImport, type PendingImport } from "@/lib/characters/manage";
 import { useBlobUrl, useCharacters } from "@/lib/store/hooks";
 import type { CharacterRecord } from "@/lib/types/records";
 import { cn } from "@/lib/utils";
+import { STEPS } from "./CharacterNewScreen";
 
 export function CharacterBadges({ record }: { record: CharacterRecord }) {
   return (
@@ -39,6 +43,34 @@ function CharacterCard({ record }: { record: CharacterRecord }) {
       <div className="grid gap-2">
         <span className="text-panel font-semibold">{record.name}</span>
         <CharacterBadges record={record} />
+      </div>
+    </Link>
+  );
+}
+
+// A character or element still being made: the wizard keeps its draft, and
+// this card takes the visitor back to the step they left.
+function DraftCard({ draft }: { draft: WizardDraft }) {
+  const thumbId = useLiveQuery(() => draftThumbBlobId(draft), [draft]);
+  const thumb = useBlobUrl(thumbId);
+  const steps = STEPS[draft.path];
+  const step = Math.min(draft.step, steps.length - 1);
+  const element = draft.path === "element";
+  const name = draft.name.trim() || (element ? "Untitled element" : "Untitled character");
+  return (
+    <Link to={`/characters/new?from=${draft.path}`} className="grid gap-3 rounded-media border border-dashed border-rule p-2 hover:bg-tint-hover">
+      <Take src={thumb} alt={`${name}, in progress`} aspect={element && draft.elementType === "location" ? "16 / 9" : "4 / 5"} fit={element ? "cover" : "contain"} />
+      <div className="grid gap-2">
+        <span className="text-panel font-semibold">{name}</span>
+        <div className="flex flex-wrap gap-2">
+          <Badge>In progress</Badge>
+          {draft.path === "photos" && <Badge>From photos</Badge>}
+          {draft.path === "text" && <Badge>Designed</Badge>}
+          {draft.path !== "element" && draft.appearance === "animated" && <Badge>Animated</Badge>}
+        </div>
+        <span className="text-control text-ink-muted">
+          Continue at step {step + 1} of {steps.length}: {steps[step]!.label}
+        </span>
       </div>
     </Link>
   );
@@ -119,10 +151,12 @@ const TABS: { value: Tab; label: string }[] = [
 // elements on their own tabs, so a vault of props doesn't bury the cast.
 export function CharactersScreen() {
   const characters = useCharacters();
+  const drafts = useLiveQuery(loadStartedDrafts, []);
   const [pending, setPending] = useState<PendingImport>();
   const [tab, setTab] = useState<Tab>("person");
-  const empty = characters !== undefined && characters.length === 0;
+  const empty = characters !== undefined && characters.length === 0 && drafts !== undefined && drafts.length === 0;
   const shown = characters?.filter((c) => c.kind === tab) ?? [];
+  const shownDrafts = drafts?.filter((d) => (d.path === "element") === (tab === "element")) ?? [];
   const count = (kind: Tab) => characters?.filter((c) => c.kind === kind).length ?? 0;
 
   return (
@@ -176,8 +210,13 @@ export function CharactersScreen() {
             ))}
           </div>
           <div id="vault-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
-            {shown.length ? (
+            {shown.length || shownDrafts.length ? (
               <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {shownDrafts.map((draft) => (
+                  <li key={draft.path}>
+                    <DraftCard draft={draft} />
+                  </li>
+                ))}
                 {shown.map((record) => (
                   <li key={record.id}>
                     <CharacterCard record={record} />

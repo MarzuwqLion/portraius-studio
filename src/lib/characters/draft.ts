@@ -46,6 +46,8 @@ export interface WizardDraft {
   updatedAt: number;
 }
 
+export const CREATE_PATHS: readonly CreatePath[] = ["photos", "text", "element"];
+
 const draftId = (path: CreatePath) => `wizard:${path}`;
 export const draftBlobId = (path: CreatePath, name: string) => `wizard:${path}:${name}`;
 
@@ -78,6 +80,31 @@ export async function loadDraft(path: CreatePath): Promise<WizardDraft | undefin
   } catch {
     return undefined;
   }
+}
+
+// Whether the visitor has done anything in a draft worth coming back to: a
+// photo, a description, a drawing or a name. Flipping a toggle isn't.
+export function isStarted(draft: WizardDraft): boolean {
+  return Boolean(
+    draft.photos.length || draft.personDescription.trim() || draft.candidateJobIds.length || draft.compositeJobIds.length || draft.name.trim() || draft.description.trim(),
+  );
+}
+
+// Every started draft, newest first: the Characters screen shows each as a
+// card to continue from.
+export async function loadStartedDrafts(): Promise<WizardDraft[]> {
+  const rows = await db.blobs.bulkGet(CREATE_PATHS.map(draftId));
+  const drafts = await Promise.all(
+    rows.map(async (row) => {
+      if (!row) return undefined;
+      try {
+        return JSON.parse(await row.blob.text()) as WizardDraft;
+      } catch {
+        return undefined;
+      }
+    }),
+  );
+  return drafts.filter((d): d is WizardDraft => Boolean(d && isStarted(d))).sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
 export async function saveDraft(draft: WizardDraft): Promise<WizardDraft> {

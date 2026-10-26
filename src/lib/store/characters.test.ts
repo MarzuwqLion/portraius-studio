@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { clearDraft, loadDraft, newDraft, putDraftBlob, saveDraft } from "@/lib/characters/draft";
+import { clearDraft, loadDraft, loadStartedDrafts, newDraft, putDraftBlob, saveDraft } from "@/lib/characters/draft";
 import type { CharacterFile } from "@/lib/types/records";
 import { blobIdFor, deleteCharacter, isUsable, loadBundle, saveCharacter } from "./characters";
 import { db } from "./db";
@@ -78,5 +78,20 @@ describe("wizard drafts", () => {
     await clearDraft("photos");
     expect(await loadDraft("photos")).toBeUndefined();
     expect(await db.blobs.get(blobId)).toBeUndefined();
+  });
+});
+
+describe("drafts in progress", () => {
+  it("lists only started drafts, newest first, and drops one once it's cleared", async () => {
+    await saveDraft({ ...newDraft("photos"), appearance: "animated" });
+    expect(await loadStartedDrafts()).toEqual([]);
+
+    await saveDraft({ ...newDraft("text"), personDescription: "A girl with a messy auburn braid" });
+    await new Promise((r) => setTimeout(r, 5));
+    await saveDraft({ ...newDraft("element"), name: "Rust jacket" });
+    expect((await loadStartedDrafts()).map((d) => d.path)).toEqual(["element", "text"]);
+
+    await clearDraft("element");
+    expect((await loadStartedDrafts()).map((d) => d.path)).toEqual(["text"]);
   });
 });

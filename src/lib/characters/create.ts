@@ -74,6 +74,18 @@ async function requireJobImage(jobId: string | undefined, what: string): Promise
   return image;
 }
 
+// The best picture of a draft so far, as a blob ID: the picked front view,
+// the picked face, the latest sheet, or the first good photo.
+export async function draftThumbBlobId(draft: WizardDraft): Promise<string | undefined> {
+  for (const jobId of [draft.pickedViewJobIds.front, draft.pickedCandidateJobId, draft.compositeJobIds.at(-1)]) {
+    const job = jobId ? await db.jobs.get(jobId) : undefined;
+    const generation = job?.status === "done" ? await db.generations.get(job.generationIds[0] ?? "") : undefined;
+    const asset = generation?.assets.find((a) => a.kind === "image");
+    if (asset) return asset.blobId;
+  }
+  return goodPhotos(draft)[0]?.blobId ?? draft.photos[0]?.blobId;
+}
+
 // ---- Sheet ----
 
 // Real or animated, as the sheet prompts take it. An element has neither.

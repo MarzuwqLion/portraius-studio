@@ -15,7 +15,7 @@ import { useDraft } from "./wizard/useDraft";
 
 type StepName = "photos" | "consent" | "design" | "pick" | "elementPhotos" | "sheet" | "describe" | "save";
 
-const STEPS: Record<CreatePath, { name: StepName; label: string }[]> = {
+export const STEPS: Record<CreatePath, { name: StepName; label: string }[]> = {
   photos: [
     { name: "photos", label: "Photos" },
     { name: "consent", label: "Consent" },
