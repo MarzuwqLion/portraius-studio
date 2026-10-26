@@ -19,6 +19,7 @@ export function CharacterBadges({ record }: { record: CharacterRecord }) {
       ) : (
         <Badge>{record.file.origin === "photos" ? "From photos" : "Designed"}</Badge>
       )}
+      {record.kind === "person" && record.file.appearance === "animated" && <Badge>Animated</Badge>}
       {record.file.consent && <Badge>Consent on file</Badge>}
       {record.locked && <Badge tone="warning">Locked</Badge>}
     </div>

@@ -92,7 +92,7 @@ function ViewPanel({ record, view }: { record: CharacterRecord; view: SheetView 
         {view === "profile" && <span className="text-control text-ink-muted">Profiles score low by design.</span>}
       </span>
     ) : elementType ? null : (
-      <span className="text-control text-ink-muted">No face data to score against</span>
+      <span className="text-control text-ink-muted">{record.file.appearance === "animated" ? "Animated characters aren't scored" : "No face data to score against"}</span>
     );
   const working = jobs?.some((j) => j && !["done", "failed", "cancelled", "expired"].includes(j.status));
   const choosing = redraws.length > 0;
@@ -372,7 +372,7 @@ export function CharacterDetailScreen() {
           </p>
         )}
         {record.kind === "person" && <VoicePanel record={record} />}
-        {record.kind === "person" && !record.locked && <LikenessSheetPanel record={record} />}
+        {record.kind === "person" && !record.locked && record.file.appearance !== "animated" && <LikenessSheetPanel record={record} />}
         <ExportPanel record={record} />
         <DeletePanel record={record} />
       </div>

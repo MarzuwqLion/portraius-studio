@@ -8,7 +8,8 @@ import { toInlineImage } from "@/lib/media/image-prep";
 import { isLocalModel } from "@/lib/registry/models";
 import { useFeatureModels } from "@/lib/session/engine";
 import { db } from "@/lib/store/db";
-import { useBlobUrl, useGeneration } from "@/lib/store/hooks";
+import { useBlobUrl, useCharacters, useGeneration } from "@/lib/store/hooks";
+import { isAnimatedCast } from "@/lib/studio/cast";
 import { DEFAULT_STRENGTH, realismSource, startRealism, type RealismJobInput } from "@/lib/studio/realism";
 import type { Job } from "@/lib/types/jobs";
 import { cn } from "@/lib/utils";
@@ -17,9 +18,12 @@ import { jobStatusText } from "./JobTake";
 import { ScoreBadge, Take } from "./Take";
 
 // "Make it real" on a still, with its Realism strength slider right beside it,
-// as one group, so the slider reads as the pass's own setting.
+// as one group, so the slider reads as the pass's own setting. A still of
+// animated characters doesn't get it: the pass adds photoreal skin.
 export function RealismAction({ generationId, onStarted, className }: { generationId: string; onStarted?: (job: Job) => void; className?: string }) {
   const id = useId();
+  const generation = useGeneration(generationId);
+  const characters = useCharacters();
   const [strength, setStrength] = useState(DEFAULT_STRENGTH);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
@@ -51,6 +55,8 @@ export function RealismAction({ generationId, onStarted, className }: { generati
       setBusy(false);
     }
   }
+
+  if (generation && isAnimatedCast(generation.characterIds.map((c) => characters?.find((r) => r.id === c)))) return null;
 
   return (
     <div role="group" aria-label="Make it real" className={cn("flex flex-wrap items-center gap-3", className)}>

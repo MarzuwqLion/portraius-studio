@@ -14,7 +14,7 @@ vi.mock("@/lib/studio/realism", () => ({
   realismSource: () => undefined,
 }));
 vi.mock("@/lib/jobs/hooks", () => ({ useEstimateLabel: () => "≈ $0.37", useJob: () => undefined }));
-vi.mock("@/lib/store/hooks", () => ({ useBlobUrl: () => undefined, useGeneration: () => undefined }));
+vi.mock("@/lib/store/hooks", () => ({ useBlobUrl: () => undefined, useCharacters: () => [], useGeneration: () => undefined }));
 
 afterEach(() => {
   cleanup();

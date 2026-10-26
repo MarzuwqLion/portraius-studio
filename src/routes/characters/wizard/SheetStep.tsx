@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { JobTake } from "@/components/studio/JobTake";
 import { ScoreBadge } from "@/components/studio/Take";
 import { Button } from "@/components/ui/button";
-import { compositeInputFor, jobImage, pickedViews, referenceDescriptors, scoreImage, startComposite, startView } from "@/lib/characters/create";
+import { compositeInputFor, isAnimatedDraft, jobImage, pickedViews, referenceDescriptors, scoreImage, startComposite, startView } from "@/lib/characters/create";
 import type { WizardDraft } from "@/lib/characters/draft";
 import { FLAGGED_VIEWS, SHEET_VIEWS, viewAspect, viewLabel, type SheetView } from "@/lib/characters/sheet";
 import { MATCH_SCORE } from "@/lib/identity/score";
@@ -24,9 +24,10 @@ export function SheetStep({ draft, update, onNext }: { draft: WizardDraft; updat
   const [busy, setBusy] = useState(false);
   const startedViewsFor = useRef<string | undefined>(undefined);
   const scoring = useRef(new Set<string>());
-  // An element has no face, so nothing is scored.
+  // An element has no face, so nothing is scored; nor is an animated face,
+  // which face-api can't match.
   const elementType = draft.path === "element" ? (draft.elementType ?? "prop") : undefined;
-  const scored = !elementType;
+  const scored = !elementType && !isAnimatedDraft(draft);
   const { modelId, option } = useFeatureModels("characters");
   const price = useEstimateLabel(modelId, compositeId ? undefined : () => compositeInputFor(draft, modelId), draft.id);
 

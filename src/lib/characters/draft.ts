@@ -2,7 +2,7 @@
 // (Contracts: #/characters/new). The Contracts schema has no table for drafts,
 // so the draft is a JSON blob in the blobs table, beside its photos.
 import { db } from "@/lib/store/db";
-import type { ConsentRecord } from "@/lib/types/records";
+import type { Appearance, ConsentRecord } from "@/lib/types/records";
 import type { ElementType } from "./element-sheet";
 import type { SheetView } from "./sheet";
 
@@ -25,6 +25,8 @@ export interface WizardDraft {
   path: CreatePath;
   step: number;
   elementType?: ElementType;     // element path only
+  appearance?: Appearance;       // person paths; unset (an older draft) means "real"
+  artStyle?: string;             // animated only
   photos: DraftPhoto[];
   consent?: ConsentRecord;
   consentClipBlobId?: string;

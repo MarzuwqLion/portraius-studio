@@ -54,6 +54,15 @@ describe("compileImagePrompt", () => {
     expect(prompt).toContain("SECOND: Silver braids, green linen jacket.");
   });
 
+  it("locks an animated person to their design and style, without the realism line", () => {
+    const toon: CastMember = { slot: "lead", name: "Hana", kind: "person", appearance: "animated", artStyle: "hand-drawn anime", references: ["sheet", "front"] };
+    const prompt = compileImagePrompt({ scene: "{lead} waits at a rainy bus stop", cast: [toon, outfit], camera: {}, modelId: NANO });
+    expect(prompt).toContain("Keep LEAD's exact character design, face, hair and colours from images 1 and 2, drawn in the same art style (hand-drawn anime). Do not make them photoreal.");
+    expect(prompt).not.toMatch(/skin|pores/);
+    expect(compileImagePrompt({ scene: "{lead} and {second}", cast: [toon, { ...lead, slot: "second" }], camera: {}, modelId: NANO, editing: true })).not.toContain("pores");
+    expect(compileVideoPrompt({ scene: "{lead} waves", cast: [toon], camera: {}, modelId: NANO, withReferences: true })).toContain("drawn in the same art style");
+  });
+
   it("is plain text-to-image with no cast, without the skin realism line", () => {
     expect(compileImagePrompt({ scene: "a teapot on a windowsill", cast: [], camera: {}, modelId: NANO })).toBe("A teapot on a windowsill.");
     expect(compileImagePrompt({ scene: "make it morning", cast: [], camera: {}, modelId: NANO, editing: true })).toContain("visible pores");

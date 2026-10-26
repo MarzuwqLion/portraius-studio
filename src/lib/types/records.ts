@@ -11,6 +11,11 @@ export type ConsentRecord = {
   appVersion: string;
 };
 
+// How a person is drawn: a real-looking person (the default) or an animated
+// character. Animated prompts never ask for photoreal skin, and an animated
+// cast may render on Seedance, which refuses only photoreal people.
+export type Appearance = "real" | "animated";
+
 export type CharacterFile = {
   format: "portraius.character";
   version: 1;
@@ -19,6 +24,8 @@ export type CharacterFile = {
   elementType?: "outfit" | "prop" | "location" | "style";
   name: string;
   description: string;                // user-written, inserted into prompts
+  appearance?: Appearance;            // person only; unset means "real"
+  artStyle?: string;                  // animated only: "Studio Ghibli-style hand-drawn anime"
   createdAt: string;
   updatedAt: string;
   photos: { path: string; width: number; height: number }[];

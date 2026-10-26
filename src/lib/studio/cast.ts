@@ -28,6 +28,30 @@ export function nextSlot(record: CharacterRecord, used: readonly string[]): stri
   return `${base}${n}`;
 }
 
+function memberOf(pick: CastPick, record: CharacterRecord): Omit<CastMember, "references"> {
+  const { appearance, artStyle } = record.file;
+  const animated = record.kind === "person" && appearance === "animated";
+  return {
+    slot: pick.slot,
+    name: record.name,
+    kind: record.kind,
+    description: record.file.description,
+    ...(animated ? { appearance, ...(artStyle ? { artStyle } : {}) } : {}),
+  };
+}
+
+// A cast of animated people (elements beside them are fine): Seedance takes
+// them, since it refuses only photoreal people. A cast with no person, or
+// with any real person, isn't.
+export function isAnimatedCast(records: readonly (CharacterRecord | undefined)[]): boolean {
+  const people = records.filter((r) => r?.kind === "person");
+  return people.length > 0 && people.every((r) => r!.file.appearance === "animated");
+}
+
+export async function castIsAnimated(picks: readonly CastPick[]): Promise<boolean> {
+  return picks.length > 0 && isAnimatedCast(await db.characters.bulkGet(picks.map((p) => p.characterId)));
+}
+
 export interface CastBundle {
   members: CastMember[];
   images: InlineImage[];
@@ -61,7 +85,7 @@ export async function buildCast(picks: readonly CastPick[], options: { withFront
       refs.push(photo ? { kind: "photo", blob: file(photo.path) } : { kind: "front", blob: file(record.file.sheet.views.front) });
       if (options.withFront && photo) refs.push({ kind: "front", blob: file(record.file.sheet.views.front) });
     }
-    members.push({ slot: pick.slot, name: record.name, kind: record.kind, description: record.file.description, references: refs.map((r) => r.kind) });
+    members.push({ ...memberOf(pick, record), references: refs.map((r) => r.kind) });
     for (const ref of refs) images.push(await toInlineImage(ref.blob));
   }
   return { members, images, characterIds: picks.map((p) => p.characterId) };
@@ -78,7 +102,7 @@ export async function describeCast(picks: readonly CastPick[], options: { compac
     if (!record) return [];
     const references: ReferenceKind[] =
       record.kind !== "person" ? ["sheet"] : options.compact ? ["front"] : ["sheet", record.file.photos.length ? "photo" : "front"];
-    return [{ slot: pick.slot, name: record.name, kind: record.kind, description: record.file.description, references }];
+    return [{ ...memberOf(pick, record), references }];
   });
 }
 

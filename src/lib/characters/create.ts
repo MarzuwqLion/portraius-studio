@@ -15,7 +15,7 @@ import type { CharacterFile, CharacterRecord } from "@/lib/types/records";
 import { CONSENT_CLIP, THUMB, isLocked } from "./format";
 import { clearDraft, loadDraft, newDraft, putDraftBlob, saveDraft, type CreatePath, type DraftPhoto, type WizardDraft } from "./draft";
 import { MAX_ELEMENT_PHOTOS, MIN_ELEMENT_PHOTOS, elementCompositeInput, elementViewInput } from "./element-sheet";
-import { CANDIDATE_COUNT, SHEET_PATHS, SHEET_VIEWS, candidateInput, compositeInput, viewInput, type SheetView } from "./sheet";
+import { CANDIDATE_COUNT, SHEET_PATHS, SHEET_VIEWS, candidateInput, compositeInput, viewInput, type SheetLook, type SheetView } from "./sheet";
 
 export const MIN_PHOTOS = 3;
 export const MAX_PHOTOS = 10;
@@ -76,6 +76,15 @@ async function requireJobImage(jobId: string | undefined, what: string): Promise
 
 // ---- Sheet ----
 
+// Real or animated, as the sheet prompts take it. An element has neither.
+export function lookOf(draft: Pick<WizardDraft, "path" | "appearance" | "artStyle">): SheetLook {
+  if (draft.path === "element" || draft.appearance !== "animated") return {};
+  return { appearance: "animated", ...(draft.artStyle?.trim() ? { artStyle: draft.artStyle.trim() } : {}) };
+}
+
+// An animated character's face isn't one face-api can match, so it isn't scored.
+export const isAnimatedDraft = (draft: Pick<WizardDraft, "path" | "appearance">) => draft.path !== "element" && draft.appearance === "animated";
+
 // What the sheet is drawn from: the photos, or the picked candidate face.
 async function sheetReferences(draft: WizardDraft): Promise<InlineImage[]> {
   if (draft.path === "text") return [await toInlineImage(await requireJobImage(draft.pickedCandidateJobId, "picked face"))];
@@ -96,7 +105,7 @@ function fitPhotos(modelId: string, photos: InlineImage[], others: number): Inli
 
 export async function compositeInputFor(draft: WizardDraft, modelId: string): Promise<ReturnType<typeof compositeInput>> {
   const references = fitPhotos(modelId, await sheetReferences(draft), 0);
-  return draft.path === "element" ? elementCompositeInput(draft.elementType ?? "prop", references) : compositeInput(references);
+  return draft.path === "element" ? elementCompositeInput(draft.elementType ?? "prop", references) : compositeInput(references, lookOf(draft), draft.path === "photos");
 }
 
 export async function startComposite(draft: WizardDraft, modelId: string): Promise<string> {
@@ -113,13 +122,15 @@ async function compositeModel(draft: WizardDraft): Promise<string> {
 export async function startView(draft: WizardDraft, view: SheetView): Promise<string> {
   const modelId = await compositeModel(draft);
   const composite = await toInlineImage(await requireJobImage(draft.compositeJobIds.at(-1), "turnaround sheet"));
-  const references = fitPhotos(modelId, await sheetReferences(draft), 1);
-  const input = draft.path === "element" ? elementViewInput(draft.elementType ?? "prop", view, references, composite) : viewInput(view, references, composite);
+  // An animated character from photos is drawn from its sheet alone: the
+  // photos would pull the views back toward a photograph.
+  const references = isAnimatedDraft(draft) && draft.path === "photos" ? [] : fitPhotos(modelId, await sheetReferences(draft), 1);
+  const input = draft.path === "element" ? elementViewInput(draft.elementType ?? "prop", view, references, composite) : viewInput(view, references, composite, lookOf(draft));
   return sheetJob(modelId, input, `Sheet view: ${view}`);
 }
 
-export async function startCandidates(description: string, modelId: string): Promise<string[]> {
-  const input = candidateInput(description);
+export async function startCandidates(description: string, modelId: string, look: SheetLook = {}): Promise<string[]> {
+  const input = candidateInput(description, look);
   const ids: string[] = [];
   for (let i = 0; i < CANDIDATE_COUNT; i++) ids.push(await sheetJob(modelId, { ...input, seed: Math.floor(Math.random() * 2 ** 31) }, "Candidate face"));
   return ids;
@@ -128,7 +139,7 @@ export async function startCandidates(description: string, modelId: string): Pro
 // ---- Identity ----
 
 export async function referenceDescriptors(draft: WizardDraft): Promise<number[][]> {
-  if (draft.path === "element") return [];
+  if (draft.path === "element" || isAnimatedDraft(draft)) return [];
   if (draft.path === "text") return draft.candidateDescriptor ? [draft.candidateDescriptor] : [];
   return goodPhotos(draft).flatMap((p) => (p.descriptor ? [p.descriptor] : []));
 }
@@ -196,6 +207,8 @@ export async function saveFromDraft(draft: WizardDraft): Promise<CharacterRecord
     origin: draft.path === "text" ? "designed" : "photos",
     name: draft.name.trim(),
     description: draft.description.trim(),
+    ...(draft.path === "element" ? {} : { appearance: isAnimatedDraft(draft) ? ("animated" as const) : ("real" as const) }),
+    ...(lookOf(draft).artStyle ? { artStyle: lookOf(draft).artStyle } : {}),
     createdAt: now,
     updatedAt: now,
     photos: photoEntries,

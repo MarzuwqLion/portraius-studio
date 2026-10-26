@@ -44,7 +44,7 @@ Marzuwq settled every open decision on October 19, and the UI pass on October 21
 | Decision | Answer |
 | --- | --- |
 | Name | Portraius Studio. Repo `portraius-studio`. |
-| Video models | Seedance 2.5 is the default video model for anything without people. Seedance refuses photoreal people as input images (M3 notes), so every video with a cast or a face in its first frame renders on MiniMax H3 (768P or 2K, 4 to 15 s, no draft mode). Decided by Marzuwq on October 19 after M3; it replaces "H3 is selectable, never the default". |
+| Video models | Seedance 2.5 is the default video model for anything without people. Seedance refuses photoreal people as input images (M3 notes), so every video with a cast or a face in its first frame renders on MiniMax H3 (768P or 2K, 4 to 15 s, no draft mode). Decided by Marzuwq on October 19 after M3; it replaces "H3 is selectable, never the default". A cast of animated characters may render on Seedance: see Decisions (October 26). |
 | Open weights | Not pursued. No open-weights profile, no Open Weights Only entry. Superseded on October 22: see Decisions (October 22) and Local engine. Still no Open Weights Only entry. |
 | Hosting | GitHub Pages, as a static site. See Architecture for what that changes. |
 | Keys | The visitor's own Comfy API key, plus a no-key Tour mode with pre-made samples. |
@@ -108,6 +108,15 @@ Marzuwq reopened the October 19 open-weights decision so that someone who doesn'
 | 4 | Prices | A local run's price reads "Free · your GPU". Decision October 21 item 2 still holds for Router models. | The visitor pays for nothing but power, and should see that before running. |
 | 5 | Contracts | Module boundaries: `lib/router` also talks to the visitor's ComfyUI (`lib/router/local.ts`), still only through `client.ts`. Error mapping: six `local_*` codes and the `check_local` action. Configuration: the CSP allows loopback ComfyUI origins; the ComfyUI URL is a Setting, not a variable. Dexie: no new version is needed (the new Settings fields aren't indexed, and a generation's `modelId` says where it ran). | Approved by Marzuwq, October 22. |
 | 6 | Local Recast in two steps (October 23) | Qwen draws the performer into the clip's first frame in the setting, then Wan Animate 2 moves that still (Local engine, Models). Local Recast needs Qwen's files as well as Wan Animate's. | On the 4090, Wan Animate 2 kept its reference's framing and background: a front view gave a talking head with no dance, and a padded full-body view a figure boxed in grey. A still in the setting gave the full dance on a real stage (docs/notes/local-notes.md). Marzuwq, October 23. |
+
+### Decisions (October 26, animated characters)
+
+| # | Decision | Answer | Why |
+| --- | --- | --- | --- |
+| 1 | Real or animated | Both person paths (photos and design from text) open with a Real person / Animated toggle, plus an optional art style when animated. Real is the default and keeps every prompt as it was. An animated character's candidate, sheet and view prompts never ask for a photograph, skin texture or a studio, and every view keeps the art style. An animated character from photos draws its views from its sheet alone. The file stores `appearance` and `artStyle`; a file without them is a real person. | A Studio Ghibli-style character got a good sheet, but the four views drifted into a photoreal woman on every reroll: the view prompts asked for "one photograph" with "visible pores". |
+| 2 | Scoring | Animated characters aren't face-scored: no face check on the picked face, no scores on the sheet, no identity data in the file, so their shots aren't scored either. The likeness sheet and "Make it real" are hidden for them. | face-api is trained on photos; its distances on a drawn face mean nothing. |
+| 3 | Prompts | An animated cast member's lock keeps their design, colours and art style and says not to make them photoreal. The realism line is never added beside an animated character. | The same drift as item 1, in Image, Video and Director. |
+| 4 | Video model | A video whose cast is all animated (elements beside them are fine) keeps the chosen model, Seedance 2.5 by default, in Video, Director and remixes; a face in its first frame doesn't send it to H3. Any real person in the cast still renders on MiniMax H3. Recast stays on H3: its source clip has a real performer, which Seedance refuses whoever the character is. Replaces part of the October 19 video decision. | Seedance refuses only photoreal people. Marzuwq, October 26. |
 
 ### Defaults
 
@@ -370,6 +379,8 @@ export type CharacterFile = {
   elementType?: "outfit" | "prop" | "location" | "style";
   name: string;
   description: string;                // user-written, inserted into prompts
+  appearance?: "real" | "animated";   // person only; unset means "real" (Decisions, October 26)
+  artStyle?: string;                  // animated only, kept in every view and shot
   createdAt: string;
   updatedAt: string;
   photos: { path: string; width: number; height: number }[];

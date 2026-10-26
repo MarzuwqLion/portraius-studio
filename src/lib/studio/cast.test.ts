@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { castOfTake } from "./cast";
+import type { CharacterRecord } from "@/lib/types/records";
+import { castOfTake, isAnimatedCast } from "./cast";
+
+const record = (kind: "person" | "element", appearance?: "real" | "animated") => ({ kind, file: { kind, ...(appearance ? { appearance } : {}) } }) as CharacterRecord;
+
+describe("isAnimatedCast", () => {
+  it("is true only when every person is animated", () => {
+    expect(isAnimatedCast([record("person", "animated")])).toBe(true);
+    expect(isAnimatedCast([record("person", "animated"), record("element")])).toBe(true);
+    expect(isAnimatedCast([record("person", "animated"), record("person", "real")])).toBe(false);
+    // An older file has no appearance: a real person.
+    expect(isAnimatedCast([record("person")])).toBe(false);
+    expect(isAnimatedCast([record("element")])).toBe(false);
+    expect(isAnimatedCast([])).toBe(false);
+  });
+});
 
 describe("castOfTake", () => {
   it("uses the request's cast when the job kept it", () => {

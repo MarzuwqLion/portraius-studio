@@ -10,7 +10,7 @@ import type { CharacterBundle, CharacterFile, CharacterRecord } from "@/lib/type
 import { jobImage } from "./create";
 import { THUMB, exportCharacter, importCharacter, type ImportSummary } from "./format";
 import { elementViewInput } from "./element-sheet";
-import { SHEET_PATHS, viewInput, type SheetView } from "./sheet";
+import { SHEET_PATHS, viewInput, type SheetLook, type SheetView } from "./sheet";
 
 async function requireBundle(id: string): Promise<CharacterBundle> {
   const bundle = await loadBundle(id);
@@ -25,12 +25,15 @@ function requireFile(bundle: CharacterBundle, path: string): Blob {
 }
 
 // A view is redrawn from the photos (or, for a designed character, the front
-// view) plus the composite, like the wizard draws it.
+// view) plus the composite, like the wizard draws it. An animated character
+// from photos is drawn from its sheet alone, as in the wizard.
 export async function startRedraw(record: CharacterRecord, view: SheetView): Promise<string> {
   if (!isUsable(record)) throw new Error("This character was imported without a consent record, so it can't be used in any generation.");
   const bundle = await requireBundle(record.id);
-  const references: InlineImage[] =
-    record.file.origin === "photos" && record.file.photos.length
+  const animated = lookOfRecord(record).appearance === "animated";
+  const references: InlineImage[] = animated && record.file.origin === "photos"
+    ? []
+    : record.file.origin === "photos" && record.file.photos.length
       ? await Promise.all(record.file.photos.map(async (p) => ({ mime: "image/jpeg" as const, base64: await blobToBase64(requireFile(bundle, p.path)) })))
       : [await toInlineImage(requireFile(bundle, record.file.sheet.views.front))];
   const composite = await toInlineImage(requireFile(bundle, record.file.sheet.composite));
@@ -38,13 +41,18 @@ export async function startRedraw(record: CharacterRecord, view: SheetView): Pro
     kind: "sheet",
     modelId: MODEL_IDS.nanoBanana,
     input: {
-      model: record.kind === "element" ? elementViewInput(elementType(record), view, references, composite) : viewInput(view, references, composite),
+      model: record.kind === "element" ? elementViewInput(elementType(record), view, references, composite) : viewInput(view, references, composite, lookOfRecord(record)),
       // An element has no face to score.
       characterIds: record.kind === "person" ? [record.id] : [],
       prompt: `Redraw ${view} view of ${record.name}`,
     },
   });
   return job.id;
+}
+
+export function lookOfRecord(record: CharacterRecord): SheetLook {
+  const { appearance, artStyle } = record.file;
+  return record.kind === "person" && appearance === "animated" ? { appearance, ...(artStyle ? { artStyle } : {}) } : {};
 }
 
 function elementType(record: CharacterRecord) {

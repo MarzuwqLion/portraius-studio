@@ -11,6 +11,9 @@ export interface CastMember {
   name: string;
   kind: "person" | "element";
   description?: string;
+  // An animated person keeps their art style and never gets the realism line.
+  appearance?: "real" | "animated";
+  artStyle?: string;
   // The images sent for this member, in order.
   references: ReferenceKind[];
 }
@@ -27,6 +30,14 @@ export interface PromptInput {
 export const REALISM = "Natural skin texture with visible pores, real lens imperfections.";
 
 export const role = (slot: string) => slot.toUpperCase();
+
+const isAnimated = (member: CastMember) => member.kind === "person" && member.appearance === "animated";
+const isRealPerson = (member: CastMember) => member.kind === "person" && member.appearance !== "animated";
+
+function animatedLock(member: CastMember, images: string): string {
+  const style = member.artStyle?.trim().replace(/[.\s]+$/, "");
+  return `Keep ${role(member.slot)}'s exact character design, face, hair and colours from ${images}, drawn in the same art style${style ? ` (${style})` : ""}. Do not make them photoreal.`;
+}
 
 export { slotsIn };
 
@@ -62,7 +73,9 @@ function castBlock(cast: CastMember[], first: number, prefix: string): { legend:
       legend.push(legendLine(n, ref, member, prefix));
       indexes.push(n++);
     }
-    if (member.kind === "person" && indexes.length) {
+    if (isAnimated(member) && indexes.length) {
+      locks.push(animatedLock(member, listImages(indexes)));
+    } else if (member.kind === "person" && indexes.length) {
       locks.push(`Keep ${role(member.slot)}'s exact face, skin tone, skin texture and hair from ${listImages(indexes)}. Do not beautify or change their age.`);
     }
   }
@@ -86,8 +99,9 @@ export function compileImagePrompt(input: PromptInput): string {
     descriptions(input.cast).join(" "),
     sentence(input.scene.replace(SLOT, (_, slot: string) => role(slot))),
     cameraLine(input),
-    // Skin and lens realism only where a person can be in the shot.
-    isStylised(input.camera) || !(input.editing || input.cast.some((m) => m.kind === "person")) ? "" : REALISM,
+    // Skin and lens realism only where a real person can be in the shot, and
+    // never beside an animated one.
+    isStylised(input.camera) || input.cast.some(isAnimated) || !(input.editing || input.cast.some(isRealPerson)) ? "" : REALISM,
   ]
     .filter(Boolean)
     .join("\n");
@@ -119,6 +133,7 @@ export function compileOneTakeShots(input: { shots: OneTakeShot[]; cast: CastMem
       .filter((m) => named.has(m.slot.toLowerCase()) && tokens.get(m.slot.toLowerCase())?.length)
       .map((m) => {
         const images = list(tokens.get(m.slot.toLowerCase())!);
+        if (isAnimated(m)) return `${role(m.slot)} is the animated character in ${images}, with the same design and art style.`;
         return m.kind === "person" ? `${role(m.slot)} is the person in ${images}, with the same face and hair.` : `The ${role(m.slot)} is the one in ${images}.`;
       });
     const action = sentence(shot.scene.replace(SLOT, (_, slot: string) => role(slot)));

@@ -37,6 +37,8 @@ const characterJson = z.object({
   elementType: z.enum(["outfit", "prop", "location", "style"]).optional(),
   name: z.string().trim().min(1).max(80),
   description: z.string().max(2000),
+  appearance: z.enum(["real", "animated"]).optional(),
+  artStyle: z.string().max(200).optional(),
   createdAt: isoDate,
   updatedAt: isoDate,
   photos: z.array(z.object({ path, width: z.number().int().positive(), height: z.number().int().positive() })).max(10),

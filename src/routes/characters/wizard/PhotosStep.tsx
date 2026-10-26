@@ -5,6 +5,7 @@ import { MAX_PHOTOS, MIN_PHOTOS, addPhoto, goodPhotos } from "@/lib/characters/c
 import { deleteDraftBlob, type DraftPhoto, type PhotoQuality, type WizardDraft } from "@/lib/characters/draft";
 import { useBlobUrl } from "@/lib/store/hooks";
 import { cn } from "@/lib/utils";
+import { AppearanceField } from "./AppearanceField";
 import type { UpdateDraft } from "./useDraft";
 
 const QUALITY_TEXT: Record<PhotoQuality, string> = {
@@ -68,6 +69,7 @@ export function PhotosStep({ draft, update, onNext }: { draft: WizardDraft; upda
 
   return (
     <div className="grid gap-6">
+      <AppearanceField draft={draft} update={update} />
       <div className="grid gap-2">
         <h2 className="text-panel font-semibold">Add {MIN_PHOTOS} to {MAX_PHOTOS} photos of yourself</h2>
         <p className="max-w-[70ch] text-body text-ink-muted">
