@@ -121,8 +121,11 @@ single views. Each view gets a likeness score; **Redraw** any one you don't like
 **description** (what a face doesn't show: build, style, a usual outfit; it goes into every prompt with this
 character), optional **tags** and an optional **stock voice**, and save.
 
-A character's page has **Use in an image / a video / a recast**, its views, its voice, **Export file** (a
-`.portraius` file with the photos, sheet, face data and consent record) and **Delete character**. To bring a
+![A character's page: the turnaround sheet with front, three-quarter, profile, full body and four expressions](docs/media/screens/character.jpg)
+
+A character's page has **Use in an image / a video / a recast**, its views, its voice, a **likeness sheet** (their
+best-scored shots in one picture, each with its score, to download or share), **Export file** (a `.portraius`
+file with the photos, sheet, face data and consent record) and **Delete character**. To bring a
 character in, use **Import a .portraius file** on the Cast page; one without a consent record can be viewed but
 not used.
 
@@ -175,6 +178,8 @@ Open **Recast**.
 3. **Performer** (or the replacement image), and optional **direction** words.
 4. Tick that you filmed the clip or have the rights to use it (the sample needs no check), then **Recast**.
 
+![Recast: the sample clip, the Motion transfer presets and the performer, priced before it runs](docs/media/screens/recast.jpg)
+
 The result plays original and recast side by side; drag the line to compare. **Re-roll** appears when likeness
 drifts, and **Export 9:16** puts both in one vertical frame. On your GPU, Recast does motion transfer in two
 steps: Qwen draws the performer into the clip's first frame and setting, then Wan Animate 2 moves them through the
@@ -196,10 +201,15 @@ Open **Director** and start from the sample scene or **New scene**.
 5. When every shot has a finished take, **Export scene** joins them into one MP4, with 6-frame crossfades if
    ticked. **Shoot as one take** (Kling, with a key) makes the whole scene as one quick clip.
 
+![Director: a shot with its anchor still, its take scored frame by frame, and the timeline](docs/media/screens/director.jpg)
+
 ### 8. Library, sharing and the Tour
 
+![A result in the Library: its likeness score, model, cast and what you can do with it](docs/media/screens/library-take.jpg)
+
 - **Library** holds every result, filterable by type, cast member, model, likeness band and date. A result's page
-  has **Download**, **Export 9:16** (with an optional end card), **Speak a line**, **Animate**, **Make it real**,
+  has **Download**, **Export 9:16** (with an optional end card that can carry the likeness score, and **Share** on
+  phones), **Speak a line**, **Animate**, **Make it real**,
   **Copy remix link**, **Save as preset** and **Delete**. **Select to export** saves several results as one zip.
 - A **remix link** carries a result's recipe, never a face: whoever opens it picks their own characters for each
   slot and runs it with one click.

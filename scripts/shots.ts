@@ -71,7 +71,8 @@ const BASE_ROUTES: Route[] = [
 const server = await createServer({ root, logLevel: "error", server: { port: PORT, strictPort: true, hmr: false, watch: { ignored: ["**/*"] } } });
 await server.listen();
 const base = `http://localhost:${PORT}${server.config.base}`;
-const browser = await chromium.launch();
+// Playwright's own Chromium when it's installed, otherwise the system's Edge.
+const browser = await chromium.launch().catch(() => chromium.launch({ channel: "msedge" }));
 const report: string[] = ["# Shots report", "", `Generated ${new Date().toISOString()}.`, "", "| Pass | Size | Theme | Screen | Primary action in view |", "| --- | --- | --- | --- | --- |"];
 const cut: string[] = ["", "## Truncated select values", ""];
 const checked: string[] = [];
