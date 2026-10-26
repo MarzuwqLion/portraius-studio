@@ -23,7 +23,7 @@ Open **[marzuwqlion.github.io/portraius-studio](https://marzuwqlion.github.io/po
 To run the code yourself instead, see [Quick start](#quick-start).
 
 **Contents:** [Why it's different](#why-its-different) · [Quick start](#quick-start) ·
-[Using Portraius Studio](#using-portraius-studio) · [FAQ](#faq) · [Models](#models) · [Costs](#costs) ·
+[Using Portraius Studio](#using-portraius-studio) · [FAQ](#faq) · [Which model keeps a face?](#which-model-keeps-a-face) · [Models](#models) · [Costs](#costs) ·
 [How it works](#how-it-works) · [ComfyUI workflows](#comfyui-workflows) · [Responsible use](#responsible-use) ·
 [Contributing presets](#contributing-presets) · [License](#license)
 
@@ -222,8 +222,25 @@ Open **Director** and start from the sample scene or **New scene**.
 
 Each output with a cast member gets a score from 0 to 100 against that character's own references: **80 and up**
 is a strong match, **60 to 79** is worth a look, and **under 60** has drifted (an image gets one automatic retry).
-Videos are scored a frame a second, with the lowest frame shown too. Faces too small or turned away aren't scored,
-and stylised looks (anime, claymation) show "Score not available". The score measures likeness, not identity.
+Videos are scored a frame a second, with the lowest frame shown too; frames where the face is too small (under 80
+px) or turned away are skipped. In an image, a cast member whose face isn't found scores 0. Stylised looks (anime,
+claymation) show "Score not available". The score measures likeness, not identity.
+
+### Which model keeps a face?
+
+We ran the same character and prompts through Comfy's models and the open-weight ones on an RTX 4090 and read
+off the app's own scores ([full report](docs/likeness-report.md)):
+
+| Task | Comfy | Your GPU |
+| --- | --- | --- |
+| Stills, 10 each | Nano Banana 2.1: median 89, all 77 or more | Qwen-Image-Edit 2511: median 99, nine of ten 85 or more |
+| 5 s video, 2 each | MiniMax H3: 83 and 100 | Wan 2.2 14B: 82 and 85 |
+| Recast of a dance | MiniMax H3: 59 | Wan Animate 2: 63 |
+
+One character and a few runs, so a first look rather than a benchmark: both paths keep the face, H3 holds it best
+through movement, and the free local path is competitive.
+
+![Same character, same prompts: Nano Banana's takes and Qwen's, with their likeness scores](docs/media/likeness/images.jpg)
 
 ### When something goes wrong
 
