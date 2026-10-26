@@ -6,22 +6,26 @@ and scenes that still look like them, with a number that says how much.
 ![Recast: a dancer's clip, then the same moves, timing and camera performed by Walt Harmon, a designed character](docs/media/recast-side-by-side.gif)
 
 Portraius Studio is an open-source studio that runs in your browser on the
-[Comfy Developer Platform](https://docs.comfy.org). Every generation goes through Comfy Router with your own
-Comfy key; your characters and outputs stay in your browser. Built for Comfy's Open Source Higgsfield
-competition (#OpenSourceHiggsfield).
+[Comfy Developer Platform](https://docs.comfy.org): on Comfy's models with your own Comfy key, on open-weight
+models on your own GPU through ComfyUI for free, or both. Your characters and outputs stay in your browser. Built
+for Comfy's Open Source Higgsfield competition (#OpenSourceHiggsfield).
 
-## Try it
+## Start here
 
-**[marzuwqlion.github.io/portraius-studio](https://marzuwqlion.github.io/portraius-studio/)**
+Open **[marzuwqlion.github.io/portraius-studio](https://marzuwqlion.github.io/portraius-studio/)** and pick one:
 
-- **No key?** Open the [Tour](https://marzuwqlion.github.io/portraius-studio/#/tour). It plays pre-made samples
-  made with Walt Harmon, a designed character: his sheet, scored stills, a realism pass, video drafts and
-  finals, a Recast, a Director scene and an element. Nothing calls a model.
-- **With a key:** paste a Comfy API key with Router access in **Settings**. It stays in your browser and goes
-  only to Comfy. The Tour can add Walt to your vault, so a first image needs only the key; or make a character
-  from your photos (with a webcam consent check), or design one from a description.
-- **With a GPU and no key:** run the open-weight models on your own ComfyUI for free
-  ([`docs/local-setup.md`](docs/local-setup.md)), then tick **Use my ComfyUI** in Settings.
+| You have | Do this | Time |
+| --- | --- | --- |
+| Nothing | Open the [Tour](https://marzuwqlion.github.io/portraius-studio/#/tour): pre-made samples of every feature with Walt Harmon, a designed character. Nothing runs, nothing to set up. | 1 minute |
+| A Comfy API key | Paste it in **Settings**, then **Try this with Walt** in the Tour for a first image with a character already made. | 3 minutes |
+| An NVIDIA GPU (24 GB is best) | Install ComfyUI and the model files ([`docs/local-setup.md`](docs/local-setup.md)), start it with the CORS flag, tick **Use my ComfyUI** in Settings. Everything is free after that. | about an hour, mostly downloading |
+
+To run the code yourself instead, see [Quick start](#quick-start).
+
+**Contents:** [Why it's different](#why-its-different) · [Quick start](#quick-start) ·
+[Using Portraius Studio](#using-portraius-studio) · [FAQ](#faq) · [Models](#models) · [Costs](#costs) ·
+[How it works](#how-it-works) · [ComfyUI workflows](#comfyui-workflows) · [Responsible use](#responsible-use) ·
+[Contributing presets](#contributing-presets) · [License](#license)
 
 ## Why it's different
 
@@ -218,6 +222,24 @@ key (Settings), not enough credits, a provider refusing an input (change it and 
 "Couldn't reach your ComfyUI" (start it with the CORS flag), "missing {file}" (Settings lists the link), "ran out
 of memory" (shorter clip, smaller size or the faster model) and "restarted before this finished" (retry it).
 
+## FAQ
+
+- **Do I have to pay?** No. The Tour is free, and on your own GPU everything is free. With a Comfy key you pay
+  Comfy per generation, and every Generate button shows the price before it runs.
+- **Do I need a GPU?** No. With a Comfy key everything runs on Comfy's models. A GPU lets you run open-weight
+  models for free instead, or as well.
+- **Where do my photos and characters go?** They stay in your browser. A generation sends Comfy only what it
+  needs (a prompt and reference images); on your GPU nothing leaves your computer. Export a character as a
+  `.portraius` file to keep it or move it to another browser.
+- **Can I make a character of someone else?** Not from their photos: a character from photos needs a webcam check
+  of that person. They make their own and send you the file. Designed characters (from a description) are
+  original people who don't exist.
+- **Is it safe to let the site use my ComfyUI?** Mostly, with a few habits; see
+  [Is it safe?](docs/local-setup.md#is-it-safe) in the setup guide.
+- **Which browsers?** Chrome, Edge and Firefox on Windows were tested with a local ComfyUI. Safari hasn't been
+  tried.
+- **What does the likeness number mean?** See [Likeness scores](#likeness-scores).
+
 ## Models
 
 Every call goes through [Comfy Router](https://docs.comfy.org/development/comfy-router/queue.md), queued so it
@@ -237,6 +259,22 @@ call sends `fallback_provider=false`), so each model is served by its own provid
 | Sync-3 | `synclabs/sync-3` | Lip sync: moves the mouth of a finished clip to a line |
 | Claude Sonnet 5.5 | `anthropic/claude-sonnet-5-5` | Director's "Draft shots with AI" |
 | Wan 2.7, BFL video edit | `wan/wan2.7-videoedit`, `bfl/video-edit-v1` | Object swap alternatives, compared with Kling in [`docs/notes/recast-ab.md`](docs/notes/recast-ab.md) |
+
+### Built with MiniMax H3
+
+MiniMax H3 is the core video model wherever a person is on screen. Seedance refuses photoreal people as input,
+so every clip of a character from your vault runs on H3:
+
+- **Image, then animate** and **Use references** in Video: the character's still or sheet becomes an H3 clip,
+  with the person's identity scored frame by frame.
+- **Recast's Motion transfer**: a character from your vault takes over a clip's moves, timing and camera on H3
+  reference mode, with the clip's own sound kept.
+- **Speak a line**: a new clip of the character saying the line, with H3's native audio.
+- **Director**: every shot with a cast member is an H3 take, and shots can continue from the last frame of the
+  one before.
+
+The same H3 graphs ship as ComfyUI workflows: `still-first-video`, `recast` and `add-a-line` in
+[`workflows/`](workflows/README.md).
 
 ### On your own GPU, free
 

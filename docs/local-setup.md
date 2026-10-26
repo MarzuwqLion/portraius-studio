@@ -187,6 +187,38 @@ description" draws candidate faces from text.
 Identity scores, automatic retries, the library, remix links and character files all work the same either way.
 A character file records which model drew its sheet.
 
+## Is it safe?
+
+Mostly, with a few habits. Here's what the setup does and what to watch for.
+
+**What the flag does.** `--enable-cors-header <address>` lets that one page read your ComfyUI's answers, so the
+app can upload inputs, queue its graphs and download the results. No other website can read anything back.
+
+**What it gives up.** Without the flag, ComfyUI also refuses requests that come from other websites. With it,
+ComfyUI 0.42.1 drops that check: while it's running, a page you visit could still *send* it simple requests
+(queue a workflow using models you have, upload a file into its input folder, interrupt a run), though it can't
+see the results. Nothing on your computer outside ComfyUI is reachable this way.
+
+**What protects you.** Chrome and Edge ask before any website talks to your own computer, once per site. Allow it
+for Portraius Studio and nothing else, and other sites can't reach ComfyUI at all. ComfyUI also listens only on
+your own computer (`127.0.0.1`) unless you add `--listen`.
+
+**Habits:**
+
+- Give the exact address: `--enable-cors-header https://marzuwqlion.github.io`. Never the flag on its own, which
+  means `*` and lets every website read your ComfyUI too.
+- Start ComfyUI with the flag only while you use Portraius Studio, and with your usual launcher otherwise.
+- Use Chrome or Edge, and allow the local network prompt only for this site. Firefox worked in testing, but
+  whether it asks first wasn't confirmed.
+- Add `--listen` only on a network you trust, and only when the app runs on another computer.
+- Keep the ComfyUI you open to the web lean: ComfyUI-Manager and custom nodes you don't trust can install or run
+  code, which a stray request could reach. A separate portable install for Portraius Studio is easiest.
+- The site itself loads no analytics or third-party scripts, its Content-Security-Policy limits where it can
+  connect, and all of its code is in this repository to read.
+
+`marzuwqlion.github.io` is shared by every GitHub Pages site on that account, so the flag trusts all of them, not
+just this app; a dedicated domain for the app would narrow that to one site.
+
 ## When something goes wrong
 
 - **"Couldn't reach your ComfyUI"**: it isn't running, the address is wrong, or it was started without
