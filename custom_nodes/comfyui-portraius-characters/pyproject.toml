@@ -19,4 +19,4 @@ Documentation = "https://github.com/MarzuwqLion/portraius-studio/tree/main/custo
 # Must match the publisher created on registry.comfy.org before the first publish.
 PublisherId = "marzuwqlion"
 DisplayName = "Portraius Characters"
-Icon = ""
+Icon = "https://raw.githubusercontent.com/MarzuwqLion/portraius-studio/main/public/favicon.svg"
