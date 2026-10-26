@@ -29,5 +29,6 @@ itself (Recast, Image, Video, the character page), not slides. Captions double a
 
 - Your own character from photos (the sample character), with the consent check on camera.
 - A Recast with a high score for the opening, and its 9:16 export with the likeness on the end card.
-- ComfyUI started with `run_portraius_live.bat` if you record against the live site.
+- ComfyUI started with [`launchers/run_portraius_live.bat`](../launchers/run_portraius_live.bat) (in the portable
+  folder) if you record against the live site.
 - Keep it under 2:00; the submission form rejects longer videos.

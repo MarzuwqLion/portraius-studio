@@ -18,7 +18,7 @@ Open **[marzuwqlion.github.io/portraius-studio](https://marzuwqlion.github.io/po
 | --- | --- | --- |
 | Nothing | Open the [Tour](https://marzuwqlion.github.io/portraius-studio/#/tour): pre-made samples of every feature with Walt Harmon, a designed character. Nothing runs, nothing to set up. | 1 minute |
 | A Comfy API key | Paste it in **Settings**, then **Try this with Walt** in the Tour for a first image with a character already made. | 3 minutes |
-| An NVIDIA GPU (24 GB is best) | Install ComfyUI and the model files ([`docs/local-setup.md`](docs/local-setup.md)), start it with the CORS flag, tick **Use my ComfyUI** in Settings. Everything is free after that. | about an hour, mostly downloading |
+| An NVIDIA GPU (24 GB is best) | Install ComfyUI and the model files ([`docs/local-setup.md`](docs/local-setup.md)), start it with the CORS flag (or a ready-made launcher from [`launchers/`](launchers)), tick **Use my ComfyUI** in Settings. Everything is free after that. | about an hour, mostly downloading |
 
 To run the code yourself instead, see [Quick start](#quick-start).
 
@@ -91,8 +91,9 @@ Open **Settings** (bottom of the left rail).
 - **Comfy API key.** Paste a key with Router access from [platform.comfy.org](https://platform.comfy.org) and
   press **Save key**. It's kept for this tab only, unless you tick **Remember on this device**. It's sent only to
   `api.comfy.org` and to the project's upload Worker, which checks it with Comfy and never stores it.
-- **Your ComfyUI** (optional, free). Start ComfyUI with `--enable-cors-header` and this page's address, tick
-  **Use my ComfyUI**, and check the address (`http://127.0.0.1:8188` by default). The card shows your GPU and
+- **Your ComfyUI** (optional, free). Start ComfyUI with `--enable-cors-header` and this page's address (Windows
+  portable and Linux or Mac have ready-made launchers in [`launchers/`](launchers)), tick **Use my ComfyUI**, and
+  check the address (`http://127.0.0.1:8188` by default, `:8000` for ComfyUI Desktop). The card shows your GPU and
   marks each local model ready or lists the files it's missing, with download links. The app notices on its own
   when ComfyUI starts, stops or comes back; **Check again** asks at once. Setup steps are in
   [`docs/local-setup.md`](docs/local-setup.md).

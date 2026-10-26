@@ -38,7 +38,8 @@ npm run local:models -- "D:\ComfyUI"
 ```
 
 Use the folder that has `models/` in it. For Windows portable that's the `ComfyUI` folder inside
-`ComfyUI_windows_portable`, for example `"D:\ComfyUI_windows_portable\ComfyUI"`. It downloads every file into the
+`ComfyUI_windows_portable`, for example `"D:\ComfyUI_windows_portable\ComfyUI"`; for ComfyUI Desktop it's the
+folder you chose when you installed it (`Documents\ComfyUI` unless you changed it). It downloads every file into the
 right `models/` subfolder and skips files you already have. Hugging Face often drops long downloads; the command
 picks a dropped file up where it stopped and tries again, and if it still gives up, running it again resumes. To get
 only some models, add words from their IDs:
@@ -127,10 +128,26 @@ ComfyUI refuses calls from other web pages unless you allow the page's address. 
 | `npm run dev` on this computer | `--enable-cors-header http://localhost:5173` |
 | `npm run preview` | `--enable-cors-header http://localhost:4173` |
 
-For example, from the ComfyUI folder: `python main.py --enable-cors-header https://marzuwqlion.github.io`.
-On Windows portable, open `run_nvidia_gpu.bat` in a text editor (or a copy of it) and add the flag to the end of
-the `python_embeded\python.exe ... --windows-standalone-build` line, then start ComfyUI with that file.
-ComfyUI Desktop has the same CORS header option in its server settings.
+How you add it depends on how you installed ComfyUI:
+
+- **Windows portable**: use a ready-made launcher from this repo's [`launchers/`](../launchers) folder:
+  [`run_portraius_live.bat`](../launchers/run_portraius_live.bat) for the hosted site, or
+  [`run_portraius_dev.bat`](../launchers/run_portraius_dev.bat) for `npm run dev`. On the file's GitHub page,
+  press **Download raw file**, move the file into your `ComfyUI_windows_portable` folder (next to
+  `run_nvidia_gpu.bat`), and double-click it whenever you use the app. Windows may warn you about a file from the
+  internet; open it in Notepad first if you like. It starts ComfyUI the same way `run_nvidia_gpu.bat` does, plus the
+  flag. To do it by hand instead, add the flag to the end of the `python_embeded\python.exe ...
+  --windows-standalone-build` line in a copy of `run_nvidia_gpu.bat`.
+- **ComfyUI Desktop**: open **Settings → Server-Config**, enter the address (for example
+  `https://marzuwqlion.github.io`) in **Enable CORS header**, and restart ComfyUI. Desktop's server uses port
+  **8000**, not 8188, so in step 4 change the app's address to `http://127.0.0.1:8000` (Server-Config shows the
+  port).
+- **From git** (Linux, Mac or Windows): from the ComfyUI folder, with its Python environment active, run
+  `python main.py --enable-cors-header https://marzuwqlion.github.io`. On Linux or Mac,
+  [`run_portraius.sh`](../launchers/run_portraius.sh) does this for you: put it in the ComfyUI folder (the one with
+  `main.py`) and run `sh run_portraius.sh`, or `sh run_portraius.sh dev` for `npm run dev`. If that folder has a
+  `venv` or `.venv`, the script uses it.
+- **comfy-cli**: `comfy launch -- --enable-cors-header https://marzuwqlion.github.io`.
 
 The hosted site can only reach a ComfyUI on the same computer (`127.0.0.1` or `localhost`): browsers let an https
 page call plain http on its own machine, and nowhere else. The first time the hosted site reaches your ComfyUI,
@@ -142,12 +159,13 @@ Firefox 157 on Windows; Safari hasn't been tried.
 For a ComfyUI on another computer, run the app locally with `npm run dev` and start ComfyUI with `--listen` as
 well.
 
-ComfyUI allows one page address at a time, so if you use both the hosted site and `npm run dev`, keep two
-launchers (two copies of `run_nvidia_gpu.bat`, one per address) and start the one you need.
+ComfyUI allows one page address at a time. If you use both the hosted site and `npm run dev`, keep both launchers
+and start the one you need; in ComfyUI Desktop, change the setting and restart.
 
 ## 4. Point the app at it
 
-In the app, open **Settings**, tick **Use my ComfyUI**, check the address (`http://127.0.0.1:8188` by default) and
+In the app, open **Settings**, tick **Use my ComfyUI**, check the address (`http://127.0.0.1:8188` by default;
+`http://127.0.0.1:8000` for ComfyUI Desktop) and
 press **Check again**. The card shows your GPU and lists any model files still missing, with their links. Once a
 model is ready, its picker shows it under "On your GPU, free". With no Comfy key, only your GPU's models are
 listed. **Never spend credits** hides Comfy's models even with a key saved.
@@ -221,7 +239,8 @@ just this app; a dedicated domain for the app would narrow that to one site.
 
 ## When something goes wrong
 
-- **"Couldn't reach your ComfyUI"**: it isn't running, the address is wrong, or it was started without
+- **"Couldn't reach your ComfyUI"**: it isn't running, the address is wrong (ComfyUI Desktop uses port 8000), or
+  it was started without
   `--enable-cors-header` for this page's address. Once it's fixed, the app picks it up within 15 seconds.
 - **"Your ComfyUI is missing ..."**: a model file isn't in its folder. Settings lists it with its link.
 - **"Your ComfyUI doesn't have the ... node"**: ComfyUI is older than the models need. Update it.
