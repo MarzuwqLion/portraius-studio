@@ -1010,6 +1010,7 @@ The contest asks for workflow files in the repo, so the `workflows/` folder is P
 | --- | --- | --- |
 | `workflows/character-sheet.json` + `.api.json` | Photos to turnaround sheet | Load Image nodes + the built-in Nano Banana 2.1 partner node |
 | `workflows/still-first-video.json` + `.api.json` | Character still, then animated clip | Nano Banana 2.1 partner node, then the Seedance 2.5 partner node |
+| `workflows/local/*.json` + `.api.json` | Every graph the local engine sends (Local engine), built by the local adapters; added October 27 | ComfyUI core nodes only, open weights |
 | `workflows/README.md` | How to open them in ComfyUI or Comfy Cloud, and which partner nodes they need |  |
 
 Export both the UI format and **Workflow (API)** format. If a partner node for either model isn't in current ComfyUI, use the closest available one and say so in the README.

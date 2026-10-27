@@ -1,0 +1,51 @@
+{
+  "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "gemma4_12b_int8_convrot.safetensors",
+      "type": "stable_diffusion",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "3": {
+    "class_type": "TextGenerate",
+    "inputs": {
+      "prompt": "Title: The Letter, again\nLogline: A retired harbour pilot finds a letter he never sent.\nLocation: A late-night diner with red vinyl booths\nFrame: 16:9\nFilm: Genre Drama, Camera Digital cinema, Era Present day, Pacing Standard\nCast (write each as its {slot} in the action):\n- {lead}: Walt Harmon, a person. Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\n\nAnswer with JSON only, no other text: {\"shots\":[{\"action\":\"...\",\"size\":\"...\",\"angle\":\"...\",\"lens\":\"...\",\"aperture\":\"\",\"movement\":\"...\",\"lighting\":\"\",\"durationSec\":5,\"continuity\":\"cut\"}]}\nsize is one of: ECU, CU, MCU, MS, WS, EWS.\nangle is one of: eye, low, high, overhead, dutch.\nlens is one of: 24mm, 35mm, 50mm, 85mm, 135mm, anamorphic.\naperture is empty or one of: f1.4, f2, f2.8, f4, f5.6, f8, f11.\nmovement is one of: static, slow-push-in, pull-back, dolly-left, dolly-right, orbit, crane-up, handheld-follow, whip-pan.\nlighting is empty or one of: soft-key, noon-sun, golden-hour, neon, practicals, moonlight.\ndurationSec is one of: 4, 5, 6, 8, 10, 12, 15.",
+      "max_length": 3000,
+      "sampling_mode": "on",
+      "sampling_mode.temperature": 0.4,
+      "sampling_mode.top_k": 64,
+      "sampling_mode.top_p": 0.95,
+      "sampling_mode.min_p": 0.05,
+      "sampling_mode.repetition_penalty": 1.05,
+      "sampling_mode.seed": 61,
+      "sampling_mode.presence_penalty": 0,
+      "thinking": false,
+      "use_default_template": true,
+      "mtp": "auto",
+      "system_prompt": "You plan shot lists for short film scenes in Portraius Studio's Director.\nEach shot becomes one still and then a 4 to 15 second generated video clip, so describe one clear, visible moment per shot: what the camera sees and what moves. No dialogue, sound or inner thoughts.\nPlan 3 to 6 shots that tell the logline with a beginning, middle and end, varying shot size and angle like an editor would.\nName cast members only by their {slot} exactly as given, never by name, and only cast members listed. Don't add other named people, brands, logos or real places.\nUse the scene's location for every shot. Pick each camera field from the allowed values; leave aperture or lighting empty when the shot doesn't need one.\nSet continuity to \"continue\" only when a shot picks up the exact moment the previous shot ends on, from a similar angle; otherwise \"cut\". The first shot is always \"cut\".\nMatch lengths to the pacing: calm scenes hold longer, fast ones cut quicker.",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Generate Text"
+    }
+  },
+  "4": {
+    "class_type": "PreviewAny",
+    "inputs": {
+      "source": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Preview as Text"
+    }
+  }
+}

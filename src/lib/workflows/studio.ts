@@ -160,9 +160,9 @@ export function elementSheetWorkflow(): Workflow {
 
 // ---- Image studio: a cast in a scene, and editing a source image ----
 
-const STILL_PRESET = "film-still";
+export const STILL_PRESET = "film-still";
 export const EDIT_SOURCE = "walt-diner.jpg";
-const EDIT_SCENE = "Put the {prop} on the booth seat beside him. Keep everything else in the image exactly as it is";
+export const EDIT_SCENE = "Put the {prop} on the booth seat beside him. Keep everything else in the image exactly as it is";
 
 const NOTE_IMAGE = `## Portraius Studio: the Image studio
 
@@ -217,10 +217,10 @@ export function imageStudioWorkflow(): Workflow {
 
 // ---- Video studio: text, references, animate an image ----
 
-const TEXT_SCENE = "Fishing boats rock at their moorings in a small harbour at dawn while gulls wheel over the masts";
-const TEXT_CAMERA: CameraSelection = { size: "EWS", movement: "crane-up", lighting: "golden-hour" };
+export const TEXT_SCENE = "Fishing boats rock at their moorings in a small harbour at dawn while gulls wheel over the masts";
+export const TEXT_CAMERA: CameraSelection = { size: "EWS", movement: "crane-up", lighting: "golden-hour" };
 const REFERENCES_PRESET = "product-reveal";
-const ANIMATE_SCENE = "He turns a page of his paperback, then glances up at the rain on the window";
+export const ANIMATE_SCENE = "He turns a page of his paperback, then glances up at the rain on the window";
 
 const NOTE_VIDEO = `## Portraius Studio: the Video studio
 
@@ -311,7 +311,7 @@ export function videoStudioWorkflow(): Workflow {
 // The Tour's Recast clip: a designed performer, 1344×768 and 8 s.
 export const RECAST_CLIP = { file: "concert-original.mp4", width: 1344, height: 768, durationSec: 8 };
 export const SWAP_CLIP = "my-product-clip.mp4";
-const MOTION_PRESET = "concert-stage";
+export const MOTION_PRESET = "concert-stage";
 const STYLE_PRESET = "claymation";
 const SWAP_PRESET = "product-swap";
 
@@ -452,12 +452,12 @@ export function makeItRealWorkflow(): Workflow {
 
 export const LINE = "I wrote this forty years ago, and I never sent it.";
 // About how long George takes to say it. H3 runs the line's length plus a moment.
-const LINE_SEC = 3;
+export const LINE_SEC = 3;
 export const LIP_SYNC_CLIP = "walt-looks-up.mp4";
 // The app's "George" stock voice (presets/voices.json), as ComfyUI lists it.
 const VOICE = "George (male, british)";
-const SPEAKING_SCENE = "{lead} sits in the corner booth of a late-night diner and looks across the table";
-const SPEAKING_CAMERA: CameraSelection = { size: "MCU", lens: "50mm" };
+export const SPEAKING_SCENE = "{lead} sits in the corner booth of a late-night diner and looks across the table";
+export const SPEAKING_CAMERA: CameraSelection = { size: "MCU", lens: "50mm" };
 
 const NOTE_LINE = `## Portraius Studio: add a line
 

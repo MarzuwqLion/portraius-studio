@@ -1,0 +1,2689 @@
+{
+  "AudioEncoderEncode": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "audio_encoder": [
+          "AUDIO_ENCODER",
+          {}
+        ],
+        "audio": [
+          "AUDIO",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "AUDIO_ENCODER_OUTPUT"
+    ],
+    "output_name": [
+      "AUDIO_ENCODER_OUTPUT"
+    ]
+  },
+  "AudioEncoderLoader": {
+    "display_name": "Load Audio Encoder",
+    "input": {
+      "required": {
+        "audio_encoder_name": [
+          "COMBO",
+          {
+            "options": [
+              "wav2vec2_large_english_fp16.safetensors"
+            ]
+          }
+        ]
+      }
+    },
+    "output": [
+      "AUDIO_ENCODER"
+    ],
+    "output_name": [
+      "AUDIO_ENCODER"
+    ]
+  },
+  "BasicScheduler": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "model": [
+          "MODEL",
+          {}
+        ],
+        "scheduler": [
+          "COMBO",
+          {
+            "options": [
+              "simple"
+            ]
+          }
+        ],
+        "steps": [
+          "INT",
+          {
+            "default": 20
+          }
+        ],
+        "denoise": [
+          "FLOAT",
+          {
+            "default": 1
+          }
+        ]
+      }
+    },
+    "output": [
+      "SIGMAS"
+    ],
+    "output_name": [
+      "SIGMAS"
+    ]
+  },
+  "CFGNorm": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "model": [
+          "MODEL",
+          {}
+        ],
+        "strength": [
+          "FLOAT",
+          {
+            "default": 1
+          }
+        ]
+      },
+      "optional": {
+        "pre_cfg": [
+          "BOOLEAN",
+          {
+            "default": false
+          }
+        ]
+      }
+    },
+    "output": [
+      "MODEL"
+    ],
+    "output_name": [
+      "patched_model"
+    ]
+  },
+  "CLIPLoader": {
+    "display_name": "Load CLIP",
+    "input": {
+      "required": {
+        "clip_name": [
+          [
+            "clip-vit-large-patch14/put_clip__clip-vit-large-patch14.safetensors"
+          ],
+          {}
+        ],
+        "type": [
+          [
+            "stable_diffusion"
+          ],
+          {}
+        ]
+      },
+      "optional": {
+        "device": [
+          [
+            "default"
+          ],
+          {}
+        ]
+      }
+    },
+    "output": [
+      "CLIP"
+    ],
+    "output_name": [
+      "CLIP"
+    ]
+  },
+  "CLIPTextEncode": {
+    "display_name": "CLIP Text Encode (Prompt)",
+    "input": {
+      "required": {
+        "text": [
+          "STRING",
+          {}
+        ],
+        "clip": [
+          "CLIP",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "CONDITIONING"
+    ],
+    "output_name": [
+      "CONDITIONING"
+    ]
+  },
+  "CLIPVisionEncode": {
+    "display_name": "CLIP Vision Encode",
+    "input": {
+      "required": {
+        "clip_vision": [
+          "CLIP_VISION",
+          {}
+        ],
+        "image": [
+          "IMAGE",
+          {}
+        ],
+        "crop": [
+          [
+            "center"
+          ],
+          {}
+        ]
+      }
+    },
+    "output": [
+      "CLIP_VISION_OUTPUT"
+    ],
+    "output_name": [
+      "CLIP_VISION_OUTPUT"
+    ]
+  },
+  "CLIPVisionLoader": {
+    "display_name": "Load CLIP Vision",
+    "input": {
+      "required": {
+        "clip_name": [
+          [
+            "clip_vision_h.safetensors"
+          ],
+          {}
+        ]
+      }
+    },
+    "output": [
+      "CLIP_VISION"
+    ],
+    "output_name": [
+      "CLIP_VISION"
+    ]
+  },
+  "ComfyMathExpression": {
+    "display_name": "Math Expression",
+    "input": {
+      "required": {
+        "expression": [
+          "STRING",
+          {
+            "default": "a + b"
+          }
+        ],
+        "values": [
+          "COMFY_AUTOGROW_V3",
+          {
+            "template": {
+              "input": {
+                "required": {
+                  "value": [
+                    "FLOAT,INT,BOOLEAN",
+                    {}
+                  ]
+                }
+              },
+              "names": [
+                "a",
+                "b",
+                "c",
+                "d",
+                "e",
+                "f",
+                "g",
+                "h",
+                "i",
+                "j",
+                "k",
+                "l",
+                "m",
+                "n",
+                "o",
+                "p",
+                "q",
+                "r",
+                "s",
+                "t",
+                "u",
+                "v",
+                "w",
+                "x",
+                "y",
+                "z"
+              ],
+              "min": 1
+            }
+          }
+        ]
+      }
+    },
+    "output": [
+      "FLOAT",
+      "INT",
+      "BOOLEAN"
+    ],
+    "output_name": [
+      "FLOAT",
+      "INT",
+      "BOOL"
+    ]
+  },
+  "ContextWindowsManual": {
+    "display_name": "Context Windows (Manual)",
+    "input": {
+      "required": {
+        "model": [
+          "MODEL",
+          {}
+        ],
+        "context_length": [
+          "INT",
+          {
+            "default": 16
+          }
+        ],
+        "context_overlap": [
+          "INT",
+          {
+            "default": 4
+          }
+        ],
+        "context_schedule": [
+          "COMBO",
+          {
+            "default": "standard_static",
+            "options": [
+              "standard_static"
+            ]
+          }
+        ],
+        "context_stride": [
+          "INT",
+          {
+            "default": 1
+          }
+        ],
+        "closed_loop": [
+          "BOOLEAN",
+          {
+            "default": false
+          }
+        ],
+        "fuse_method": [
+          "COMBO",
+          {
+            "default": "pyramid",
+            "options": [
+              "pyramid"
+            ]
+          }
+        ],
+        "dim": [
+          "INT",
+          {
+            "default": 0
+          }
+        ],
+        "freenoise": [
+          "BOOLEAN",
+          {
+            "default": false
+          }
+        ],
+        "cond_retain_index_list": [
+          "STRING",
+          {
+            "default": ""
+          }
+        ],
+        "split_conds_to_windows": [
+          "BOOLEAN",
+          {
+            "default": false
+          }
+        ],
+        "latent_retain_index_list": [
+          "STRING",
+          {
+            "default": ""
+          }
+        ],
+        "causal_window_fix": [
+          "BOOLEAN",
+          {
+            "default": true
+          }
+        ]
+      }
+    },
+    "output": [
+      "MODEL"
+    ],
+    "output_name": [
+      "MODEL"
+    ]
+  },
+  "CreateVideo": {
+    "display_name": "Create Video",
+    "input": {
+      "required": {
+        "images": [
+          "IMAGE",
+          {}
+        ],
+        "fps": [
+          "FLOAT",
+          {
+            "default": 30
+          }
+        ]
+      },
+      "optional": {
+        "audio": [
+          "AUDIO",
+          {}
+        ],
+        "bit_depth": [
+          "COMBO",
+          {
+            "default": "auto",
+            "options": [
+              "auto"
+            ]
+          }
+        ],
+        "color_space": [
+          "COMBO",
+          {
+            "default": "sRGB",
+            "options": [
+              "sRGB"
+            ]
+          }
+        ],
+        "codec": [
+          "COMBO",
+          {
+            "default": "none",
+            "options": [
+              "none"
+            ]
+          }
+        ]
+      }
+    },
+    "output": [
+      "VIDEO"
+    ],
+    "output_name": [
+      "VIDEO"
+    ]
+  },
+  "EmptyHunyuanLatentVideo": {
+    "display_name": "Empty Hunyuan Video 1.0 Latent",
+    "input": {
+      "required": {
+        "width": [
+          "INT",
+          {
+            "default": 848
+          }
+        ],
+        "height": [
+          "INT",
+          {
+            "default": 480
+          }
+        ],
+        "length": [
+          "INT",
+          {
+            "default": 25
+          }
+        ],
+        "batch_size": [
+          "INT",
+          {
+            "default": 1
+          }
+        ]
+      }
+    },
+    "output": [
+      "LATENT"
+    ],
+    "output_name": [
+      "LATENT"
+    ]
+  },
+  "EmptyImage": {
+    "display_name": "Empty Image",
+    "input": {
+      "required": {
+        "width": [
+          "INT",
+          {
+            "default": 512
+          }
+        ],
+        "height": [
+          "INT",
+          {
+            "default": 512
+          }
+        ],
+        "batch_size": [
+          "INT",
+          {
+            "default": 1
+          }
+        ],
+        "color": [
+          "INT",
+          {
+            "default": 0
+          }
+        ]
+      }
+    },
+    "output": [
+      "IMAGE"
+    ],
+    "output_name": [
+      "IMAGE"
+    ]
+  },
+  "EmptySD3LatentImage": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "width": [
+          "INT",
+          {
+            "default": 1024
+          }
+        ],
+        "height": [
+          "INT",
+          {
+            "default": 1024
+          }
+        ],
+        "batch_size": [
+          "INT",
+          {
+            "default": 1
+          }
+        ]
+      }
+    },
+    "output": [
+      "LATENT"
+    ],
+    "output_name": [
+      "LATENT"
+    ]
+  },
+  "FluxKontextImageScale": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "image": [
+          "IMAGE",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "IMAGE"
+    ],
+    "output_name": [
+      "IMAGE"
+    ]
+  },
+  "FluxKontextMultiReferenceLatentMethod": {
+    "display_name": "Edit Model Reference Method",
+    "input": {
+      "required": {
+        "conditioning": [
+          "CONDITIONING",
+          {}
+        ],
+        "reference_latents_method": [
+          "COMBO",
+          {
+            "options": [
+              "offset"
+            ]
+          }
+        ]
+      }
+    },
+    "output": [
+      "CONDITIONING"
+    ],
+    "output_name": [
+      "CONDITIONING"
+    ]
+  },
+  "GetImageSize": {
+    "display_name": "Get Image Size",
+    "input": {
+      "required": {
+        "image": [
+          "IMAGE",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "INT",
+      "INT",
+      "INT"
+    ],
+    "output_name": [
+      "width",
+      "height",
+      "batch_size"
+    ]
+  },
+  "GetVideoComponents": {
+    "display_name": "Get Video Components",
+    "input": {
+      "required": {
+        "video": [
+          "VIDEO",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "IMAGE",
+      "AUDIO",
+      "FLOAT",
+      "COMBO",
+      "COMBO"
+    ],
+    "output_name": [
+      "images",
+      "audio",
+      "fps",
+      "bit_depth",
+      "color_space"
+    ]
+  },
+  "ImageCompositeMasked": {
+    "display_name": "Image Composite Masked",
+    "input": {
+      "required": {
+        "destination": [
+          "IMAGE",
+          {}
+        ],
+        "source": [
+          "IMAGE",
+          {}
+        ],
+        "x": [
+          "INT",
+          {
+            "default": 0
+          }
+        ],
+        "y": [
+          "INT",
+          {
+            "default": 0
+          }
+        ],
+        "resize_source": [
+          "BOOLEAN",
+          {
+            "default": false
+          }
+        ]
+      },
+      "optional": {
+        "mask": [
+          "MASK",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "IMAGE"
+    ],
+    "output_name": [
+      "IMAGE"
+    ]
+  },
+  "ImageFromBatch": {
+    "display_name": "Get Image from Batch",
+    "input": {
+      "required": {
+        "image": [
+          "IMAGE",
+          {}
+        ],
+        "batch_index": [
+          "INT",
+          {
+            "default": 0
+          }
+        ],
+        "length": [
+          "INT",
+          {
+            "default": 1
+          }
+        ]
+      }
+    },
+    "output": [
+      "IMAGE"
+    ],
+    "output_name": [
+      "IMAGE"
+    ]
+  },
+  "ImageStitch": {
+    "display_name": "Stitch Images",
+    "input": {
+      "required": {
+        "image1": [
+          "IMAGE",
+          {}
+        ],
+        "direction": [
+          "COMBO",
+          {
+            "default": "right",
+            "options": [
+              "right"
+            ]
+          }
+        ],
+        "match_image_size": [
+          "BOOLEAN",
+          {
+            "default": true
+          }
+        ],
+        "spacing_width": [
+          "INT",
+          {
+            "default": 0
+          }
+        ],
+        "spacing_color": [
+          "COMBO",
+          {
+            "default": "white",
+            "options": [
+              "white"
+            ]
+          }
+        ]
+      },
+      "optional": {
+        "image2": [
+          "IMAGE",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "IMAGE"
+    ],
+    "output_name": [
+      "IMAGE"
+    ]
+  },
+  "KSampler": {
+    "display_name": "KSampler",
+    "input": {
+      "required": {
+        "model": [
+          "MODEL",
+          {}
+        ],
+        "seed": [
+          "INT",
+          {
+            "default": 0,
+            "control_after_generate": true
+          }
+        ],
+        "steps": [
+          "INT",
+          {
+            "default": 20
+          }
+        ],
+        "cfg": [
+          "FLOAT",
+          {
+            "default": 8
+          }
+        ],
+        "sampler_name": [
+          [
+            "euler"
+          ],
+          {}
+        ],
+        "scheduler": [
+          [
+            "simple"
+          ],
+          {}
+        ],
+        "positive": [
+          "CONDITIONING",
+          {}
+        ],
+        "negative": [
+          "CONDITIONING",
+          {}
+        ],
+        "latent_image": [
+          "LATENT",
+          {}
+        ],
+        "denoise": [
+          "FLOAT",
+          {
+            "default": 1
+          }
+        ]
+      }
+    },
+    "output": [
+      "LATENT"
+    ],
+    "output_name": [
+      "LATENT"
+    ]
+  },
+  "KSamplerAdvanced": {
+    "display_name": "KSampler (Advanced)",
+    "input": {
+      "required": {
+        "model": [
+          "MODEL",
+          {}
+        ],
+        "add_noise": [
+          [
+            "enable"
+          ],
+          {}
+        ],
+        "noise_seed": [
+          "INT",
+          {
+            "default": 0,
+            "control_after_generate": true
+          }
+        ],
+        "steps": [
+          "INT",
+          {
+            "default": 20
+          }
+        ],
+        "cfg": [
+          "FLOAT",
+          {
+            "default": 8
+          }
+        ],
+        "sampler_name": [
+          [
+            "euler"
+          ],
+          {}
+        ],
+        "scheduler": [
+          [
+            "simple"
+          ],
+          {}
+        ],
+        "positive": [
+          "CONDITIONING",
+          {}
+        ],
+        "negative": [
+          "CONDITIONING",
+          {}
+        ],
+        "latent_image": [
+          "LATENT",
+          {}
+        ],
+        "start_at_step": [
+          "INT",
+          {
+            "default": 0
+          }
+        ],
+        "end_at_step": [
+          "INT",
+          {
+            "default": 10000
+          }
+        ],
+        "return_with_leftover_noise": [
+          [
+            "disable"
+          ],
+          {}
+        ]
+      }
+    },
+    "output": [
+      "LATENT"
+    ],
+    "output_name": [
+      "LATENT"
+    ]
+  },
+  "KSamplerSelect": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "sampler_name": [
+          "COMBO",
+          {
+            "options": [
+              "euler"
+            ]
+          }
+        ]
+      }
+    },
+    "output": [
+      "SAMPLER"
+    ],
+    "output_name": [
+      "SAMPLER"
+    ]
+  },
+  "LatentConcat": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "samples1": [
+          "LATENT",
+          {}
+        ],
+        "samples2": [
+          "LATENT",
+          {}
+        ],
+        "dim": [
+          "COMBO",
+          {
+            "options": [
+              "x"
+            ]
+          }
+        ]
+      }
+    },
+    "output": [
+      "LATENT"
+    ],
+    "output_name": [
+      "LATENT"
+    ]
+  },
+  "LatentCut": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "samples": [
+          "LATENT",
+          {}
+        ],
+        "dim": [
+          "COMBO",
+          {
+            "options": [
+              "x"
+            ]
+          }
+        ],
+        "index": [
+          "INT",
+          {
+            "default": 0
+          }
+        ],
+        "amount": [
+          "INT",
+          {
+            "default": 1
+          }
+        ]
+      }
+    },
+    "output": [
+      "LATENT"
+    ],
+    "output_name": [
+      "LATENT"
+    ]
+  },
+  "LoadAudio": {
+    "display_name": "Load Audio",
+    "input": {
+      "required": {
+        "audio": [
+          "COMBO",
+          {
+            "audio_upload": true,
+            "options": []
+          }
+        ]
+      }
+    },
+    "output": [
+      "AUDIO"
+    ],
+    "output_name": [
+      "AUDIO"
+    ]
+  },
+  "LoadImage": {
+    "display_name": "Load Image",
+    "input": {
+      "required": {
+        "image": [
+          [
+            "ec1db37451d45eb2f667f812c1d45a8aadd9b92fdfa18f257e57ec7fcdf3fff9.jpg"
+          ],
+          {
+            "image_upload": true
+          }
+        ]
+      }
+    },
+    "output": [
+      "IMAGE",
+      "MASK"
+    ],
+    "output_name": [
+      "IMAGE",
+      "MASK"
+    ]
+  },
+  "LoadVideo": {
+    "display_name": "Load Video",
+    "input": {
+      "required": {
+        "file": [
+          "COMBO",
+          {
+            "video_upload": true,
+            "options": []
+          }
+        ]
+      }
+    },
+    "output": [
+      "VIDEO"
+    ],
+    "output_name": [
+      "VIDEO"
+    ]
+  },
+  "LoraLoaderModelOnly": {
+    "display_name": "Load LoRA",
+    "input": {
+      "required": {
+        "model": [
+          "MODEL",
+          {}
+        ],
+        "lora_name": [
+          [
+            "Flux2TurboComfyv2.safetensors"
+          ],
+          {}
+        ],
+        "strength_model": [
+          "FLOAT",
+          {
+            "default": 1
+          }
+        ]
+      }
+    },
+    "output": [
+      "MODEL"
+    ],
+    "output_name": [
+      "MODEL"
+    ]
+  },
+  "ModelSamplingAuraFlow": {
+    "display_name": "ModelSamplingAuraFlow",
+    "input": {
+      "required": {
+        "model": [
+          "MODEL",
+          {}
+        ],
+        "shift": [
+          "FLOAT",
+          {
+            "default": 1.73
+          }
+        ]
+      },
+      "optional": {
+        "sampling": [
+          [
+            "flow"
+          ],
+          {
+            "default": "flow"
+          }
+        ]
+      }
+    },
+    "output": [
+      "MODEL"
+    ],
+    "output_name": [
+      "MODEL"
+    ]
+  },
+  "ModelSamplingSD3": {
+    "display_name": "ModelSamplingSD3",
+    "input": {
+      "required": {
+        "model": [
+          "MODEL",
+          {}
+        ],
+        "shift": [
+          "FLOAT",
+          {
+            "default": 3
+          }
+        ]
+      }
+    },
+    "output": [
+      "MODEL"
+    ],
+    "output_name": [
+      "MODEL"
+    ]
+  },
+  "PreviewAny": {
+    "display_name": "Preview as Text",
+    "input": {
+      "required": {
+        "source": [
+          "*",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "STRING"
+    ],
+    "output_name": [
+      "STRING"
+    ]
+  },
+  "ResizeImageMaskNode": {
+    "display_name": "Resize Image/Mask",
+    "input": {
+      "required": {
+        "input": [
+          "COMFY_MATCHTYPE_V3",
+          {
+            "template": {
+              "template_id": "input_type",
+              "allowed_types": "IMAGE,MASK"
+            }
+          }
+        ],
+        "resize_type": [
+          "COMFY_DYNAMICCOMBO_V3",
+          {
+            "options": [
+              {
+                "key": "scale dimensions",
+                "inputs": {
+                  "required": {
+                    "width": [
+                      "INT",
+                      {
+                        "default": 512
+                      }
+                    ],
+                    "height": [
+                      "INT",
+                      {
+                        "default": 512
+                      }
+                    ],
+                    "crop": [
+                      "COMBO",
+                      {
+                        "default": "center",
+                        "options": [
+                          "disabled"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "scale by multiplier",
+                "inputs": {
+                  "required": {
+                    "multiplier": [
+                      "FLOAT",
+                      {
+                        "default": 1
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "scale longer dimension",
+                "inputs": {
+                  "required": {
+                    "longer_size": [
+                      "INT",
+                      {
+                        "default": 512
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "scale shorter dimension",
+                "inputs": {
+                  "required": {
+                    "shorter_size": [
+                      "INT",
+                      {
+                        "default": 512
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "scale width",
+                "inputs": {
+                  "required": {
+                    "width": [
+                      "INT",
+                      {
+                        "default": 512
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "scale height",
+                "inputs": {
+                  "required": {
+                    "height": [
+                      "INT",
+                      {
+                        "default": 512
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "scale total pixels",
+                "inputs": {
+                  "required": {
+                    "megapixels": [
+                      "FLOAT",
+                      {
+                        "default": 1
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "match size",
+                "inputs": {
+                  "required": {
+                    "match": [
+                      "IMAGE,MASK",
+                      {}
+                    ],
+                    "crop": [
+                      "COMBO",
+                      {
+                        "default": "center",
+                        "options": [
+                          "disabled"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "scale to multiple",
+                "inputs": {
+                  "required": {
+                    "multiple": [
+                      "INT",
+                      {
+                        "default": 8
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "scale_method": [
+          "COMBO",
+          {
+            "default": "area",
+            "options": [
+              "nearest-exact"
+            ]
+          }
+        ]
+      }
+    },
+    "output": [
+      "COMFY_MATCHTYPE_V3"
+    ],
+    "output_name": [
+      "resized"
+    ]
+  },
+  "SamplerCustom": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "model": [
+          "MODEL",
+          {}
+        ],
+        "add_noise": [
+          "BOOLEAN",
+          {
+            "default": true
+          }
+        ],
+        "noise_seed": [
+          "INT",
+          {
+            "default": 0,
+            "control_after_generate": true
+          }
+        ],
+        "cfg": [
+          "FLOAT",
+          {
+            "default": 8
+          }
+        ],
+        "positive": [
+          "CONDITIONING",
+          {}
+        ],
+        "negative": [
+          "CONDITIONING",
+          {}
+        ],
+        "sampler": [
+          "SAMPLER",
+          {}
+        ],
+        "sigmas": [
+          "SIGMAS",
+          {}
+        ],
+        "latent_image": [
+          "LATENT",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "LATENT",
+      "LATENT"
+    ],
+    "output_name": [
+      "output",
+      "denoised_output"
+    ]
+  },
+  "SaveImage": {
+    "display_name": "Save Image",
+    "input": {
+      "required": {
+        "images": [
+          "IMAGE",
+          {}
+        ],
+        "filename_prefix": [
+          "STRING",
+          {
+            "default": "ComfyUI"
+          }
+        ]
+      }
+    },
+    "output": [
+      "IMAGE"
+    ],
+    "output_name": [
+      "images"
+    ]
+  },
+  "SaveVideo": {
+    "display_name": "Save Video",
+    "input": {
+      "required": {
+        "video": [
+          "VIDEO",
+          {}
+        ],
+        "filename_prefix": [
+          "STRING",
+          {
+            "default": "video/ComfyUI"
+          }
+        ],
+        "format": [
+          "COMFY_DYNAMICCOMBO_V3",
+          {
+            "options": [
+              {
+                "key": "auto",
+                "inputs": {
+                  "required": {
+                    "codec": [
+                      "COMFY_DYNAMICCOMBO_V3",
+                      {
+                        "options": [
+                          {
+                            "key": "auto",
+                            "inputs": {
+                              "required": {}
+                            }
+                          },
+                          {
+                            "key": "h264",
+                            "inputs": {
+                              "required": {},
+                              "optional": {
+                                "encoding": [
+                                  "COMFY_DYNAMICCOMBO_V3",
+                                  {
+                                    "options": [
+                                      {
+                                        "key": "auto",
+                                        "inputs": {
+                                          "required": {}
+                                        }
+                                      },
+                                      {
+                                        "key": "re-encode",
+                                        "inputs": {
+                                          "required": {
+                                            "crf": [
+                                              "FLOAT",
+                                              {
+                                                "default": 18
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          {
+                            "key": "av1",
+                            "inputs": {
+                              "required": {},
+                              "optional": {
+                                "encoding": [
+                                  "COMFY_DYNAMICCOMBO_V3",
+                                  {
+                                    "options": [
+                                      {
+                                        "key": "auto",
+                                        "inputs": {
+                                          "required": {}
+                                        }
+                                      },
+                                      {
+                                        "key": "re-encode",
+                                        "inputs": {
+                                          "required": {
+                                            "crf": [
+                                              "FLOAT",
+                                              {
+                                                "default": 24
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "mp4",
+                "inputs": {
+                  "required": {
+                    "codec": [
+                      "COMFY_DYNAMICCOMBO_V3",
+                      {
+                        "options": [
+                          {
+                            "key": "auto",
+                            "inputs": {
+                              "required": {}
+                            }
+                          },
+                          {
+                            "key": "h264",
+                            "inputs": {
+                              "required": {},
+                              "optional": {
+                                "encoding": [
+                                  "COMFY_DYNAMICCOMBO_V3",
+                                  {
+                                    "options": [
+                                      {
+                                        "key": "auto",
+                                        "inputs": {
+                                          "required": {}
+                                        }
+                                      },
+                                      {
+                                        "key": "re-encode",
+                                        "inputs": {
+                                          "required": {
+                                            "crf": [
+                                              "FLOAT",
+                                              {
+                                                "default": 18
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          {
+                            "key": "av1",
+                            "inputs": {
+                              "required": {},
+                              "optional": {
+                                "encoding": [
+                                  "COMFY_DYNAMICCOMBO_V3",
+                                  {
+                                    "options": [
+                                      {
+                                        "key": "auto",
+                                        "inputs": {
+                                          "required": {}
+                                        }
+                                      },
+                                      {
+                                        "key": "re-encode",
+                                        "inputs": {
+                                          "required": {
+                                            "crf": [
+                                              "FLOAT",
+                                              {
+                                                "default": 24
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "mkv",
+                "inputs": {
+                  "required": {
+                    "codec": [
+                      "COMFY_DYNAMICCOMBO_V3",
+                      {
+                        "options": [
+                          {
+                            "key": "auto",
+                            "inputs": {
+                              "required": {}
+                            }
+                          },
+                          {
+                            "key": "h264",
+                            "inputs": {
+                              "required": {},
+                              "optional": {
+                                "encoding": [
+                                  "COMFY_DYNAMICCOMBO_V3",
+                                  {
+                                    "options": [
+                                      {
+                                        "key": "auto",
+                                        "inputs": {
+                                          "required": {}
+                                        }
+                                      },
+                                      {
+                                        "key": "re-encode",
+                                        "inputs": {
+                                          "required": {
+                                            "crf": [
+                                              "FLOAT",
+                                              {
+                                                "default": 18
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          {
+                            "key": "av1",
+                            "inputs": {
+                              "required": {},
+                              "optional": {
+                                "encoding": [
+                                  "COMFY_DYNAMICCOMBO_V3",
+                                  {
+                                    "options": [
+                                      {
+                                        "key": "auto",
+                                        "inputs": {
+                                          "required": {}
+                                        }
+                                      },
+                                      {
+                                        "key": "re-encode",
+                                        "inputs": {
+                                          "required": {
+                                            "crf": [
+                                              "FLOAT",
+                                              {
+                                                "default": 24
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "webm",
+                "inputs": {
+                  "required": {
+                    "codec": [
+                      "COMFY_DYNAMICCOMBO_V3",
+                      {
+                        "options": [
+                          {
+                            "key": "auto",
+                            "inputs": {
+                              "required": {}
+                            }
+                          },
+                          {
+                            "key": "av1",
+                            "inputs": {
+                              "required": {},
+                              "optional": {
+                                "encoding": [
+                                  "COMFY_DYNAMICCOMBO_V3",
+                                  {
+                                    "options": [
+                                      {
+                                        "key": "auto",
+                                        "inputs": {
+                                          "required": {}
+                                        }
+                                      },
+                                      {
+                                        "key": "re-encode",
+                                        "inputs": {
+                                          "required": {
+                                            "crf": [
+                                              "FLOAT",
+                                              {
+                                                "default": 24
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "optional": {
+        "codec": [
+          "COMFY_DYNAMICCOMBO_V3",
+          {
+            "options": [
+              {
+                "key": "auto",
+                "inputs": {
+                  "required": {}
+                }
+              },
+              {
+                "key": "h264",
+                "inputs": {
+                  "required": {},
+                  "optional": {
+                    "encoding": [
+                      "COMFY_DYNAMICCOMBO_V3",
+                      {
+                        "options": [
+                          {
+                            "key": "auto",
+                            "inputs": {
+                              "required": {}
+                            }
+                          },
+                          {
+                            "key": "re-encode",
+                            "inputs": {
+                              "required": {
+                                "crf": [
+                                  "FLOAT",
+                                  {
+                                    "default": 18
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "av1",
+                "inputs": {
+                  "required": {},
+                  "optional": {
+                    "encoding": [
+                      "COMFY_DYNAMICCOMBO_V3",
+                      {
+                        "options": [
+                          {
+                            "key": "auto",
+                            "inputs": {
+                              "required": {}
+                            }
+                          },
+                          {
+                            "key": "re-encode",
+                            "inputs": {
+                              "required": {
+                                "crf": [
+                                  "FLOAT",
+                                  {
+                                    "default": 24
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "output": [
+      "VIDEO"
+    ],
+    "output_name": [
+      "video"
+    ]
+  },
+  "SeedVR2Conditioning": {
+    "display_name": "Apply SeedVR2 Conditioning",
+    "input": {
+      "required": {
+        "model": [
+          "MODEL",
+          {}
+        ],
+        "vae_conditioning": [
+          "LATENT",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "CONDITIONING",
+      "CONDITIONING"
+    ],
+    "output_name": [
+      "positive",
+      "negative"
+    ]
+  },
+  "SeedVR2PostProcessing": {
+    "display_name": "Post-Process SeedVR2 Output",
+    "input": {
+      "required": {
+        "images": [
+          "IMAGE",
+          {}
+        ],
+        "original_resized_images": [
+          "IMAGE",
+          {}
+        ],
+        "color_correction_method": [
+          "COMBO",
+          {
+            "default": "lab",
+            "options": [
+              "lab"
+            ]
+          }
+        ]
+      }
+    },
+    "output": [
+      "IMAGE"
+    ],
+    "output_name": [
+      "images"
+    ]
+  },
+  "SeedVR2Preprocess": {
+    "display_name": "Pre-Process SeedVR2 Input",
+    "input": {
+      "required": {
+        "resized_images": [
+          "IMAGE",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "IMAGE"
+    ],
+    "output_name": [
+      "images"
+    ]
+  },
+  "TextEncodeQwenImageEditPlus": {
+    "display_name": "Text Encode Qwen Image Edit Plus",
+    "input": {
+      "required": {
+        "clip": [
+          "CLIP",
+          {}
+        ],
+        "prompt": [
+          "STRING",
+          {}
+        ]
+      },
+      "optional": {
+        "vae": [
+          "VAE",
+          {}
+        ],
+        "image1": [
+          "IMAGE",
+          {}
+        ],
+        "image2": [
+          "IMAGE",
+          {}
+        ],
+        "image3": [
+          "IMAGE",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "CONDITIONING"
+    ],
+    "output_name": [
+      "CONDITIONING"
+    ]
+  },
+  "TextGenerate": {
+    "display_name": "Generate Text",
+    "input": {
+      "required": {
+        "clip": [
+          "CLIP",
+          {}
+        ],
+        "prompt": [
+          "STRING",
+          {
+            "default": ""
+          }
+        ],
+        "max_length": [
+          "INT",
+          {
+            "default": 512
+          }
+        ],
+        "sampling_mode": [
+          "COMFY_DYNAMICCOMBO_V3",
+          {
+            "options": [
+              {
+                "key": "on",
+                "inputs": {
+                  "required": {
+                    "temperature": [
+                      "FLOAT",
+                      {
+                        "default": 0.7
+                      }
+                    ],
+                    "top_k": [
+                      "INT",
+                      {
+                        "default": 64
+                      }
+                    ],
+                    "top_p": [
+                      "FLOAT",
+                      {
+                        "default": 0.95
+                      }
+                    ],
+                    "min_p": [
+                      "FLOAT",
+                      {
+                        "default": 0.05
+                      }
+                    ],
+                    "repetition_penalty": [
+                      "FLOAT",
+                      {
+                        "default": 1.05
+                      }
+                    ],
+                    "seed": [
+                      "INT",
+                      {
+                        "default": 0
+                      }
+                    ]
+                  },
+                  "optional": {
+                    "presence_penalty": [
+                      "FLOAT",
+                      {
+                        "default": 0
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "key": "off",
+                "inputs": {
+                  "required": {}
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "optional": {
+        "image": [
+          "IMAGE",
+          {}
+        ],
+        "video": [
+          "IMAGE",
+          {}
+        ],
+        "audio": [
+          "AUDIO",
+          {}
+        ],
+        "thinking": [
+          "BOOLEAN",
+          {
+            "default": false
+          }
+        ],
+        "use_default_template": [
+          "BOOLEAN",
+          {
+            "default": true
+          }
+        ],
+        "mtp": [
+          "COMBO",
+          {
+            "default": "auto",
+            "options": [
+              "auto"
+            ]
+          }
+        ],
+        "system_prompt": [
+          "STRING",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "STRING",
+      "STRING"
+    ],
+    "output_name": [
+      "generated_text",
+      "thinking"
+    ]
+  },
+  "TrimVideoLatent": {
+    "display_name": "Trim Video Latent",
+    "input": {
+      "required": {
+        "samples": [
+          "LATENT",
+          {}
+        ],
+        "trim_amount": [
+          "INT",
+          {
+            "default": 0
+          }
+        ]
+      }
+    },
+    "output": [
+      "LATENT"
+    ],
+    "output_name": [
+      "LATENT"
+    ]
+  },
+  "UNETLoader": {
+    "display_name": "Load Diffusion Model",
+    "input": {
+      "required": {
+        "unet_name": [
+          [
+            "acestep_v1.5_turbo.safetensors"
+          ],
+          {}
+        ],
+        "weight_dtype": [
+          [
+            "default"
+          ],
+          {}
+        ]
+      }
+    },
+    "output": [
+      "MODEL"
+    ],
+    "output_name": [
+      "MODEL"
+    ]
+  },
+  "VAEDecode": {
+    "display_name": "VAE Decode",
+    "input": {
+      "required": {
+        "samples": [
+          "LATENT",
+          {}
+        ],
+        "vae": [
+          "VAE",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "IMAGE"
+    ],
+    "output_name": [
+      "IMAGE"
+    ]
+  },
+  "VAEDecodeTiled": {
+    "display_name": "VAE Decode (Tiled)",
+    "input": {
+      "required": {
+        "samples": [
+          "LATENT",
+          {}
+        ],
+        "vae": [
+          "VAE",
+          {}
+        ],
+        "tile_size": [
+          "INT",
+          {
+            "default": 512
+          }
+        ],
+        "overlap": [
+          "INT",
+          {
+            "default": 64
+          }
+        ],
+        "temporal_size": [
+          "INT",
+          {
+            "default": 64
+          }
+        ],
+        "temporal_overlap": [
+          "INT",
+          {
+            "default": 8
+          }
+        ]
+      }
+    },
+    "output": [
+      "IMAGE"
+    ],
+    "output_name": [
+      "IMAGE"
+    ]
+  },
+  "VAEEncode": {
+    "display_name": "VAE Encode",
+    "input": {
+      "required": {
+        "pixels": [
+          "IMAGE",
+          {}
+        ],
+        "vae": [
+          "VAE",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "LATENT"
+    ],
+    "output_name": [
+      "LATENT"
+    ]
+  },
+  "VAEEncodeTiled": {
+    "display_name": "VAE Encode (Tiled)",
+    "input": {
+      "required": {
+        "pixels": [
+          "IMAGE",
+          {}
+        ],
+        "vae": [
+          "VAE",
+          {}
+        ],
+        "tile_size": [
+          "INT",
+          {
+            "default": 512
+          }
+        ],
+        "overlap": [
+          "INT",
+          {
+            "default": 64
+          }
+        ],
+        "temporal_size": [
+          "INT",
+          {
+            "default": 64
+          }
+        ],
+        "temporal_overlap": [
+          "INT",
+          {
+            "default": 8
+          }
+        ]
+      }
+    },
+    "output": [
+      "LATENT"
+    ],
+    "output_name": [
+      "LATENT"
+    ]
+  },
+  "VAELoader": {
+    "display_name": "Load VAE",
+    "input": {
+      "required": {
+        "vae_name": [
+          [
+            "ace_1.5_vae.safetensors"
+          ],
+          {}
+        ]
+      }
+    },
+    "output": [
+      "VAE"
+    ],
+    "output_name": [
+      "VAE"
+    ]
+  },
+  "Wan22ImageToVideoLatent": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "vae": [
+          "VAE",
+          {}
+        ],
+        "width": [
+          "INT",
+          {
+            "default": 1280
+          }
+        ],
+        "height": [
+          "INT",
+          {
+            "default": 704
+          }
+        ],
+        "length": [
+          "INT",
+          {
+            "default": 49
+          }
+        ],
+        "batch_size": [
+          "INT",
+          {
+            "default": 1
+          }
+        ]
+      },
+      "optional": {
+        "start_image": [
+          "IMAGE",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "LATENT"
+    ],
+    "output_name": [
+      "LATENT"
+    ]
+  },
+  "WanAnimate2Cache": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "model": [
+          "MODEL",
+          {}
+        ],
+        "device": [
+          "COMBO",
+          {
+            "default": "cpu",
+            "options": [
+              "cpu"
+            ]
+          }
+        ],
+        "dtype": [
+          "COMBO",
+          {
+            "default": "default",
+            "options": [
+              "default"
+            ]
+          }
+        ]
+      }
+    },
+    "output": [
+      "MODEL"
+    ],
+    "output_name": [
+      "MODEL"
+    ]
+  },
+  "WanAnimate2ToVideo": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "positive": [
+          "CONDITIONING",
+          {}
+        ],
+        "negative": [
+          "CONDITIONING",
+          {}
+        ],
+        "vae": [
+          "VAE",
+          {}
+        ],
+        "width": [
+          "INT",
+          {
+            "default": 832
+          }
+        ],
+        "height": [
+          "INT",
+          {
+            "default": 480
+          }
+        ],
+        "length": [
+          "INT",
+          {
+            "default": 81
+          }
+        ],
+        "batch_size": [
+          "INT",
+          {
+            "default": 1
+          }
+        ],
+        "video_frame_offset": [
+          "INT",
+          {
+            "default": 0
+          }
+        ],
+        "pose_strength": [
+          "FLOAT",
+          {
+            "default": 1
+          }
+        ],
+        "pose_start_percent": [
+          "FLOAT",
+          {
+            "default": 0
+          }
+        ],
+        "pose_end_percent": [
+          "FLOAT",
+          {
+            "default": 1
+          }
+        ],
+        "reference_image_strength": [
+          "FLOAT",
+          {
+            "default": 1
+          }
+        ]
+      },
+      "optional": {
+        "reference_image": [
+          "IMAGE",
+          {}
+        ],
+        "pose_video": [
+          "IMAGE",
+          {}
+        ],
+        "clip_vision_output": [
+          "CLIP_VISION_OUTPUT",
+          {}
+        ],
+        "positive_pose": [
+          "CONDITIONING",
+          {}
+        ],
+        "clip_vision_output_pose": [
+          "CLIP_VISION_OUTPUT",
+          {}
+        ],
+        "continue_motion": [
+          "IMAGE",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "CONDITIONING",
+      "CONDITIONING",
+      "LATENT",
+      "INT",
+      "INT",
+      "INT"
+    ],
+    "output_name": [
+      "positive",
+      "negative",
+      "latent",
+      "trim_latent",
+      "trim_image",
+      "video_frame_offset"
+    ]
+  },
+  "WanFirstLastFrameToVideo": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "positive": [
+          "CONDITIONING",
+          {}
+        ],
+        "negative": [
+          "CONDITIONING",
+          {}
+        ],
+        "vae": [
+          "VAE",
+          {}
+        ],
+        "width": [
+          "INT",
+          {
+            "default": 832
+          }
+        ],
+        "height": [
+          "INT",
+          {
+            "default": 480
+          }
+        ],
+        "length": [
+          "INT",
+          {
+            "default": 81
+          }
+        ],
+        "batch_size": [
+          "INT",
+          {
+            "default": 1
+          }
+        ]
+      },
+      "optional": {
+        "clip_vision_start_image": [
+          "CLIP_VISION_OUTPUT",
+          {}
+        ],
+        "clip_vision_end_image": [
+          "CLIP_VISION_OUTPUT",
+          {}
+        ],
+        "start_image": [
+          "IMAGE",
+          {}
+        ],
+        "end_image": [
+          "IMAGE",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "CONDITIONING",
+      "CONDITIONING",
+      "LATENT"
+    ],
+    "output_name": [
+      "positive",
+      "negative",
+      "latent"
+    ]
+  },
+  "WanImageToVideo": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "positive": [
+          "CONDITIONING",
+          {}
+        ],
+        "negative": [
+          "CONDITIONING",
+          {}
+        ],
+        "vae": [
+          "VAE",
+          {}
+        ],
+        "width": [
+          "INT",
+          {
+            "default": 832
+          }
+        ],
+        "height": [
+          "INT",
+          {
+            "default": 480
+          }
+        ],
+        "length": [
+          "INT",
+          {
+            "default": 81
+          }
+        ],
+        "batch_size": [
+          "INT",
+          {
+            "default": 1
+          }
+        ]
+      },
+      "optional": {
+        "clip_vision_output": [
+          "CLIP_VISION_OUTPUT",
+          {}
+        ],
+        "start_image": [
+          "IMAGE",
+          {}
+        ],
+        "ref_pad_image": [
+          "IMAGE",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "CONDITIONING",
+      "CONDITIONING",
+      "LATENT"
+    ],
+    "output_name": [
+      "positive",
+      "negative",
+      "latent"
+    ]
+  },
+  "WanSoundImageToVideo": {
+    "display_name": null,
+    "input": {
+      "required": {
+        "positive": [
+          "CONDITIONING",
+          {}
+        ],
+        "negative": [
+          "CONDITIONING",
+          {}
+        ],
+        "vae": [
+          "VAE",
+          {}
+        ],
+        "width": [
+          "INT",
+          {
+            "default": 832
+          }
+        ],
+        "height": [
+          "INT",
+          {
+            "default": 480
+          }
+        ],
+        "length": [
+          "INT",
+          {
+            "default": 77
+          }
+        ],
+        "batch_size": [
+          "INT",
+          {
+            "default": 1
+          }
+        ]
+      },
+      "optional": {
+        "audio_encoder_output": [
+          "AUDIO_ENCODER_OUTPUT",
+          {}
+        ],
+        "ref_image": [
+          "IMAGE",
+          {}
+        ],
+        "control_video": [
+          "IMAGE",
+          {}
+        ],
+        "ref_motion": [
+          "IMAGE",
+          {}
+        ]
+      }
+    },
+    "output": [
+      "CONDITIONING",
+      "CONDITIONING",
+      "LATENT"
+    ],
+    "output_name": [
+      "positive",
+      "negative",
+      "latent"
+    ]
+  }
+}

@@ -1,7 +1,8 @@
 # ComfyUI workflows
 
-Every studio feature that has a ComfyUI partner node, as a graph. Each comes in two formats: the `.json` file is
-the graph you open and edit, and the `.api.json` file is the **Workflow (API)** format, for sending to a ComfyUI
+Every studio feature that has a ComfyUI partner node, as a graph, and in [`local/`](#on-your-own-gpu-local) every
+graph the app's "On your GPU" engine sends to your own ComfyUI. Each comes in two formats: the `.json` file is the
+graph you open and edit, and the `.api.json` file is the **Workflow (API)** format, for sending to a ComfyUI
 server's `/prompt` route from a script.
 
 | File | What it reproduces | Partner nodes |
@@ -18,6 +19,66 @@ server's `/prompt` route from a script.
 | `kling-one-take` | The Director's one-take: the whole scene as one Kling clip, one storyboard per shot | Kling 3.0 Omni |
 | `director-scene` | A Director scene: an anchor still per shot, a take from each, joined in order | Nano Banana 2.1, MiniMax H3 |
 | `draft-shots` | The Director's "Draft with AI": Claude plans the shot list from the scene card | Anthropic Claude |
+
+## On your own GPU (`local/`)
+
+The same studio on open-weight models with ComfyUI's own nodes: no partner nodes, no account and no credits. These are
+the graphs the app sends to your ComfyUI when a feature runs "On your GPU", built by the app's local adapters
+([`src/lib/adapters/local/`](../src/lib/adapters/local/)) from the request each studio makes.
+
+| File | What it reproduces | Models |
+| --- | --- | --- |
+| `local/character-sheet` | Photos to a character: the turnaround sheet from three photos, then the four views from two photos and that sheet | Qwen-Image-Edit 2511 |
+| `local/image-studio` | A still with a cast in it (the Film still preset), and an edit of a source image with an element's sheet | Qwen-Image-Edit 2511 |
+| `local/video-text` | Text to video, the Video studio's "Best" | Wan 2.2 14B |
+| `local/video-animate` | Animate an image: the still is the first frame | Wan 2.2 14B |
+| `local/video-fast` | Text to video, the Video studio's "Fast" | Wan 2.2 5B |
+| `local/recast` | Recast's motion transfer: the performer drawn into the clip's first frame, then moved through the clip with its own sound | Qwen-Image-Edit 2511, Wan Animate 2 |
+| `local/add-a-line` | A still that speaks a recorded line | Wan 2.2 S2V |
+| `local/make-it-real` | The realism pass on a still | SeedVR2 7B |
+| `local/draft-shots` | The Director's "Draft with AI": the shot list for the Tour's sample scene | Gemma 4 12B |
+
+1. Download the models a graph needs. Its note lists each file, the folder in `ComfyUI/models/` it goes in and its
+   link; [`docs/local-setup.md`](../docs/local-setup.md) has them all by feature. Every file is Apache 2.0.
+2. Put the inputs its note names in `ComfyUI/input/`: samples from [`public/samples/`](../public/samples/), or for
+   character-sheet three photos of yourself (`my-photo-1.jpg` to `my-photo-3.jpg`) and for add-a-line a recording
+   of the line (`my-line.mp3`).
+3. Open the `.json` file and run it. It needs a ComfyUI from October 2026 or later (0.42 or newer): Wan Animate 2,
+   SeedVR2 and Generate Text are recent core nodes.
+
+### How they match the app
+
+- **Built by the app.** [`src/lib/workflows/local.ts`](../src/lib/workflows/local.ts) passes each studio's request
+  (the same prompt compiler, presets, sheet and Recast prompts, Director agent prompt and settings) through the
+  app's own local adapter. The API files are what the app sends, node for node; the UI files add only the inputs the
+  app leaves at ComfyUI's defaults. A test fails if a file drifts from the code, and `npm run workflows` rebuilds them.
+- **The UI layout comes from ComfyUI's node definitions.** Each node's slots and widget order are read from
+  [`local-nodes.json`](../src/lib/workflows/local-nodes.json), a trimmed copy of ComfyUI's `/object_info` for the 55
+  nodes the adapters use. `npm run workflows:nodes` refreshes it.
+- **Two steps, one graph.** Where the app runs two jobs, the graph links them: each view takes the sheet it just drew,
+  and Wan Animate moves the still Qwen just drew. Nodes both steps share, like the model loaders, appear once.
+
+### Where a local graph differs from the app
+
+| Graph | The app | The graph |
+| --- | --- | --- |
+| character-sheet | A webcam consent check first, and a likeness score on each view | Draws the sheet and all four views in one run, unscored |
+| image-studio, recast | Your cast from the vault | Walt Harmon's sample views, one image per cast member, as the app sends to Qwen |
+| add-a-line | Speaks the first frame of a clip you made, with a line you typed (ElevenLabs) or recorded | Speaks `walt-looks-up.webp`, the first frame of `walt-looks-up.mp4`, with a recording you supply; set its length to the line's |
+| draft-shots | Checks each planned shot and adds it to the scene | The plan comes back as text in **Preview as Text** |
+
+As with the partner graphs, the likeness score and the automatic retry under 60 live in the app (and in the node
+pack's Identity Score node); the identity second opinion has no graph, since the app doesn't use it yet.
+
+### Checked
+
+`OBJECT_INFO_URL=https://cloud.comfy.org/api/object_info npm run local:check` (with `COMFY_API_KEY` in your shell),
+or against a local ComfyUI's `/object_info`, checks every file in `local/` the way `workflows:check` checks the
+partner graphs: every node exists, every input is one the node takes, every choice is one of its options, every
+required input is there and every link fits. All nine ran clean against Comfy Cloud's definitions on October 27,
+2026. The adapters behind them ran end to end through the app on an RTX 4090 on October 23
+([`docs/notes/local-notes.md`](../docs/notes/local-notes.md)); the joined graphs here haven't been run on a GPU yet,
+and neither these nor the partner graphs have been opened in the ComfyUI frontend by hand.
 
 ## Open them
 

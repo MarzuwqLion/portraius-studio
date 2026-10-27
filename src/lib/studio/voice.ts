@@ -247,12 +247,17 @@ export interface LocalSpeakingRequest {
 // A stored prompt's {slots} as plain words, for a model that has no cast.
 const withoutSlots = (prompt: string) => prompt.replace(/\{([a-z][a-z0-9_-]*)\}/g, "the person");
 
+// Wan S2V's prompt: the clip's own prompt, then the instruction to speak.
+export function localSpeakingPrompt(clipPrompt: string | undefined): string {
+  return `${withoutSlots(clipPrompt ?? "A person faces the camera").trim().replace(/[.!?]?$/, ".")} The person speaks the words in the audio, lips moving in sync with it.`;
+}
+
 export async function startLocalSpeakingClip(request: LocalSpeakingRequest, parentJobId?: string): Promise<Job> {
   const { generation, blob } = await generationVideo(request.speakFrom);
   const frame = await firstFrame(blob);
   const sound = await lineBlob(request.line);
   const input: SpeakInput = {
-    prompt: `${withoutSlots(generation.prompt ?? "A person faces the camera").trim().replace(/[.!?]?$/, ".")} The person speaks the words in the audio, lips moving in sync with it.`,
+    prompt: localSpeakingPrompt(generation.prompt),
     image: `${LOCAL_INPUT}${await uploadLocalInput(frame.jpeg, "jpg")}`,
     audio: `${LOCAL_INPUT}${await uploadLocalInput(sound, request.line.mime === "audio/wav" ? "wav" : "mp3")}`,
     durationSec: request.line.durationSec,

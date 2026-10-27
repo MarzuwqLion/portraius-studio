@@ -1,0 +1,2804 @@
+{
+  "id": "7d1b6c2e-4a7e-4f0e-9a51-5c3d2b1a0101",
+  "revision": 0,
+  "last_node_id": 43,
+  "last_link_id": 81,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "title": "Note",
+      "pos": [
+        -560,
+        0
+      ],
+      "size": [
+        480,
+        720
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "MarkdownNote"
+      },
+      "widgets_values": [
+        "## Portraius Studio on your GPU: a character from photos\n\nThe turnaround sheet from your photos, then the front, three-quarter, profile and full-body views from the photos and that sheet, the way Cast and elements makes a character on your GPU. Qwen takes three images, so the sheet gets three photos and each view the first two plus the sheet. Put three photos of yourself in `ComfyUI/input/` as `my-photo-1.jpg`, `my-photo-2.jpg`, `my-photo-3.jpg`: varied angles, good light, one face each.\n\nThe app also checks consent on camera first, and scores each view against your photos. The graph does neither.\n\n**Inputs in `ComfyUI/input/`:** `my-photo-1.jpg`, `my-photo-2.jpg`, `my-photo-3.jpg`. Samples are in this repo's `public/samples/`.\n\nFree: open-weight models and ComfyUI's own nodes, so no account or credits. Built by the app's own local adapters from the request its studio makes, so it matches what \"On your GPU\" sends (docs/local-setup.md).\n\n**Models (Qwen-Image-Edit 2511).** Every file is Apache 2.0.\n\n| Folder in `ComfyUI/models/` | File | GB |\n| --- | --- | --- |\n| `diffusion_models` | [qwen_image_edit_2511_fp8mixed.safetensors](https://huggingface.co/Comfy-Org/Qwen-Image-Edit_ComfyUI/resolve/main/split_files/diffusion_models/qwen_image_edit_2511_fp8mixed.safetensors) | 20.5 |\n| `text_encoders` | [qwen_2.5_vl_7b_fp8_scaled.safetensors](https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors) | 9.4 |\n| `vae` | [qwen_image_vae.safetensors](https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/vae/qwen_image_vae.safetensors) | 0.3 |\n| `loras` | [Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16.safetensors](https://huggingface.co/lightx2v/Qwen-Image-Edit-2511-Lightning/resolve/main/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16.safetensors) | 0.9 |"
+      ],
+      "widgets_values_named": {
+        "text": "## Portraius Studio on your GPU: a character from photos\n\nThe turnaround sheet from your photos, then the front, three-quarter, profile and full-body views from the photos and that sheet, the way Cast and elements makes a character on your GPU. Qwen takes three images, so the sheet gets three photos and each view the first two plus the sheet. Put three photos of yourself in `ComfyUI/input/` as `my-photo-1.jpg`, `my-photo-2.jpg`, `my-photo-3.jpg`: varied angles, good light, one face each.\n\nThe app also checks consent on camera first, and scores each view against your photos. The graph does neither.\n\n**Inputs in `ComfyUI/input/`:** `my-photo-1.jpg`, `my-photo-2.jpg`, `my-photo-3.jpg`. Samples are in this repo's `public/samples/`.\n\nFree: open-weight models and ComfyUI's own nodes, so no account or credits. Built by the app's own local adapters from the request its studio makes, so it matches what \"On your GPU\" sends (docs/local-setup.md).\n\n**Models (Qwen-Image-Edit 2511).** Every file is Apache 2.0.\n\n| Folder in `ComfyUI/models/` | File | GB |\n| --- | --- | --- |\n| `diffusion_models` | [qwen_image_edit_2511_fp8mixed.safetensors](https://huggingface.co/Comfy-Org/Qwen-Image-Edit_ComfyUI/resolve/main/split_files/diffusion_models/qwen_image_edit_2511_fp8mixed.safetensors) | 20.5 |\n| `text_encoders` | [qwen_2.5_vl_7b_fp8_scaled.safetensors](https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors) | 9.4 |\n| `vae` | [qwen_image_vae.safetensors](https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/vae/qwen_image_vae.safetensors) | 0.3 |\n| `loras` | [Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16.safetensors](https://huggingface.co/lightx2v/Qwen-Image-Edit-2511-Lightning/resolve/main/Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16.safetensors) | 0.9 |"
+      }
+    },
+    {
+      "id": 2,
+      "type": "UNETLoader",
+      "title": "Load Diffusion Model",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "UNETLoader"
+      },
+      "widgets_values": [
+        "qwen_image_edit_2511_fp8mixed.safetensors",
+        "default"
+      ],
+      "widgets_values_named": {
+        "unet_name": "qwen_image_edit_2511_fp8mixed.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    {
+      "id": 3,
+      "type": "ModelSamplingAuraFlow",
+      "title": "ModelSamplingAuraFlow",
+      "pos": [
+        460,
+        0
+      ],
+      "size": [
+        400,
+        194
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ModelSamplingAuraFlow"
+      },
+      "widgets_values": [
+        3.1,
+        "flow"
+      ],
+      "widgets_values_named": {
+        "shift": 3.1,
+        "sampling": "flow"
+      }
+    },
+    {
+      "id": 4,
+      "type": "CFGNorm",
+      "title": "CFGNorm",
+      "pos": [
+        920,
+        0
+      ],
+      "size": [
+        400,
+        194
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "patched_model",
+          "type": "MODEL",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CFGNorm"
+      },
+      "widgets_values": [
+        1,
+        false
+      ],
+      "widgets_values_named": {
+        "strength": 1,
+        "pre_cfg": false
+      }
+    },
+    {
+      "id": 5,
+      "type": "LoraLoaderModelOnly",
+      "title": "Load LoRA",
+      "pos": [
+        1380,
+        0
+      ],
+      "size": [
+        400,
+        194
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            17,
+            36,
+            49,
+            62,
+            75
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoraLoaderModelOnly"
+      },
+      "widgets_values": [
+        "Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16.safetensors",
+        1
+      ],
+      "widgets_values_named": {
+        "lora_name": "Qwen-Image-Edit-2511-Lightning-8steps-V1.0-bf16.safetensors",
+        "strength_model": 1
+      }
+    },
+    {
+      "id": 6,
+      "type": "CLIPLoader",
+      "title": "Load CLIP",
+      "pos": [
+        0,
+        208
+      ],
+      "size": [
+        400,
+        194
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            5,
+            11,
+            24,
+            30,
+            43,
+            56,
+            69
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPLoader"
+      },
+      "widgets_values": [
+        "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+        "qwen_image",
+        "default"
+      ],
+      "widgets_values_named": {
+        "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+        "type": "qwen_image",
+        "device": "default"
+      }
+    },
+    {
+      "id": 7,
+      "type": "VAELoader",
+      "title": "Load VAE",
+      "pos": [
+        0,
+        442
+      ],
+      "size": [
+        400,
+        142
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            6,
+            12,
+            22,
+            25,
+            31,
+            41,
+            44,
+            54,
+            57,
+            67,
+            70,
+            80
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "qwen_image_vae.safetensors"
+      ],
+      "widgets_values_named": {
+        "vae_name": "qwen_image_vae.safetensors"
+      }
+    },
+    {
+      "id": 8,
+      "type": "LoadImage",
+      "title": "Load Image",
+      "pos": [
+        0,
+        624
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "my-photo-1.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "my-photo-1.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 9,
+      "type": "LoadImage",
+      "title": "Load Image",
+      "pos": [
+        0,
+        832
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            8,
+            14,
+            27,
+            33,
+            46,
+            59,
+            72
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "my-photo-2.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "my-photo-2.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 10,
+      "type": "LoadImage",
+      "title": "Load Image",
+      "pos": [
+        0,
+        1040
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            9,
+            15
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "my-photo-3.jpg",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "my-photo-3.jpg",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 11,
+      "type": "FluxKontextImageScale",
+      "title": "FluxKontextImageScale",
+      "pos": [
+        460,
+        234
+      ],
+      "size": [
+        400,
+        142
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            7,
+            13,
+            26,
+            32,
+            45,
+            58,
+            71
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FluxKontextImageScale"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 12,
+      "type": "TextEncodeQwenImageEditPlus",
+      "title": "Text Encode Qwen Image Edit Plus",
+      "pos": [
+        920,
+        234
+      ],
+      "size": [
+        400,
+        272
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 5
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 6,
+          "shape": 7
+        },
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 7,
+          "shape": 7
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 8,
+          "shape": 7
+        },
+        {
+          "name": "image3",
+          "type": "IMAGE",
+          "link": 9,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            10
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TextEncodeQwenImageEditPlus"
+      },
+      "widgets_values": [
+        "Create a character reference sheet of the same person shown in the attached photos.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nLayout: one 16:9 image, plain mid-grey studio background, soft even front lighting, natural\nskin texture with visible pores.\nPanels left to right: front head-and-shoulders, three-quarter left, left profile, full body\nstanding front-facing in simple neutral clothing, and a strip of four expressions (neutral,\nsmile, surprised, serious).\nNo text, labels, borders or watermarks."
+      ],
+      "widgets_values_named": {
+        "prompt": "Create a character reference sheet of the same person shown in the attached photos.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nLayout: one 16:9 image, plain mid-grey studio background, soft even front lighting, natural\nskin texture with visible pores.\nPanels left to right: front head-and-shoulders, three-quarter left, left profile, full body\nstanding front-facing in simple neutral clothing, and a strip of four expressions (neutral,\nsmile, surprised, serious).\nNo text, labels, borders or watermarks."
+      }
+    },
+    {
+      "id": 13,
+      "type": "FluxKontextMultiReferenceLatentMethod",
+      "title": "Edit Model Reference Method",
+      "pos": [
+        1380,
+        234
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            18
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FluxKontextMultiReferenceLatentMethod"
+      },
+      "widgets_values": [
+        "index_timestep_zero"
+      ],
+      "widgets_values_named": {
+        "reference_latents_method": "index_timestep_zero"
+      }
+    },
+    {
+      "id": 14,
+      "type": "TextEncodeQwenImageEditPlus",
+      "title": "Text Encode Qwen Image Edit Plus",
+      "pos": [
+        920,
+        546
+      ],
+      "size": [
+        400,
+        272
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 11
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 12,
+          "shape": 7
+        },
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 13,
+          "shape": 7
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 14,
+          "shape": 7
+        },
+        {
+          "name": "image3",
+          "type": "IMAGE",
+          "link": 15,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            16
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TextEncodeQwenImageEditPlus"
+      },
+      "widgets_values": [
+        ""
+      ],
+      "widgets_values_named": {
+        "prompt": ""
+      }
+    },
+    {
+      "id": 15,
+      "type": "FluxKontextMultiReferenceLatentMethod",
+      "title": "Edit Model Reference Method",
+      "pos": [
+        1380,
+        442
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            19
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FluxKontextMultiReferenceLatentMethod"
+      },
+      "widgets_values": [
+        "index_timestep_zero"
+      ],
+      "widgets_values_named": {
+        "reference_latents_method": "index_timestep_zero"
+      }
+    },
+    {
+      "id": 16,
+      "type": "EmptySD3LatentImage",
+      "title": "EmptySD3LatentImage",
+      "pos": [
+        0,
+        1248
+      ],
+      "size": [
+        400,
+        194
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            20
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptySD3LatentImage"
+      },
+      "widgets_values": [
+        1728,
+        976,
+        1
+      ],
+      "widgets_values_named": {
+        "width": 1728,
+        "height": 976,
+        "batch_size": 1
+      }
+    },
+    {
+      "id": 17,
+      "type": "KSampler",
+      "title": "KSampler",
+      "pos": [
+        1840,
+        0
+      ],
+      "size": [
+        400,
+        376
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 17
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 18
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 19
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 20
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            21
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSampler"
+      },
+      "widgets_values": [
+        1,
+        "randomize",
+        8,
+        1,
+        "euler",
+        "simple",
+        1
+      ],
+      "widgets_values_named": {
+        "seed": 1,
+        "control_after_generate": "randomize",
+        "steps": 8,
+        "cfg": 1,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1
+      }
+    },
+    {
+      "id": 18,
+      "type": "VAEDecode",
+      "title": "VAE Decode",
+      "pos": [
+        2300,
+        0
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 21
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 22
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            23,
+            28,
+            34,
+            47,
+            60,
+            73
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 19,
+      "type": "SaveImage",
+      "title": "Save Image",
+      "pos": [
+        2760,
+        0
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 23
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/qwen"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/qwen"
+      }
+    },
+    {
+      "id": 20,
+      "type": "TextEncodeQwenImageEditPlus",
+      "title": "Text Encode Qwen Image Edit Plus",
+      "pos": [
+        2760,
+        1642
+      ],
+      "size": [
+        400,
+        272
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 24
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 25,
+          "shape": 7
+        },
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 26,
+          "shape": 7
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 27,
+          "shape": 7
+        },
+        {
+          "name": "image3",
+          "type": "IMAGE",
+          "link": 28,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            29
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TextEncodeQwenImageEditPlus"
+      },
+      "widgets_values": [
+        "Draw a front-facing head-and-shoulders portrait, looking straight into the camera, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks."
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a front-facing head-and-shoulders portrait, looking straight into the camera, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks."
+      }
+    },
+    {
+      "id": 21,
+      "type": "FluxKontextMultiReferenceLatentMethod",
+      "title": "Edit Model Reference Method",
+      "pos": [
+        3220,
+        1642
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 29
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            37
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FluxKontextMultiReferenceLatentMethod"
+      },
+      "widgets_values": [
+        "index_timestep_zero"
+      ],
+      "widgets_values_named": {
+        "reference_latents_method": "index_timestep_zero"
+      }
+    },
+    {
+      "id": 22,
+      "type": "TextEncodeQwenImageEditPlus",
+      "title": "Text Encode Qwen Image Edit Plus",
+      "pos": [
+        2760,
+        1954
+      ],
+      "size": [
+        400,
+        272
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 30
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 31,
+          "shape": 7
+        },
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 32,
+          "shape": 7
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 33,
+          "shape": 7
+        },
+        {
+          "name": "image3",
+          "type": "IMAGE",
+          "link": 34,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            35
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TextEncodeQwenImageEditPlus"
+      },
+      "widgets_values": [
+        ""
+      ],
+      "widgets_values_named": {
+        "prompt": ""
+      }
+    },
+    {
+      "id": 23,
+      "type": "FluxKontextMultiReferenceLatentMethod",
+      "title": "Edit Model Reference Method",
+      "pos": [
+        3220,
+        1850
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 35
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            38,
+            51,
+            64,
+            77
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FluxKontextMultiReferenceLatentMethod"
+      },
+      "widgets_values": [
+        "index_timestep_zero"
+      ],
+      "widgets_values_named": {
+        "reference_latents_method": "index_timestep_zero"
+      }
+    },
+    {
+      "id": 24,
+      "type": "EmptySD3LatentImage",
+      "title": "EmptySD3LatentImage",
+      "pos": [
+        0,
+        1642
+      ],
+      "size": [
+        400,
+        194
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            39,
+            52,
+            65
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptySD3LatentImage"
+      },
+      "widgets_values": [
+        1152,
+        1456,
+        1
+      ],
+      "widgets_values_named": {
+        "width": 1152,
+        "height": 1456,
+        "batch_size": 1
+      }
+    },
+    {
+      "id": 25,
+      "type": "KSampler",
+      "title": "KSampler",
+      "pos": [
+        3680,
+        1642
+      ],
+      "size": [
+        400,
+        376
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 36
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 37
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 38
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 39
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            40
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSampler"
+      },
+      "widgets_values": [
+        2,
+        "randomize",
+        8,
+        1,
+        "euler",
+        "simple",
+        1
+      ],
+      "widgets_values_named": {
+        "seed": 2,
+        "control_after_generate": "randomize",
+        "steps": 8,
+        "cfg": 1,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1
+      }
+    },
+    {
+      "id": 26,
+      "type": "VAEDecode",
+      "title": "VAE Decode",
+      "pos": [
+        4140,
+        1642
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 40
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 41
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            42
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 27,
+      "type": "SaveImage",
+      "title": "Save Image",
+      "pos": [
+        4600,
+        1642
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 42
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/qwen"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/qwen"
+      }
+    },
+    {
+      "id": 28,
+      "type": "TextEncodeQwenImageEditPlus",
+      "title": "Text Encode Qwen Image Edit Plus",
+      "pos": [
+        2760,
+        2426
+      ],
+      "size": [
+        400,
+        272
+      ],
+      "flags": {},
+      "order": 27,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 43
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 44,
+          "shape": 7
+        },
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 45,
+          "shape": 7
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 46,
+          "shape": 7
+        },
+        {
+          "name": "image3",
+          "type": "IMAGE",
+          "link": 47,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            48
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TextEncodeQwenImageEditPlus"
+      },
+      "widgets_values": [
+        "Draw a three-quarter head-and-shoulders portrait, head turned to their left, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks."
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a three-quarter head-and-shoulders portrait, head turned to their left, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks."
+      }
+    },
+    {
+      "id": 29,
+      "type": "FluxKontextMultiReferenceLatentMethod",
+      "title": "Edit Model Reference Method",
+      "pos": [
+        3220,
+        2426
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 28,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 48
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            50
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FluxKontextMultiReferenceLatentMethod"
+      },
+      "widgets_values": [
+        "index_timestep_zero"
+      ],
+      "widgets_values_named": {
+        "reference_latents_method": "index_timestep_zero"
+      }
+    },
+    {
+      "id": 30,
+      "type": "KSampler",
+      "title": "KSampler",
+      "pos": [
+        3680,
+        2426
+      ],
+      "size": [
+        400,
+        376
+      ],
+      "flags": {},
+      "order": 29,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 49
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 50
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 51
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 52
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            53
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSampler"
+      },
+      "widgets_values": [
+        3,
+        "randomize",
+        8,
+        1,
+        "euler",
+        "simple",
+        1
+      ],
+      "widgets_values_named": {
+        "seed": 3,
+        "control_after_generate": "randomize",
+        "steps": 8,
+        "cfg": 1,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1
+      }
+    },
+    {
+      "id": 31,
+      "type": "VAEDecode",
+      "title": "VAE Decode",
+      "pos": [
+        4140,
+        2426
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 30,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 53
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 54
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            55
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 32,
+      "type": "SaveImage",
+      "title": "Save Image",
+      "pos": [
+        4600,
+        2426
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 31,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 55
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/qwen"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/qwen"
+      }
+    },
+    {
+      "id": 33,
+      "type": "TextEncodeQwenImageEditPlus",
+      "title": "Text Encode Qwen Image Edit Plus",
+      "pos": [
+        2760,
+        3002
+      ],
+      "size": [
+        400,
+        272
+      ],
+      "flags": {},
+      "order": 32,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 56
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 57,
+          "shape": 7
+        },
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 58,
+          "shape": 7
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 59,
+          "shape": 7
+        },
+        {
+          "name": "image3",
+          "type": "IMAGE",
+          "link": 60,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            61
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TextEncodeQwenImageEditPlus"
+      },
+      "widgets_values": [
+        "Draw a left profile head-and-shoulders portrait, facing fully to their left, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks."
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a left profile head-and-shoulders portrait, facing fully to their left, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks."
+      }
+    },
+    {
+      "id": 34,
+      "type": "FluxKontextMultiReferenceLatentMethod",
+      "title": "Edit Model Reference Method",
+      "pos": [
+        3220,
+        3002
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 33,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 61
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            63
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FluxKontextMultiReferenceLatentMethod"
+      },
+      "widgets_values": [
+        "index_timestep_zero"
+      ],
+      "widgets_values_named": {
+        "reference_latents_method": "index_timestep_zero"
+      }
+    },
+    {
+      "id": 35,
+      "type": "KSampler",
+      "title": "KSampler",
+      "pos": [
+        3680,
+        3002
+      ],
+      "size": [
+        400,
+        376
+      ],
+      "flags": {},
+      "order": 34,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 62
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 63
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 64
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 65
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            66
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSampler"
+      },
+      "widgets_values": [
+        4,
+        "randomize",
+        8,
+        1,
+        "euler",
+        "simple",
+        1
+      ],
+      "widgets_values_named": {
+        "seed": 4,
+        "control_after_generate": "randomize",
+        "steps": 8,
+        "cfg": 1,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1
+      }
+    },
+    {
+      "id": 36,
+      "type": "VAEDecode",
+      "title": "VAE Decode",
+      "pos": [
+        4140,
+        3002
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 35,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 66
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 67
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            68
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 37,
+      "type": "SaveImage",
+      "title": "Save Image",
+      "pos": [
+        4600,
+        3002
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 36,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 68
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/qwen"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/qwen"
+      }
+    },
+    {
+      "id": 38,
+      "type": "TextEncodeQwenImageEditPlus",
+      "title": "Text Encode Qwen Image Edit Plus",
+      "pos": [
+        2760,
+        3578
+      ],
+      "size": [
+        400,
+        272
+      ],
+      "flags": {},
+      "order": 37,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 69
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 70,
+          "shape": 7
+        },
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 71,
+          "shape": 7
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 72,
+          "shape": 7
+        },
+        {
+          "name": "image3",
+          "type": "IMAGE",
+          "link": 73,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            74
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TextEncodeQwenImageEditPlus"
+      },
+      "widgets_values": [
+        "Draw a full-body portrait, standing front-facing in simple neutral clothing, head to feet in frame, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks."
+      ],
+      "widgets_values_named": {
+        "prompt": "Draw a full-body portrait, standing front-facing in simple neutral clothing, head to feet in frame, of the same person shown in the attached photos and reference sheet.\nKeep their exact facial structure, skin tone and texture, hairline, hair, eye shape, and any\nmarks or features. Do not beautify, slim, smooth the skin or change their age.\nPlain mid-grey studio background, soft even front lighting, natural skin texture with visible pores.\nOne photograph only. No text, labels, borders or watermarks."
+      }
+    },
+    {
+      "id": 39,
+      "type": "FluxKontextMultiReferenceLatentMethod",
+      "title": "Edit Model Reference Method",
+      "pos": [
+        3220,
+        3578
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 38,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 74
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            76
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FluxKontextMultiReferenceLatentMethod"
+      },
+      "widgets_values": [
+        "index_timestep_zero"
+      ],
+      "widgets_values_named": {
+        "reference_latents_method": "index_timestep_zero"
+      }
+    },
+    {
+      "id": 40,
+      "type": "EmptySD3LatentImage",
+      "title": "EmptySD3LatentImage",
+      "pos": [
+        0,
+        3578
+      ],
+      "size": [
+        400,
+        194
+      ],
+      "flags": {},
+      "order": 39,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            78
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptySD3LatentImage"
+      },
+      "widgets_values": [
+        976,
+        1728,
+        1
+      ],
+      "widgets_values_named": {
+        "width": 976,
+        "height": 1728,
+        "batch_size": 1
+      }
+    },
+    {
+      "id": 41,
+      "type": "KSampler",
+      "title": "KSampler",
+      "pos": [
+        3680,
+        3578
+      ],
+      "size": [
+        400,
+        376
+      ],
+      "flags": {},
+      "order": 40,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 75
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 76
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 77
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 78
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            79
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSampler"
+      },
+      "widgets_values": [
+        5,
+        "randomize",
+        8,
+        1,
+        "euler",
+        "simple",
+        1
+      ],
+      "widgets_values_named": {
+        "seed": 5,
+        "control_after_generate": "randomize",
+        "steps": 8,
+        "cfg": 1,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1
+      }
+    },
+    {
+      "id": 42,
+      "type": "VAEDecode",
+      "title": "VAE Decode",
+      "pos": [
+        4140,
+        3578
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 41,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 79
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 80
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            81
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 43,
+      "type": "SaveImage",
+      "title": "Save Image",
+      "pos": [
+        4600,
+        3578
+      ],
+      "size": [
+        400,
+        168
+      ],
+      "flags": {},
+      "order": 42,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 81
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "portraius/qwen"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "portraius/qwen"
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      3,
+      0,
+      "MODEL"
+    ],
+    [
+      2,
+      3,
+      0,
+      4,
+      0,
+      "MODEL"
+    ],
+    [
+      3,
+      4,
+      0,
+      5,
+      0,
+      "MODEL"
+    ],
+    [
+      4,
+      8,
+      0,
+      11,
+      0,
+      "IMAGE"
+    ],
+    [
+      5,
+      6,
+      0,
+      12,
+      0,
+      "CLIP"
+    ],
+    [
+      6,
+      7,
+      0,
+      12,
+      1,
+      "VAE"
+    ],
+    [
+      7,
+      11,
+      0,
+      12,
+      2,
+      "IMAGE"
+    ],
+    [
+      8,
+      9,
+      0,
+      12,
+      3,
+      "IMAGE"
+    ],
+    [
+      9,
+      10,
+      0,
+      12,
+      4,
+      "IMAGE"
+    ],
+    [
+      10,
+      12,
+      0,
+      13,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      11,
+      6,
+      0,
+      14,
+      0,
+      "CLIP"
+    ],
+    [
+      12,
+      7,
+      0,
+      14,
+      1,
+      "VAE"
+    ],
+    [
+      13,
+      11,
+      0,
+      14,
+      2,
+      "IMAGE"
+    ],
+    [
+      14,
+      9,
+      0,
+      14,
+      3,
+      "IMAGE"
+    ],
+    [
+      15,
+      10,
+      0,
+      14,
+      4,
+      "IMAGE"
+    ],
+    [
+      16,
+      14,
+      0,
+      15,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      17,
+      5,
+      0,
+      17,
+      0,
+      "MODEL"
+    ],
+    [
+      18,
+      13,
+      0,
+      17,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      19,
+      15,
+      0,
+      17,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      20,
+      16,
+      0,
+      17,
+      3,
+      "LATENT"
+    ],
+    [
+      21,
+      17,
+      0,
+      18,
+      0,
+      "LATENT"
+    ],
+    [
+      22,
+      7,
+      0,
+      18,
+      1,
+      "VAE"
+    ],
+    [
+      23,
+      18,
+      0,
+      19,
+      0,
+      "IMAGE"
+    ],
+    [
+      24,
+      6,
+      0,
+      20,
+      0,
+      "CLIP"
+    ],
+    [
+      25,
+      7,
+      0,
+      20,
+      1,
+      "VAE"
+    ],
+    [
+      26,
+      11,
+      0,
+      20,
+      2,
+      "IMAGE"
+    ],
+    [
+      27,
+      9,
+      0,
+      20,
+      3,
+      "IMAGE"
+    ],
+    [
+      28,
+      18,
+      0,
+      20,
+      4,
+      "IMAGE"
+    ],
+    [
+      29,
+      20,
+      0,
+      21,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      30,
+      6,
+      0,
+      22,
+      0,
+      "CLIP"
+    ],
+    [
+      31,
+      7,
+      0,
+      22,
+      1,
+      "VAE"
+    ],
+    [
+      32,
+      11,
+      0,
+      22,
+      2,
+      "IMAGE"
+    ],
+    [
+      33,
+      9,
+      0,
+      22,
+      3,
+      "IMAGE"
+    ],
+    [
+      34,
+      18,
+      0,
+      22,
+      4,
+      "IMAGE"
+    ],
+    [
+      35,
+      22,
+      0,
+      23,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      36,
+      5,
+      0,
+      25,
+      0,
+      "MODEL"
+    ],
+    [
+      37,
+      21,
+      0,
+      25,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      38,
+      23,
+      0,
+      25,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      39,
+      24,
+      0,
+      25,
+      3,
+      "LATENT"
+    ],
+    [
+      40,
+      25,
+      0,
+      26,
+      0,
+      "LATENT"
+    ],
+    [
+      41,
+      7,
+      0,
+      26,
+      1,
+      "VAE"
+    ],
+    [
+      42,
+      26,
+      0,
+      27,
+      0,
+      "IMAGE"
+    ],
+    [
+      43,
+      6,
+      0,
+      28,
+      0,
+      "CLIP"
+    ],
+    [
+      44,
+      7,
+      0,
+      28,
+      1,
+      "VAE"
+    ],
+    [
+      45,
+      11,
+      0,
+      28,
+      2,
+      "IMAGE"
+    ],
+    [
+      46,
+      9,
+      0,
+      28,
+      3,
+      "IMAGE"
+    ],
+    [
+      47,
+      18,
+      0,
+      28,
+      4,
+      "IMAGE"
+    ],
+    [
+      48,
+      28,
+      0,
+      29,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      49,
+      5,
+      0,
+      30,
+      0,
+      "MODEL"
+    ],
+    [
+      50,
+      29,
+      0,
+      30,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      51,
+      23,
+      0,
+      30,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      52,
+      24,
+      0,
+      30,
+      3,
+      "LATENT"
+    ],
+    [
+      53,
+      30,
+      0,
+      31,
+      0,
+      "LATENT"
+    ],
+    [
+      54,
+      7,
+      0,
+      31,
+      1,
+      "VAE"
+    ],
+    [
+      55,
+      31,
+      0,
+      32,
+      0,
+      "IMAGE"
+    ],
+    [
+      56,
+      6,
+      0,
+      33,
+      0,
+      "CLIP"
+    ],
+    [
+      57,
+      7,
+      0,
+      33,
+      1,
+      "VAE"
+    ],
+    [
+      58,
+      11,
+      0,
+      33,
+      2,
+      "IMAGE"
+    ],
+    [
+      59,
+      9,
+      0,
+      33,
+      3,
+      "IMAGE"
+    ],
+    [
+      60,
+      18,
+      0,
+      33,
+      4,
+      "IMAGE"
+    ],
+    [
+      61,
+      33,
+      0,
+      34,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      62,
+      5,
+      0,
+      35,
+      0,
+      "MODEL"
+    ],
+    [
+      63,
+      34,
+      0,
+      35,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      64,
+      23,
+      0,
+      35,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      65,
+      24,
+      0,
+      35,
+      3,
+      "LATENT"
+    ],
+    [
+      66,
+      35,
+      0,
+      36,
+      0,
+      "LATENT"
+    ],
+    [
+      67,
+      7,
+      0,
+      36,
+      1,
+      "VAE"
+    ],
+    [
+      68,
+      36,
+      0,
+      37,
+      0,
+      "IMAGE"
+    ],
+    [
+      69,
+      6,
+      0,
+      38,
+      0,
+      "CLIP"
+    ],
+    [
+      70,
+      7,
+      0,
+      38,
+      1,
+      "VAE"
+    ],
+    [
+      71,
+      11,
+      0,
+      38,
+      2,
+      "IMAGE"
+    ],
+    [
+      72,
+      9,
+      0,
+      38,
+      3,
+      "IMAGE"
+    ],
+    [
+      73,
+      18,
+      0,
+      38,
+      4,
+      "IMAGE"
+    ],
+    [
+      74,
+      38,
+      0,
+      39,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      75,
+      5,
+      0,
+      41,
+      0,
+      "MODEL"
+    ],
+    [
+      76,
+      39,
+      0,
+      41,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      77,
+      23,
+      0,
+      41,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      78,
+      40,
+      0,
+      41,
+      3,
+      "LATENT"
+    ],
+    [
+      79,
+      41,
+      0,
+      42,
+      0,
+      "LATENT"
+    ],
+    [
+      80,
+      7,
+      0,
+      42,
+      1,
+      "VAE"
+    ],
+    [
+      81,
+      42,
+      0,
+      43,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Turnaround sheet",
+      "bounding": [
+        -20,
+        -60,
+        3220,
+        1542
+      ],
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Front view",
+      "bounding": [
+        -20,
+        1582,
+        5060,
+        684
+      ],
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "Three-quarter view",
+      "bounding": [
+        -20,
+        2366,
+        5060,
+        476
+      ],
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 4,
+      "title": "Profile view",
+      "bounding": [
+        -20,
+        2942,
+        5060,
+        476
+      ],
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 5,
+      "title": "Full body view",
+      "bounding": [
+        -20,
+        3518,
+        5060,
+        476
+      ],
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6,
+      "offset": [
+        0,
+        0
+      ]
+    },
+    "frontendVersion": "1.53.6"
+  },
+  "version": 0.4
+}

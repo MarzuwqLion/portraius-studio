@@ -1,0 +1,746 @@
+{
+  "2": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "qwen_image_edit_2511_fp8mixed.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "3": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+      "shift": 3.1,
+      "sampling": "flow",
+      "model": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "ModelSamplingAuraFlow"
+    }
+  },
+  "4": {
+    "class_type": "CFGNorm",
+    "inputs": {
+      "strength": 1,
+      "pre_cfg": false,
+      "model": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "CFGNorm"
+    }
+  },
+  "5": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "lora_name": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+      "strength_model": 1,
+      "model": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
+  "6": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "7": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "8": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "walt-full-body.jpg"
+    },
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "9": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "concert-original.webp"
+    },
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "10": {
+    "class_type": "FluxKontextImageScale",
+    "inputs": {
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "FluxKontextImageScale"
+    }
+  },
+  "11": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+      "prompt": "Image 1 is a full-body portrait of a person. Image 2 is the first frame of a video. Draw the person from image 1, with exactly the same face, hair, skin and build, in place of the person in image 2: in the same position, at the same size in the frame and in the same pose. About them: Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater. Dress them as described there; anything it leaves out comes from image 1. The place is a large concert stage with crowd lights and haze behind, seen from the same camera position as image 2. Nobody else is in the picture. No text, signs or lettering.",
+      "clip": [
+        "6",
+        0
+      ],
+      "vae": [
+        "7",
+        0
+      ],
+      "image1": [
+        "10",
+        0
+      ],
+      "image2": [
+        "9",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Text Encode Qwen Image Edit Plus"
+    }
+  },
+  "12": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+      "reference_latents_method": "index_timestep_zero",
+      "conditioning": [
+        "11",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Edit Model Reference Method"
+    }
+  },
+  "13": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+      "prompt": "",
+      "clip": [
+        "6",
+        0
+      ],
+      "vae": [
+        "7",
+        0
+      ],
+      "image1": [
+        "10",
+        0
+      ],
+      "image2": [
+        "9",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Text Encode Qwen Image Edit Plus"
+    }
+  },
+  "14": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+      "reference_latents_method": "index_timestep_zero",
+      "conditioning": [
+        "13",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Edit Model Reference Method"
+    }
+  },
+  "15": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+      "width": 1360,
+      "height": 768,
+      "batch_size": 1
+    },
+    "_meta": {
+      "title": "EmptySD3LatentImage"
+    }
+  },
+  "16": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 41,
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "5",
+        0
+      ],
+      "positive": [
+        "12",
+        0
+      ],
+      "negative": [
+        "14",
+        0
+      ],
+      "latent_image": [
+        "15",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "17": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "16",
+        0
+      ],
+      "vae": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "18": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "portraius/qwen",
+      "images": [
+        "17",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "19": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "wan_animate_2_distill_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "20": {
+    "class_type": "ContextWindowsManual",
+    "inputs": {
+      "context_length": 21,
+      "context_overlap": 8,
+      "context_schedule": "standard_static",
+      "context_stride": 1,
+      "closed_loop": false,
+      "fuse_method": "pyramid",
+      "dim": 2,
+      "freenoise": true,
+      "cond_retain_index_list": "0",
+      "split_conds_to_windows": false,
+      "latent_retain_index_list": "",
+      "causal_window_fix": true,
+      "model": [
+        "19",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Context Windows (Manual)"
+    }
+  },
+  "21": {
+    "class_type": "WanAnimate2Cache",
+    "inputs": {
+      "device": "gpu",
+      "dtype": "int8",
+      "model": [
+        "20",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "WanAnimate2Cache"
+    }
+  },
+  "22": {
+    "class_type": "ModelSamplingSD3",
+    "inputs": {
+      "shift": 5,
+      "model": [
+        "21",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "ModelSamplingSD3"
+    }
+  },
+  "23": {
+    "class_type": "BasicScheduler",
+    "inputs": {
+      "scheduler": "simple",
+      "steps": 10,
+      "denoise": 1,
+      "model": [
+        "21",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "24": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "lcm"
+    },
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "25": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "type": "wan",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "26": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "Wan2_1_VAE_bf16.safetensors"
+    },
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "27": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+      "clip_name": "clip_vision_h.safetensors"
+    },
+    "_meta": {
+      "title": "Load CLIP Vision"
+    }
+  },
+  "28": {
+    "class_type": "ResizeImageMaskNode",
+    "inputs": {
+      "resize_type": "scale height",
+      "resize_type.height": 480,
+      "scale_method": "area",
+      "input": [
+        "17",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Resize Image/Mask"
+    }
+  },
+  "29": {
+    "class_type": "GetImageSize",
+    "inputs": {
+      "image": [
+        "28",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Get Image Size"
+    }
+  },
+  "30": {
+    "class_type": "ComfyMathExpression",
+    "inputs": {
+      "expression": "max(0, floor((848 - a) / 2))",
+      "values.a": [
+        "29",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Math Expression"
+    }
+  },
+  "31": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 848,
+      "height": 480,
+      "batch_size": 1,
+      "color": 9210764
+    },
+    "_meta": {
+      "title": "Empty Image"
+    }
+  },
+  "32": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "x": [
+        "30",
+        1
+      ],
+      "y": 0,
+      "resize_source": false,
+      "destination": [
+        "31",
+        0
+      ],
+      "source": [
+        "28",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Image Composite Masked"
+    }
+  },
+  "33": {
+    "class_type": "LoadVideo",
+    "inputs": {
+      "file": "concert-original.mp4"
+    },
+    "_meta": {
+      "title": "Load Video"
+    }
+  },
+  "34": {
+    "class_type": "GetVideoComponents",
+    "inputs": {
+      "video": [
+        "33",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Get Video Components"
+    }
+  },
+  "35": {
+    "class_type": "ResizeImageMaskNode",
+    "inputs": {
+      "resize_type": "scale dimensions",
+      "resize_type.width": 848,
+      "resize_type.height": 480,
+      "resize_type.crop": "center",
+      "scale_method": "area",
+      "input": [
+        "34",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Resize Image/Mask"
+    }
+  },
+  "36": {
+    "class_type": "ImageFromBatch",
+    "inputs": {
+      "batch_index": 0,
+      "length": 1,
+      "image": [
+        "35",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Get Image from Batch"
+    }
+  },
+  "37": {
+    "class_type": "GetImageSize",
+    "inputs": {
+      "image": [
+        "35",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Get Image Size"
+    }
+  },
+  "38": {
+    "class_type": "ComfyMathExpression",
+    "inputs": {
+      "expression": "floor((a - 1) / 4) * 4 + 1",
+      "values.a": [
+        "37",
+        2
+      ]
+    },
+    "_meta": {
+      "title": "Math Expression"
+    }
+  },
+  "39": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "Character appearance description: Walt Harmon, exactly as in the reference image, with the same face, hair, skin and build. Retired harbour pilot. Tall and lean, usually in a navy wool peacoat over a dark knit sweater.\nBackground description: a large concert stage with crowd lights and haze behind.",
+      "clip": [
+        "25",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "40": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "25",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "41": {
+    "class_type": "CLIPVisionEncode",
+    "inputs": {
+      "crop": "none",
+      "clip_vision": [
+        "27",
+        0
+      ],
+      "image": [
+        "32",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Vision Encode"
+    }
+  },
+  "42": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "a person performs exactly the movement, timing and camera of the reference video.",
+      "clip": [
+        "25",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "43": {
+    "class_type": "CLIPVisionEncode",
+    "inputs": {
+      "crop": "none",
+      "clip_vision": [
+        "27",
+        0
+      ],
+      "image": [
+        "36",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Vision Encode"
+    }
+  },
+  "44": {
+    "class_type": "WanAnimate2ToVideo",
+    "inputs": {
+      "width": 848,
+      "height": 480,
+      "length": [
+        "38",
+        1
+      ],
+      "batch_size": 1,
+      "video_frame_offset": 0,
+      "pose_strength": 1,
+      "pose_start_percent": 0,
+      "pose_end_percent": 1,
+      "reference_image_strength": 1,
+      "positive": [
+        "39",
+        0
+      ],
+      "negative": [
+        "40",
+        0
+      ],
+      "vae": [
+        "26",
+        0
+      ],
+      "reference_image": [
+        "32",
+        0
+      ],
+      "pose_video": [
+        "35",
+        0
+      ],
+      "clip_vision_output": [
+        "41",
+        0
+      ],
+      "positive_pose": [
+        "42",
+        0
+      ],
+      "clip_vision_output_pose": [
+        "43",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "WanAnimate2ToVideo"
+    }
+  },
+  "45": {
+    "class_type": "SamplerCustom",
+    "inputs": {
+      "add_noise": true,
+      "noise_seed": 41,
+      "cfg": 1,
+      "model": [
+        "22",
+        0
+      ],
+      "positive": [
+        "44",
+        0
+      ],
+      "negative": [
+        "44",
+        1
+      ],
+      "sampler": [
+        "24",
+        0
+      ],
+      "sigmas": [
+        "23",
+        0
+      ],
+      "latent_image": [
+        "44",
+        2
+      ]
+    },
+    "_meta": {
+      "title": "SamplerCustom"
+    }
+  },
+  "46": {
+    "class_type": "TrimVideoLatent",
+    "inputs": {
+      "trim_amount": [
+        "44",
+        3
+      ],
+      "samples": [
+        "45",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Trim Video Latent"
+    }
+  },
+  "47": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "46",
+        0
+      ],
+      "vae": [
+        "26",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "48": {
+    "class_type": "CreateVideo",
+    "inputs": {
+      "fps": [
+        "34",
+        2
+      ],
+      "bit_depth": "auto",
+      "color_space": "sRGB",
+      "codec": "none",
+      "images": [
+        "47",
+        0
+      ],
+      "audio": [
+        "34",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "Create Video"
+    }
+  },
+  "49": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "portraius/recast",
+      "format": "auto",
+      "format.codec": "auto",
+      "codec": "auto",
+      "video": [
+        "48",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save Video"
+    }
+  }
+}

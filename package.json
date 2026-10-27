@@ -25,6 +25,7 @@
     "voices:check": "tsx scripts/voices-check.ts",
     "workflows": "vitest run src/lib/workflows --mode workflows",
     "workflows:check": "tsx scripts/workflows-check.ts",
+    "workflows:nodes": "tsx scripts/workflows-nodes.ts",
     "local:check": "tsx scripts/local-check.ts",
     "local:smoke": "tsx scripts/local-smoke.ts",
     "local:models": "tsx scripts/local-models.ts",

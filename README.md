@@ -73,11 +73,12 @@ tick "Remember on this device". There's no `.env` key and no server to hold one.
 | `npm run smoke` | One image, one video draft, an estimate and a resumed job against real Router calls, with `COMFY_API_KEY` from your shell (costs cents) |
 | `npm run presets:check` | Validates `presets/` |
 | `npm run workflows` / `workflows:check` | Rebuilds `workflows/` from the app's prompts / checks them against ComfyUI's node definitions |
+| `npm run workflows:nodes` | Refreshes the node definitions `workflows/local/`'s UI files are built from |
 | `npm run nodepack` | Rebuilds the ComfyUI node pack's presets, prompt cases and example workflow from the app |
 | `npm run voices:check` | Speaks one line in every voice in `presets/voices.json` through Router (costs cents) |
 | `npm run build` | The static site in `dist/`, as GitHub Pages serves it |
 | `npm run local:models -- <ComfyUI folder>` | Downloads the open-weight model files into a ComfyUI ([`docs/local-setup.md`](docs/local-setup.md)) |
-| `npm run local:check` / `local:smoke` | Checks every local graph against your ComfyUI's nodes / runs each local model once on your GPU |
+| `npm run local:check` / `local:smoke` | Checks every local graph and `workflows/local/` against your ComfyUI's nodes / runs each local model once on your GPU |
 
 ## Using Portraius Studio
 
@@ -371,6 +372,11 @@ Workflow (API) format:
 - **Finishing:** a line in an ElevenLabs voice, lip-synced with Sync-3 or spoken in a new H3 clip (add-a-line).
 - **Director:** the sample scene shot by shot and joined (director-scene), as a Kling 3.0 Omni one-take
   (kling-one-take), and its shot list drafted by Claude Sonnet 5.5 (draft-shots).
+
+[`workflows/local/`](workflows/README.md#on-your-own-gpu-local) has the same studio on your own GPU, free: every graph
+the app sends when a feature runs "On your GPU", with open-weight models and ComfyUI's own nodes only. A character
+from photos and the Image studio on Qwen-Image-Edit 2511, video on Wan 2.2 14B and 5B, Recast on Qwen then Wan
+Animate 2, a speaking clip on Wan 2.2 S2V, the realism pass on SeedVR2 and the Director's shot list on Gemma 4.
 
 They're generated from the app's own prompt code and presets, so a graph sends what the app sends, and checked
 against ComfyUI's published node definitions. The workflows README lists where a graph has to differ from the app.
