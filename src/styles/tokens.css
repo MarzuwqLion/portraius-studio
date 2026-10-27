@@ -1,7 +1,9 @@
 /*
  * Portraius Studio design tokens. The only file in src/ that holds colour values.
- * Dark is the default theme (data-theme="dark" on <html> from the first paint);
- * "Match system" removes the attribute and the media query below decides.
+ * Portraius is the default theme (data-theme="portraius" on <html> from the
+ * first paint): portraius.com's pink-to-blue gradient, moving behind glass
+ * panels. Light and Dark are the studio's own; "Match system" removes the
+ * attribute and the media query below decides between those two.
  * Media sits on --seamless, which is neutral grey in both themes; the cognac
  * and plum identity stays in the chrome (spec: Visual direction, Why grey).
  */
@@ -74,5 +76,43 @@
   --check: #e8c25a;
   --drift: #f08a90;
   --on-seamless: var(--ink);
+  color-scheme: dark;
+}
+
+/* Portraius (Decisions, October 27): portraius.com's brand colours. The
+   gradient moves behind the shell; panels are deep violet glass over it, so
+   text keeps its contrast even over the brightest stop. Media still sits on
+   neutral grey (Why grey). */
+:root[data-theme="portraius"] {
+  --seamless: #2e2f31;
+  --proof: #1a1330;
+  --ink: #fbf7ff;
+  --rule: #8a7cc0;
+  --accent: #d1336d;
+  --on-accent: #ffffff;
+  --accent-text: #ffa3c2;
+  --grease: #ffd700;
+  --match: #9bbf7a;
+  --check: #e8c25a;
+  /* Coral, so an error never reads as a pink link. */
+  --drift: #ffa592;
+  --on-seamless: var(--ink);
+
+  /* portraius.com's --brand-pink, --brand-blue, --gen-pink and --gen-purple. */
+  --brand-pink: #ff6b9a;
+  --brand-blue: #6a82ff;
+  --brand-rose: #f8a2d8;
+  --brand-purple: #a283f5;
+  --backdrop-gradient: linear-gradient(120deg, var(--brand-pink), var(--brand-purple), var(--brand-blue), var(--brand-rose), var(--brand-pink));
+  /* Deeper stops for fills under white text: each is at least 4.5:1. */
+  --accent-deep-purple: #7a3fc8;
+  --accent-deep-blue: #4c5fe0;
+  --accent-gradient: linear-gradient(110deg, var(--accent), var(--accent-deep-purple), var(--accent-deep-blue), var(--accent-deep-purple), var(--accent));
+  --glass: color-mix(in srgb, var(--proof) 72%, transparent);
+  --glow: color-mix(in srgb, var(--brand-pink) 40%, transparent);
+  --corner-panel: 14px;
+  --backdrop-duration: 24s;
+  --accent-duration: 6s;
+
   color-scheme: dark;
 }

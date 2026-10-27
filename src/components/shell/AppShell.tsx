@@ -47,7 +47,7 @@ function useScrollPerScreen() {
 export function AppShell() {
   const { main, onScroll } = useScrollPerScreen();
   return (
-    <div className="flex h-full flex-col bg-proof text-ink">
+    <div className="shell flex h-full flex-col bg-proof text-ink">
       {/* The first focus stop on every screen, seen only when focused. Not a
           #fragment: the hash belongs to the router. */}
       <a
@@ -60,9 +60,9 @@ export function AppShell() {
       >
         Skip to content
       </a>
-      <div className="flex min-h-0 flex-1">
-        <nav aria-label="Studio" className="hidden w-24 shrink-0 flex-col gap-1 border-r border-rule p-2 md:flex">
-          <NavLink to="/" className="mb-2 px-1 py-2 text-center font-display text-panel font-extrabold leading-none text-accent-text">
+      <div className="shell-body flex min-h-0 flex-1">
+        <nav aria-label="Studio" className="shell-panel hidden w-24 shrink-0 flex-col gap-1 border-r border-rule p-2 md:flex">
+          <NavLink to="/" className="shell-logo mb-2 px-1 py-2 text-center font-display text-panel font-extrabold leading-none text-accent-text">
             Portraius
           </NavLink>
           {WORK_NAV.map((item) => (
@@ -72,12 +72,12 @@ export function AppShell() {
             <RailLink item={SETTINGS_NAV} />
           </div>
         </nav>
-        <main ref={main} tabIndex={-1} onScroll={onScroll} className="min-w-0 flex-1 overflow-auto focus:outline-none">
+        <main ref={main} tabIndex={-1} onScroll={onScroll} className="shell-panel min-w-0 flex-1 overflow-auto focus:outline-none">
           <Outlet />
         </main>
       </div>
       <JobsTray />
-      <nav aria-label="Studio" className="flex border-t border-rule px-1 md:hidden">
+      <nav aria-label="Studio" className="shell-panel flex border-t border-rule px-1 md:hidden">
         {[...WORK_NAV, SETTINGS_NAV].map((item) => (
           <RailLink key={item.to} item={item} compact />
         ))}

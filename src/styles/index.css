@@ -124,6 +124,142 @@
   }
 }
 
+/* The Portraius theme (Decisions, October 27): the brand gradient drifts
+   behind the shell and two soft glows float over it; the panels are glass, so
+   the movement shows through them, and the set stays opaque Studio grey.
+   Primary fills (buttons, the active rail item) carry a slower gradient of
+   their own. Only transforms and background positions move, and reduced
+   motion holds everything still. Unlayered, so these win over the utility
+   classes the shell carries (bg-proof, border-rule). */
+[data-theme="portraius"] body {
+  background: var(--proof);
+}
+
+[data-theme="portraius"] .shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
+  background: transparent;
+}
+
+[data-theme="portraius"] .shell::before,
+[data-theme="portraius"] .shell::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Twice the shell's size, so sliding it never shows an edge. */
+[data-theme="portraius"] .shell::before {
+  inset: -50%;
+  background: var(--backdrop-gradient);
+  animation: backdrop-drift var(--backdrop-duration) ease-in-out infinite
+    alternate;
+}
+
+[data-theme="portraius"] .shell::after {
+  inset: -20%;
+  background:
+    radial-gradient(circle at 25% 30%, var(--brand-rose), transparent 32%),
+    radial-gradient(circle at 75% 70%, var(--brand-blue), transparent 34%);
+  opacity: 0.55;
+  animation: glow-float calc(var(--backdrop-duration) * 1.4) ease-in-out
+    infinite alternate;
+}
+
+[data-theme="portraius"] .shell-body {
+  gap: 8px;
+}
+
+[data-theme="portraius"] .shell-panel {
+  border-color: transparent;
+  border-radius: var(--corner-panel);
+  background: var(--glass);
+}
+
+[data-theme="portraius"] .shell-logo {
+  background: linear-gradient(
+    90deg,
+    var(--brand-pink),
+    var(--brand-purple),
+    var(--brand-blue),
+    var(--brand-pink)
+  );
+  background-size: 300% 100%;
+  background-clip: text;
+  color: transparent;
+  animation: accent-drift var(--accent-duration) linear infinite;
+}
+
+[data-theme="portraius"] .bg-accent {
+  background-image: var(--accent-gradient);
+  background-size: 300% 100%;
+  animation: accent-drift var(--accent-duration) ease-in-out infinite alternate;
+}
+
+[data-theme="portraius"] button.bg-accent,
+[data-theme="portraius"] a.bg-accent {
+  box-shadow: 0 4px 20px var(--glow);
+  transition:
+    transform var(--mark-duration) ease-out,
+    box-shadow var(--mark-duration) ease-out;
+}
+
+[data-theme="portraius"] button.bg-accent:disabled {
+  box-shadow: none;
+}
+
+[data-theme="portraius"] button.bg-accent:not(:disabled):hover,
+[data-theme="portraius"] a.bg-accent:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 26px var(--glow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="portraius"] .shell::before,
+  [data-theme="portraius"] .shell::after,
+  [data-theme="portraius"] .shell-logo,
+  [data-theme="portraius"] .bg-accent {
+    animation: none;
+  }
+
+  [data-theme="portraius"] button.bg-accent,
+  [data-theme="portraius"] a.bg-accent {
+    transition: none;
+    transform: none;
+  }
+}
+
+@keyframes backdrop-drift {
+  from {
+    transform: translate3d(-12%, -8%, 0) rotate(0deg);
+  }
+  to {
+    transform: translate3d(12%, 8%, 0) rotate(8deg);
+  }
+}
+
+@keyframes glow-float {
+  from {
+    transform: translate3d(-6%, 4%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(6%, -4%, 0) scale(1.12);
+  }
+}
+
+@keyframes accent-drift {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+
 @keyframes develop {
   from {
     opacity: 0;

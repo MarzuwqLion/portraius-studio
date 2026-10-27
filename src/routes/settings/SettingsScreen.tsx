@@ -126,9 +126,10 @@ function ThemeSection() {
   return (
     <Section title="Theme">
       <RadioGroup value={settings.theme} onValueChange={onChange} aria-label="Theme">
-        <RadioGroupItem value="system">Match system</RadioGroupItem>
-        <RadioGroupItem value="light">Light</RadioGroupItem>
+        <RadioGroupItem value="portraius">Portraius</RadioGroupItem>
         <RadioGroupItem value="dark">Dark</RadioGroupItem>
+        <RadioGroupItem value="light">Light</RadioGroupItem>
+        <RadioGroupItem value="system">Match system</RadioGroupItem>
       </RadioGroup>
     </Section>
   );

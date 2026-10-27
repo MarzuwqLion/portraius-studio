@@ -117,7 +117,8 @@ export interface Settings {
   keyStorage: "session" | "device";
   // Set only when keyStorage is "device" ("Remember on this device").
   rememberedKey?: string;
-  theme: "system" | "light" | "dark";
+  // Portraius is the default (Decisions, October 27).
+  theme: "portraius" | "system" | "light" | "dark";
   autoRetry: boolean;
   keepDrafts: boolean;
   // The local engine (spec: Local engine). Unindexed, so no Dexie version.
@@ -131,7 +132,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   id: "app",
   keyStorage: "session",
-  theme: "dark",
+  theme: "portraius",
   autoRetry: true,
   keepDrafts: true,
 };

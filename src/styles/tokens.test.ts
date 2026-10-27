@@ -20,6 +20,7 @@ const light = block(/:root\s*\{/);
 const darkMedia = block(/:root:not\(\[data-theme="light"\]\)\s*\{/);
 const darkForced = block(/:root\[data-theme="dark"\]\s*\{/);
 const dark = { ...light, ...darkMedia };
+const portraius = { ...light, ...block(/:root\[data-theme="portraius"\]\s*\{/) };
 
 const hex = (value: string): Rgb => {
   const m = /^#([0-9a-f]{6})$/i.exec(value);
@@ -75,10 +76,33 @@ const pairs: { text: string; on: string; min: number; why: string }[] = [
 ];
 
 describe("contrast targets", () => {
-  for (const [name, theme] of [["light", light], ["dark", dark]] as const) {
+  for (const [name, theme] of [["light", light], ["dark", dark], ["portraius", portraius]] as const) {
     for (const p of pairs) {
       it(`${name}: ${p.why} (${p.text} on ${p.on}) is at least ${p.min}:1`, () => {
         expect(contrast(colour(theme, p.text), colour(theme, p.on))).toBeGreaterThanOrEqual(p.min);
+      });
+    }
+  }
+
+  // White labels sit on every stop of the moving accent gradient.
+  for (const stop of ["--accent", "--accent-deep-purple", "--accent-deep-blue"]) {
+    it(`portraius: a label on the accent gradient's ${stop} stop is at least 4.5:1`, () => {
+      expect(contrast(colour(portraius, "--on-accent"), colour(portraius, stop))).toBeGreaterThanOrEqual(4.5);
+    });
+  }
+
+  // Panels are --glass: --proof at 72% over the moving backdrop. Text has to
+  // hold its contrast over every colour that drifts behind it.
+  it("portraius: glass is proof at 72% over the backdrop", () => {
+    expect(portraius["--glass"]).toBe("color-mix(in srgb, var(--proof) 72%, transparent)");
+  });
+  for (const stop of ["--brand-pink", "--brand-rose", "--brand-purple", "--brand-blue"]) {
+    for (const text of ["--ink", "--ink-muted", "--accent-text", "--match", "--check", "--drift"]) {
+      it(`portraius: ${text} on glass over ${stop} is at least 4.5:1`, () => {
+        const proof = colour(portraius, "--proof");
+        const behind = colour(portraius, stop);
+        const glass = proof.map((c, i) => c * 0.72 + behind[i]! * 0.28) as Rgb;
+        expect(contrast(colour(portraius, text), glass)).toBeGreaterThanOrEqual(4.5);
       });
     }
   }

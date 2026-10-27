@@ -94,7 +94,7 @@ export function JobsTray() {
   const strip = active.length > 0 || (open && done.length > 0);
 
   return (
-    <section aria-label="Activity" className={cn("flex shrink-0 items-center gap-3 overflow-x-auto border-t border-rule px-4", strip ? "h-[4.5rem]" : "h-10")}>
+    <section aria-label="Activity" className={cn("shell-panel flex shrink-0 items-center gap-3 overflow-x-auto border-t border-rule px-4", strip ? "h-[4.5rem]" : "h-10")}>
       {active.length > 0 ? (
         <ol aria-label="Working and failed" className="flex shrink-0 gap-2">
           {active.map((job) => (

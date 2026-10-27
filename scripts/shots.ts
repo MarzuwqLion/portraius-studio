@@ -25,7 +25,7 @@ import yearbook from "../presets/image/yearbook-1996.json" with { type: "json" }
 const root = join(import.meta.dirname, "..");
 const out = join(root, "shots");
 const PORT = 5199;
-const THEMES = ["light", "dark"] as const;
+const THEMES = ["portraius", "light", "dark"] as const;
 type Theme = (typeof THEMES)[number];
 interface Viewport {
   name: string;
@@ -101,7 +101,8 @@ async function visit(page: Page, hash: string): Promise<void> {
 }
 
 async function setTheme(page: Page, theme: Theme): Promise<void> {
-  await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
+  // Portraius is a dark theme of its own; the media query only matters for the other two.
+  await page.emulateMedia({ colorScheme: theme === "portraius" ? "dark" : theme, reducedMotion: "reduce" });
   await page.evaluate((t) => document.documentElement.setAttribute("data-theme", t), theme);
 }
 

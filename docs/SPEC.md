@@ -118,6 +118,15 @@ Marzuwq reopened the October 19 open-weights decision so that someone who doesn'
 | 3 | Prompts | An animated cast member's lock keeps their design, colours and art style and says not to make them photoreal. The realism line is never added beside an animated character. | The same drift as item 1, in Image, Video and Director. |
 | 4 | Video model | A video whose cast is all animated (elements beside them are fine) keeps the chosen model, Seedance 2.5 by default, in Video, Director and remixes; a face in its first frame doesn't send it to H3. Any real person in the cast still renders on MiniMax H3. Recast stays on H3: its source clip has a real performer, which Seedance refuses whoever the character is. Replaces part of the October 19 video decision. | Seedance refuses only photoreal people. Marzuwq, October 26. |
 
+### Decisions (October 27, Portraius theme)
+
+| # | Decision | Answer | Why |
+| --- | --- | --- | --- |
+| 1 | Default theme | Settings offers Portraius (the default, and first), Dark, Light and Match system. Portraius takes portraius.com's colours: brand pink `#FF6B9A` to blue `#6A82FF`, with its rose `#F8A2D8` and purple `#A283F5`. A visitor with a saved theme keeps it. | Marzuwq asked for the portraius.com colour scheme as the default, October 27. |
+| 2 | Motion | The brand gradient drifts behind the shell (24 s) and two soft glows float over it; primary buttons and the active rail item carry a slower accent gradient (6 s) with a pink glow and a 1 px lift on hover; the rail logo shimmers. Only transforms and background positions animate. Reduced motion holds all of it still. | "Moving gradients and moving effects", as on portraius.com, without costing the set its frame rate. |
+| 3 | Surfaces | The rail, main area and activity row become glass panels (deep violet `#1A1330` at 72%) with 8 px gutters and 14 px corners, so the gradient frames them and tints through. Buttons and the active rail item use deeper stops (`#D1336D`, `#7A3FC8`, `#4C5FE0`) under white labels. `tokens.test.ts` checks every text colour on glass over each backdrop stop at 4.5:1 or more. In this theme only, the Layout rule "no card shadows, no gradients" is lifted for the chrome. | portraius.com sets white text on bright pink, about 2.6:1; the glass keeps the look and the contrast targets. |
+| 4 | Media | The set and every take stay on neutral Studio grey (`#2E2F31`), opaque. Selection marks use the site's gold `#FFD700`; Drifted and errors are coral `#FFA592`, so they never read as a pink link. | Why grey: a tinted surround shifts how skin reads, and skin tones are the product. |
+
 ### Defaults
 
 - **Stack:** Vite + React + TypeScript, built as a static site. Node 22 or newer for local dev and scripts.
@@ -1110,7 +1119,7 @@ Skin tones are the product. A neutral grey surround (the same backdrop the turna
 
 ### Colour tokens
 
-Defined once in `src/styles/tokens.css`; no raw hex values anywhere else. Dark is the default theme; Settings offers Light, Dark and Match system.
+Defined once in `src/styles/tokens.css`; no raw hex values anywhere else. Portraius is the default theme (Decisions, October 27); Settings offers Portraius, Dark, Light and Match system. The table below is Light and Dark.
 
 | Token | Light | Dark | Use |
 | --- | --- | --- | --- |
