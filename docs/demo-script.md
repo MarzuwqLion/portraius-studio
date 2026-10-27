@@ -6,7 +6,7 @@ itself (Recast, Image, Video, the character page), not slides. Captions double a
 
 | Time | On screen | Voice-over or caption |
 | --- | --- | --- |
-| 0:00 to 0:08 | A Recast side by side: the dancer, then your character doing the same moves, ending on the end card with "Likeness 90, Strong match" | "Higgsfield promised to open source. So I built it, and it tells you how much the result still looks like you." |
+| 0:00 to 0:08 | A Recast side by side: the dancer, then your character doing the same moves, ending on the end card with its likeness score | "Higgsfield promised to open source. So I built it, and it tells you how much the result still looks like you." |
 | 0:08 to 0:25 | Cast: photos in, the webcam consent check (three prompts, head turn), the turnaround sheet with a score on every view, Export file | "A character is a file you own: photos, sheet, face data and a consent record. No one can make yours from your photos without the webcam check." |
 | 0:25 to 0:40 | Image: one preset, three takes, the likeness badge on each; then a take with no face marked Drifted and its automatic retry | "Every output is scored 0 to 100 against that person's own references, in the browser. Under 60, it retries on its own." |
 | 0:40 to 0:55 | Video: Image, then animate with the character on MiniMax H3, the score per frame and the lowest frame | "Wherever a person is on screen, MiniMax H3 is the core video model: stills, takes, Recast and speaking lines." |

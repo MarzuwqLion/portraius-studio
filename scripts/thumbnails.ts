@@ -64,7 +64,7 @@ const jobs: Job[] = [
     return { preset: id, type: "video", clip: { mode: people ? "still" : "text", scene: fill(p.recipe.prompt), ratio: String(p.recipe.params?.ratio ?? "16:9"), camera: p.recipe.camera } };
   }),
   ...Object.entries(RECAST_STILLS).map(([id, scene]): Job => ({ preset: id, type: "recast", still: { scene, aspectRatio: "1:1" } })),
-  ...RECAST_SAMPLE.map((id): Job => ({ preset: id, type: "recast", sample: { file: "concert-recast.mp4", startSec: 4 } })),
+  ...RECAST_SAMPLE.map((id): Job => ({ preset: id, type: "recast", sample: { file: "concert-recast.mp4", startSec: 1 } })),
 ];
 
 const args = process.argv.slice(2);

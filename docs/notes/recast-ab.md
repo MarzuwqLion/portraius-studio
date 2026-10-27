@@ -91,6 +91,20 @@ Full-body clips put the face at 40 to 60 px at 768P, where face-api's descriptor
 doubles that and the median clears 70. The score is the bar the spec sets, so waist-up clips are the
 honest demo for Motion Transfer at 768P, and full-body ones want 2K.
 
+**The Tour's sample, replaced on October 26.** The Tour shipped the 89.5 take above: the one that
+walks up to the lens. Next to the dancer it read as a different clip, so it was made again with
+`npm run recast-sample` (Swap me in, Walt):
+
+| Take | Result | Median (worst frame) |
+| --- | --- | --- |
+| 768P, seed 1758248209, request 4f7525db-a786-47e8-83b4-957d110b9095 | Same side steps, spin, raised arms and point, and the same locked-off camera, beat for beat | 57 (42) |
+| 2K, seed 1419183322, request cf381629-ad59-4511-8f3e-6e03689d6cd8 | Dances for about 4 s, then the camera pushes in and he steps up to the lens | 87.5 (71) |
+
+The 768P take ships, chosen by Marzuwq: it does what Motion Transfer promises, and its score is the
+honest one for a full-body dance at that distance. A high score here mostly measured how close the
+camera got. The 9:16 export, README GIF, link preview and the Swap me in and Dance double loops were
+made again from it.
+
 Frames where the face can't be seen (a spin, a turned head) used to score 0 and set the worst frame
 to 0; they're now skipped (`videoScores` in `lib/identity/score-output.ts`).
 

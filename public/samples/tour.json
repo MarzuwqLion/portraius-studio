@@ -85,10 +85,10 @@
       "items": [
         {
           "media": { "kind": "split", "original": "concert-original.mp4", "recast": "concert-recast.mp4", "width": 1344, "height": 768 },
-          "caption": "Motion Transfer: the dancer's moves, timing and camera, performed by Walt. Drag the line to compare.",
+          "caption": "Motion Transfer: the dancer's moves, timing and camera, performed by Walt. Drag the line to compare. A full-body dance far from the lens keeps his face small, so it scores low even when it reads as him; waist-up clips score higher.",
           "model": "MiniMax H3",
-          "score": 89.5,
-          "worst": 82
+          "score": 57,
+          "worst": 42
         },
         {
           "media": { "kind": "video", "src": "concert-9x16.mp4", "width": 720, "height": 1280, "alt": "The original and the recast in one 9:16 frame, then the Made with Portraius Studio end card" },

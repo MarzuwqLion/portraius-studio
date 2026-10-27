@@ -12,7 +12,7 @@ the Recast's original performer is a designed person made with H3 for testing (r
 | Images | Three stills with their scores: 96, 98, 94 |
 | Make it real | Before and after with both scores (96 to 81) |
 | Video | A Seedance 480p draft and its 1080p final (no people), an H3 clip of Walt (95, worst frame 93) |
-| Recast | The split view (Motion Transfer on H3, 89.5) and its 9:16 export with the end card |
+| Recast | The split view (Motion Transfer on H3, 57; replaced on October 26, see recast-ab.md) and its 9:16 export with the end card |
 | Director | "The Letter", the 3-shot scene from M6 |
 | Elements | The leather satchel's reference sheet |
 

@@ -30,7 +30,8 @@
     "local:models": "tsx scripts/local-models.ts",
     "nodepack": "vitest run src/lib/nodepack --mode nodepack",
     "posters": "tsx scripts/posters.ts",
-    "og-image": "tsx scripts/og-image.ts"
+    "og-image": "tsx scripts/og-image.ts",
+    "recast-sample": "tsx scripts/recast-sample.ts"
   },
   "dependencies": {
     "@comfyorg/sdk": "^0.5.0",

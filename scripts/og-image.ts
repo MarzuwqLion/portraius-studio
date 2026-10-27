@@ -30,7 +30,7 @@ img { width: 100%; height: 300px; object-fit: cover; border-radius: var(--corner
 .foot { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
 h1 { font-family: var(--type-display); font-weight: 800; font-size: 96px; line-height: 0.9; margin: 0; }
 p { font-weight: 600; font-size: 24px; margin: 10px 0 0; max-width: 34ch; }
-.chip { background: var(--proof); color: var(--match); font-family: var(--type-display); font-weight: 800; font-size: 44px; padding: 10px 22px; border-radius: var(--corner-control); white-space: nowrap; }
+.chip { background: var(--proof); color: var(--drift); font-family: var(--type-display); font-weight: 800; font-size: 44px; padding: 10px 22px; border-radius: var(--corner-control); white-space: nowrap; }
 </style></head><body>
 <div class="pair">
   <figure><figcaption>Original</figcaption><img src="${url("public/samples/concert-original.webp")}"></figure>
@@ -38,7 +38,7 @@ p { font-weight: 600; font-size: 24px; margin: 10px 0 0; max-width: 34ch; }
 </div>
 <div class="foot">
   <div><h1>Portraius Studio</h1><p>Your character in every shot, with a number for how much it looks like them.</p></div>
-  <div class="chip">Likeness 90</div>
+  <div class="chip">Likeness 57</div>
 </div>
 </body></html>`;
 
