@@ -127,6 +127,15 @@ Marzuwq reopened the October 19 open-weights decision so that someone who doesn'
 | 3 | Surfaces | The rail, main area and activity row become glass panels (deep violet `#1A1330` at 72%) with 8 px gutters and 14 px corners, so the gradient frames them and tints through. Buttons and the active rail item use deeper stops (`#D1336D`, `#7A3FC8`, `#4C5FE0`) under white labels. `tokens.test.ts` checks every text colour on glass over each backdrop stop at 4.5:1 or more. In this theme only, the Layout rule "no card shadows, no gradients" is lifted for the chrome. | portraius.com sets white text on bright pink, about 2.6:1; the glass keeps the look and the contrast targets. |
 | 4 | Media | The set and every take stay on neutral Studio grey (`#2E2F31`), opaque. Selection marks use the site's gold `#FFD700`; Drifted and errors are coral `#FFA592`, so they never read as a pink link. | Why grey: a tinted surround shifts how skin reads, and skin tones are the product. |
 
+### Decisions (October 27, backdrop)
+
+| # | Decision | Answer | Why |
+| --- | --- | --- | --- |
+| 1 | A shader backdrop in every theme | portraius.com's ShaderGradient waterPlane (`@shadergradient/react` on three.js, settings from portraius.com) moves behind the shell in Portraius, Dark and Light, in each theme's own three colours (`--shader-1` to `--shader-3` and `--shader-brightness` in `tokens.css`). It follows the theme when Settings or the system changes it. Lit by three.js lights only: the "env" lighting downloads HDR files from shadergradient's site, which the CSP and the no-third-party rule both rule out. Replaces part of the October 27 Portraius decision, item 2. | Marzuwq, October 27: the portraius.com backdrop in every theme, to set the UI apart from the other entries. |
+| 2 | Glass in every theme | The rail, main area, activity row and bottom bar are glass panels with 8 px gutters and 14 px corners in Light and Dark too: proof at 86% there and 78% in Portraius (was 72%). `tokens.test.ts` checks every text colour on glass over each shader colour and over the darkest and brightest pixels the shader drew, at 4.5:1 or more. The Layout rule "no card shadows, no gradients" is lifted for the chrome in every theme; takes keep it. | "Mostly opaque" and subtle: the backdrop tints through, and text keeps its contrast over the shader's lit highlights, which run brighter than its inputs. |
+| 3 | Light accent text | `--accent-text` in Light becomes `#934F2C` (was `#A65C35`, 4.5:1 on proof with no margin). | Any tint under the glass took it below 4.5:1. |
+| 4 | Loading and fallbacks | The shader is its own chunk, loaded after the first paint and faded in. The CSS gradient drifts under it, and in its place where WebGL isn't available or the shader fails. Reduced motion holds the shader on one frame. The set and every take stay opaque Studio grey. | three.js is about 270 KB gzipped; nobody should wait for a backdrop. Why grey still holds. |
+
 ### Defaults
 
 - **Stack:** Vite + React + TypeScript, built as a static site. Node 22 or newer for local dev and scripts.
@@ -1129,13 +1138,13 @@ Defined once in `src/styles/tokens.css`; no raw hex values anywhere else. Portra
 | `--rule` | `#887785` | `#806C7E` | Dividers, print outlines, input borders |
 | `--accent` | `#A65C35` | `#A65C35` | Primary button fill, focus ring, active rail item |
 | `--on-accent` | `#FFFFFF` | `#FFFFFF` | Text on `--accent` |
-| `--accent-text` | `#A65C35` | `#D08A5C` | Links and accent text on `--proof` |
+| `--accent-text` | `#934F2C` | `#D08A5C` | Links and accent text on `--proof` (Light darkened October 27, backdrop item 3) |
 | `--grease` | `#E3955F` | `#E3955F` | Selection marks only, never text |
 | `--match` | `#4F6B34` | `#9BBF7A` | Likeness 80 to 100 |
 | `--check` | `#7A5A00` | `#E8C25A` | Likeness 60 to 79 (toward yellow, so it doesn't read as the accent) |
 | `--drift` | `#A3313A` | `#F08A90` | Likeness under 60, and errors |
 
-Measured (WCAG relative luminance, checked again on October 21): ink on proof 13.8:1 light, 14.4:1 dark. Text on seamless 5.2:1 light (proof), 11.4:1 dark (ink). On-accent on accent 5.0:1. Accent text on proof 4.5:1 light, 6.0:1 dark. Rule on proof 3.8:1 light, 3.5:1 dark. Match, check and drift on proof at least 5.4:1 in both themes. Grease on seamless 2.4:1 light (the "✓ Selected" label carries it), 5.6:1 dark.
+Measured (WCAG relative luminance, checked again on October 21): ink on proof 13.8:1 light, 14.4:1 dark. Text on seamless 5.2:1 light (proof), 11.4:1 dark (ink). On-accent on accent 5.0:1. Accent text on proof 5.6:1 light (4.5:1 before October 27), 6.0:1 dark. Rule on proof 3.8:1 light, 3.5:1 dark. Match, check and drift on proof at least 5.4:1 in both themes. Grease on seamless 2.4:1 light (the "✓ Selected" label carries it), 5.6:1 dark.
 
 Two pairs need care. The accent is 1.1:1 on light Studio grey, so a focus ring inside the set uses `--on-seamless` instead, and a primary button in the set keeps its label contrast (5.0:1) but not its edge. `tokens.test.ts` holds every pair above as a minimum: 4.5:1 for text (including on-accent on accent and accent text on proof), 3:1 for rule on proof.
 
@@ -1183,6 +1192,7 @@ Two pairs need care. The accent is 1.1:1 on light Studio grey, so a focus ring i
 
 ### Motion
 
+- The backdrop moves slowly behind the shell in every theme (Decisions, October 27, backdrop); it is chrome, not a moment.
 - One ambient moment: when a take lands, it "develops", fading up from Studio grey over 600 ms.
 - Grease marks draw on over 250 ms when the user picks.
 - Everything else changes instantly. With `prefers-reduced-motion`, takes appear without the fade and marks appear without drawing.

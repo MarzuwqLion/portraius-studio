@@ -91,19 +91,31 @@ describe("contrast targets", () => {
     });
   }
 
-  // Panels are --glass: --proof at 72% over the moving backdrop. Text has to
-  // hold its contrast over every colour that drifts behind it.
-  it("portraius: glass is proof at 72% over the backdrop", () => {
-    expect(portraius["--glass"]).toBe("color-mix(in srgb, var(--proof) 72%, transparent)");
-  });
-  for (const stop of ["--brand-pink", "--brand-rose", "--brand-purple", "--brand-blue"]) {
-    for (const text of ["--ink", "--ink-muted", "--accent-text", "--match", "--check", "--drift"]) {
-      it(`portraius: ${text} on glass over ${stop} is at least 4.5:1`, () => {
-        const proof = colour(portraius, "--proof");
-        const behind = colour(portraius, stop);
-        const glass = proof.map((c, i) => c * 0.72 + behind[i]! * 0.28) as Rgb;
-        expect(contrast(colour(portraius, text), glass)).toBeGreaterThanOrEqual(4.5);
-      });
+  // Panels are --glass: --proof over the moving backdrop, at 78% in Portraius
+  // and 86% in Light and Dark. Text has to hold its contrast over every colour
+  // that drifts behind it: the shader's three tokens, Portraius's CSS
+  // gradient, and the darkest and brightest pixels the shader actually drew
+  // (lighting takes it past its inputs), measured October 27 in Chrome.
+  const backdrops = [
+    ["light", light, ["--shader-1", "--shader-2", "--shader-3", "#ce8fab", "#efffff"]],
+    ["dark", dark, ["--shader-1", "--shader-2", "--shader-3", "#d0975b", "#000013"]],
+    ["portraius", portraius, ["--shader-1", "--shader-2", "--shader-3", "--brand-purple", "#ffc6f0", "#1541df"]],
+  ] as const;
+  for (const [name, theme, stops] of backdrops) {
+    const opacity = /^color-mix\(in srgb, var\(--proof\) (\d+)%, transparent\)$/.exec(theme["--glass"] ?? "");
+    it(`${name}: glass is proof at 72% or more over the backdrop`, () => {
+      expect(Number(opacity?.[1])).toBeGreaterThanOrEqual(72);
+    });
+    for (const stop of stops) {
+      for (const text of ["--ink", "--ink-muted", "--accent-text", "--match", "--check", "--drift"]) {
+        it(`${name}: ${text} on glass over ${stop} is at least 4.5:1`, () => {
+          const p = Number(opacity?.[1]) / 100;
+          const proof = colour(theme, "--proof");
+          const behind = stop.startsWith("#") ? hex(stop) : colour(theme, stop);
+          const glass = proof.map((c, i) => c * p + behind[i]! * (1 - p)) as Rgb;
+          expect(contrast(colour(theme, text), glass)).toBeGreaterThanOrEqual(4.5);
+        });
+      }
     }
   }
 

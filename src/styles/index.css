@@ -124,18 +124,14 @@
   }
 }
 
-/* The Portraius theme (Decisions, October 27): the brand gradient drifts
-   behind the shell and two soft glows float over it; the panels are glass, so
-   the movement shows through them, and the set stays opaque Studio grey.
-   Primary fills (buttons, the active rail item) carry a slower gradient of
-   their own. Only transforms and background positions move, and reduced
-   motion holds everything still. Unlayered, so these win over the utility
-   classes the shell carries (bg-proof, border-rule). */
-[data-theme="portraius"] body {
-  background: var(--proof);
-}
-
-[data-theme="portraius"] .shell {
+/* The backdrop (Decisions, October 27, backdrop): in every theme a shader of
+   the theme's three colours moves behind the shell (components/shell/
+   Backdrop.tsx), and the panels are glass over it, so it tints through while
+   text keeps its contrast. The set stays opaque Studio grey. Under the
+   shader, and in its place where WebGL isn't available, the CSS gradient
+   below drifts. Unlayered, so these win over the utility classes the shell carries
+   (bg-proof, border-rule). */
+.shell {
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -144,22 +140,53 @@
   background: transparent;
 }
 
-[data-theme="portraius"] .shell::before,
-[data-theme="portraius"] .shell::after {
-  content: "";
+.shell::before,
+.shell::after,
+.shell-backdrop {
   position: absolute;
   z-index: -1;
   pointer-events: none;
 }
 
+.shell::before,
+.shell::after {
+  content: "";
+}
+
+.shell-backdrop {
+  inset: 0;
+  animation: backdrop-in calc(var(--develop-duration) * 2) ease-out both;
+}
+
 /* Twice the shell's size, so sliding it never shows an edge. */
-[data-theme="portraius"] .shell::before {
+.shell::before {
   inset: -50%;
   background: var(--backdrop-gradient);
   animation: backdrop-drift var(--backdrop-duration) ease-in-out infinite
     alternate;
 }
 
+/* Once the shader has a canvas, Portraius's glows (which would sit over it)
+   go. The gradient stays under it, so a canvas that never draws still has
+   the gradient behind it. */
+.shell:has(.shell-backdrop canvas)::after {
+  display: none;
+}
+
+.shell-body {
+  gap: 8px;
+}
+
+.shell-panel {
+  border-color: transparent;
+  border-radius: var(--corner-panel);
+  background: var(--glass);
+}
+
+/* The Portraius theme (Decisions, October 27): two soft glows float over the
+   brand gradient while the shader loads, and primary fills (buttons, the
+   active rail item) carry a slower gradient of their own. Only transforms and
+   background positions move, and reduced motion holds everything still. */
 [data-theme="portraius"] .shell::after {
   inset: -20%;
   background:
@@ -168,16 +195,6 @@
   opacity: 0.55;
   animation: glow-float calc(var(--backdrop-duration) * 1.4) ease-in-out
     infinite alternate;
-}
-
-[data-theme="portraius"] .shell-body {
-  gap: 8px;
-}
-
-[data-theme="portraius"] .shell-panel {
-  border-color: transparent;
-  border-radius: var(--corner-panel);
-  background: var(--glass);
 }
 
 [data-theme="portraius"] .shell-logo {
@@ -219,7 +236,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-theme="portraius"] .shell::before,
+  .shell::before,
+  .shell-backdrop,
   [data-theme="portraius"] .shell::after,
   [data-theme="portraius"] .shell-logo,
   [data-theme="portraius"] .bg-accent {
@@ -230,6 +248,15 @@
   [data-theme="portraius"] a.bg-accent {
     transition: none;
     transform: none;
+  }
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 

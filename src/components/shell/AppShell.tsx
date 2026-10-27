@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from "react";
 import { NavLink, Outlet, useLocation, useNavigationType } from "react-router";
 import { cn } from "@/lib/utils";
+import { Backdrop } from "./Backdrop";
 import { JobsTray } from "./JobsTray";
 import { SETTINGS_NAV, WORK_NAV, type NavItem } from "./nav";
 
@@ -48,6 +49,7 @@ export function AppShell() {
   const { main, onScroll } = useScrollPerScreen();
   return (
     <div className="shell flex h-full flex-col bg-proof text-ink">
+      <Backdrop />
       {/* The first focus stop on every screen, seen only when focused. Not a
           #fragment: the hash belongs to the router. */}
       <a

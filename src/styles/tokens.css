@@ -1,8 +1,9 @@
 /*
  * Portraius Studio design tokens. The only file in src/ that holds colour values.
  * Portraius is the default theme (data-theme="portraius" on <html> from the
- * first paint): portraius.com's pink-to-blue gradient, moving behind glass
- * panels. Light and Dark are the studio's own; "Match system" removes the
+ * first paint): portraius.com's pink-to-blue colours. Every theme moves a
+ * shader of its own three colours behind glass panels. Light and Dark are the
+ * studio's own; "Match system" removes the
  * attribute and the media query below decides between those two.
  * Media sits on --seamless, which is neutral grey in both themes; the cognac
  * and plum identity stays in the chrome (spec: Visual direction, Why grey).
@@ -15,7 +16,7 @@
   --rule: #887785;
   --accent: #a65c35;
   --on-accent: #ffffff;
-  --accent-text: #a65c35;
+  --accent-text: #934f2c;
   --grease: #e3955f;
   --match: #4f6b34;
   --check: #7a5a00;
@@ -48,6 +49,18 @@
   --develop-duration: 600ms;
   --mark-duration: 250ms;
 
+  /* The backdrop (Decisions, October 27, backdrop): a slow shader of three
+     colours behind the shell in every theme, with the panels as glass over it.
+     --backdrop-gradient is what shows where WebGL isn't available. */
+  --shader-1: #f5d6bf;
+  --shader-2: #e8d0e2;
+  --shader-3: var(--proof);
+  --shader-brightness: 1.2;
+  --backdrop-gradient: linear-gradient(120deg, var(--shader-1), var(--shader-2), var(--shader-3), var(--shader-1));
+  --glass: color-mix(in srgb, var(--proof) 86%, transparent);
+  --corner-panel: 14px;
+  --backdrop-duration: 24s;
+
   color-scheme: light;
 }
 
@@ -62,6 +75,10 @@
     --check: #e8c25a;
     --drift: #f08a90;
     --on-seamless: var(--ink);
+    --shader-1: var(--accent);
+    --shader-2: #5e3352;
+    --shader-3: var(--accent-text);
+    --shader-brightness: 0.9;
     color-scheme: dark;
   }
 }
@@ -76,6 +93,10 @@
   --check: #e8c25a;
   --drift: #f08a90;
   --on-seamless: var(--ink);
+  --shader-1: var(--accent);
+  --shader-2: #5e3352;
+  --shader-3: var(--accent-text);
+  --shader-brightness: 0.9;
   color-scheme: dark;
 }
 
@@ -104,14 +125,16 @@
   --brand-rose: #f8a2d8;
   --brand-purple: #a283f5;
   --backdrop-gradient: linear-gradient(120deg, var(--brand-pink), var(--brand-purple), var(--brand-blue), var(--brand-rose), var(--brand-pink));
+  --shader-1: var(--brand-pink);
+  --shader-2: var(--brand-blue);
+  --shader-3: var(--brand-rose);
+  --shader-brightness: 1.2;
   /* Deeper stops for fills under white text: each is at least 4.5:1. */
   --accent-deep-purple: #7a3fc8;
   --accent-deep-blue: #4c5fe0;
   --accent-gradient: linear-gradient(110deg, var(--accent), var(--accent-deep-purple), var(--accent-deep-blue), var(--accent-deep-purple), var(--accent));
-  --glass: color-mix(in srgb, var(--proof) 72%, transparent);
+  --glass: color-mix(in srgb, var(--proof) 78%, transparent);
   --glow: color-mix(in srgb, var(--brand-pink) 40%, transparent);
-  --corner-panel: 14px;
-  --backdrop-duration: 24s;
   --accent-duration: 6s;
 
   color-scheme: dark;
