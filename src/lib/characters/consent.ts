@@ -31,6 +31,7 @@ export const THRESHOLDS = {
   yawChange: 0.18,
   pitchChange: 0.05,
   smile: 0.7,         // face-api "happy" probability
+  smileRise: 0.3,     // above the baseline's, so a smiling photo held up to the camera doesn't count
   blinkClosed: 0.75,  // eye openness under this share of the baseline counts as closed
   blinkOpen: 0.9,     // and back over this share as open again
   minMatchSamples: 3,
@@ -56,7 +57,8 @@ export interface ChallengeResult {
 
 // Three distinct prompts in random order, with at least one turn: a printed
 // photo can smile in a poster but can't turn its head. Since one prompt is
-// enough to pass (checkPassed), the turn is offered, not required.
+// enough to pass (checkPassed), the turn is offered, not required, and a
+// smile counts only when it starts on the prompt.
 export function pickChallenges(random: () => number = Math.random): Challenge[] {
   const pool = [...CHALLENGE_POOL];
   for (let i = pool.length - 1; i > 0; i--) {
@@ -68,10 +70,12 @@ export function pickChallenges(random: () => number = Math.random): Challenge[] 
   return picked;
 }
 
-const values = (frames: readonly FrameSample[], key: "yaw" | "pitch" | "eyeOpenness" | "happy") =>
+type Measure = "yaw" | "pitch" | "eyeOpenness" | "happy";
+
+const values = (frames: readonly FrameSample[], key: Measure) =>
   frames.map((f) => f[key]).filter((v): v is number => typeof v === "number");
 
-function baselineOf(frames: readonly FrameSample[], key: "yaw" | "pitch" | "eyeOpenness"): number | undefined {
+function baselineOf(frames: readonly FrameSample[], key: Measure): number | undefined {
   const v = values(frames, key);
   return v.length ? median(v) : undefined;
 }
@@ -108,8 +112,15 @@ export function verifyChallenge(challenge: Challenge, baseline: readonly FrameSa
       const moved = Math.max(0, ...values(window, "pitch").map((v) => Math.abs(v - base)));
       return moved >= THRESHOLDS.pitchChange ? { challenge, passed: true } : fail("We didn't see you look up. Tilt your head back a little further.");
     }
-    case "smile":
-      return Math.max(0, ...values(window, "happy")) >= THRESHOLDS.smile ? { challenge, passed: true } : fail("We didn't see a smile.");
+    // The smile has to start on the prompt: a face already smiling during
+    // "Look at the camera" (a photo, say) doesn't count.
+    case "smile": {
+      const base = baselineOf(baseline, "happy");
+      if (base === undefined) return fail("We couldn't see your face clearly before the prompt.");
+      const peak = Math.max(0, ...values(window, "happy"));
+      if (peak < THRESHOLDS.smile) return fail("We didn't see a smile.");
+      return peak - base >= THRESHOLDS.smileRise ? { challenge, passed: true } : fail("You were already smiling before the prompt. Start with a neutral face, then smile.");
+    }
     case "blink-twice": {
       const open = baselineOf(baseline, "eyeOpenness");
       if (open === undefined) return fail("We couldn't see your eyes clearly before the prompt.");

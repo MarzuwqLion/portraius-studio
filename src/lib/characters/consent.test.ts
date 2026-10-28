@@ -63,6 +63,14 @@ describe("verifyChallenge", () => {
     expect(verifyChallenge("smile", baseline, frames(20, {}, { happy: 0.4 })).passed).toBe(false);
   });
 
+  // A smiling photo held up to the camera smiles through the baseline too.
+  it("fails a smile that was already there before the prompt", () => {
+    const smiling = frames(15, {}, { happy: 0.95 });
+    expect(verifyChallenge("smile", smiling, frames(20, {}, { happy: 0.95 }))).toMatchObject({ passed: false, reason: expect.stringContaining("already smiling") });
+    // A slight smile at rest that broadens on the prompt still counts.
+    expect(verifyChallenge("smile", frames(15, {}, { happy: 0.5 }), frames(20, {}, { happy: 0.9 })).passed).toBe(true);
+  });
+
   it("counts two blinks, and not one", () => {
     const open = frames(5);
     const shut = frames(2, { blink: 0.9 });

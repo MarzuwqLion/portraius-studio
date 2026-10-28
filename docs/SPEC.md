@@ -623,7 +623,7 @@ A character takes about two minutes to make: add photos, pass a short webcam con
 1. **Add 3 to 10 photos** by drag-and-drop or camera. An overlay asks for varied angles, good light, no sunglasses, one face per photo. The browser checks each photo with face-api and rejects ones with zero or several faces, a face under 160 px tall, or heavy blur. Each photo gets a quality chip.
 2. **Consent check** (required for `kind: "person"` from photos).
    1. The webcam opens and shows three random prompts, one at a time, from a pool: turn left, turn right, look up, smile, blink twice.
-   2. The browser confirms a face is present for each prompt, that head yaw changes on the turn prompts (face landmarks), and that the face in the clip matches the photos (descriptor distance under the threshold).
+   2. The browser confirms a face is present for each prompt, that head yaw changes on the turn prompts (face landmarks), that a smile starts on its prompt rather than before it (so a smiling photo held up to the camera doesn't pass, October 27), and that the face in the clip matches the photos (descriptor distance under the threshold).
    3. The subject types their name and accepts: "I am the person in these photos, and I consent to a character of me being created in this app."
    4. The app writes a `ConsentRecord`. The clip is kept only if the user opts in.
    5. The check passes on 2 of its 4 parts, one of them the face match: the face matches the photos and at least one prompt passes. A face that doesn't match never passes, however many prompts do. Tries are unlimited; a failed check says which part to fix and offers another try. (Marzuwq, October 27; it was all three prompts and the match, with three tries.)
