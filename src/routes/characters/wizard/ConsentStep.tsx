@@ -1,10 +1,9 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Link } from "react-router";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CHALLENGE_TEXT, CONSENT_STATEMENT, MAX_ATTEMPTS, consentRecord, pickChallenges, type Challenge } from "@/lib/characters/consent";
+import { CHALLENGE_TEXT, CONSENT_STATEMENT, consentRecord, pickChallenges, type Challenge } from "@/lib/characters/consent";
 import { referenceDescriptors } from "@/lib/characters/create";
 import { deleteDraftBlob, putDraftBlob, type WizardDraft } from "@/lib/characters/draft";
 import { runWebcamCheck, type CheckOutcome, type CheckPhase } from "@/lib/characters/webcam-check";
@@ -30,7 +29,6 @@ export function ConsentStep({ draft, update, onNext }: { draft: WizardDraft; upd
   const [agreed, setAgreed] = useState(false);
   const [keepClip, setKeepClip] = useState(false);
   const nameId = useId();
-  const blocked = draft.consentFailures >= MAX_ATTEMPTS;
 
   useEffect(
     () => () => {
@@ -67,11 +65,7 @@ export function ConsentStep({ draft, update, onNext }: { draft: WizardDraft; upd
         signal: abort.current.signal,
       });
       setOutcome(result);
-      if (result.passed) setStage("passed");
-      else {
-        update((d) => ({ consentFailures: d.consentFailures + 1 }));
-        setStage("failed");
-      }
+      setStage(result.passed ? "passed" : "failed");
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
         setCameraError("The face checker couldn't run. Reload the page and try again.");
@@ -112,21 +106,6 @@ export function ConsentStep({ draft, update, onNext }: { draft: WizardDraft; upd
     );
   }
 
-  if (blocked && stage !== "passed") {
-    return (
-      <div className="grid max-w-[70ch] gap-4">
-        <h2 className="text-panel font-semibold">This character can't be made from these photos</h2>
-        <p className="text-body">
-          The check didn't pass {MAX_ATTEMPTS} times. A character from photos has to be made by the person in them. You can still design an
-          original character from a description.
-        </p>
-        <Link to="/characters/new?from=text" className={buttonVariants({ variant: "primary", className: "justify-self-start" })}>
-          Design a character
-        </Link>
-      </div>
-    );
-  }
-
   const prompt =
     phase?.kind === "challenge" ? CHALLENGE_TEXT[phase.challenge] : phase?.kind === "baseline" ? "Look at the camera" : stage === "starting" ? "Getting the camera ready" : "";
 
@@ -149,8 +128,8 @@ export function ConsentStep({ draft, update, onNext }: { draft: WizardDraft; upd
         {stage === "intro" && (
           <>
             <p className="max-w-[70ch] text-body">
-              Three quick prompts on camera, about 15 seconds. It proves you're the person in the photos. The check runs in this browser; the clip is
-              kept only if you choose to keep it.
+              Three quick prompts on camera, about 15 seconds. It proves you're the person in the photos: your face has to match them, and at least
+              one prompt has to pass. Try as many times as you need. The check runs in this browser; the clip is kept only if you choose to keep it.
             </p>
             <Button onClick={() => void start()} className="justify-self-start">
               Start the check
@@ -186,18 +165,16 @@ export function ConsentStep({ draft, update, onNext }: { draft: WizardDraft; upd
             </li>
           </ul>
         )}
-        {stage === "failed" && (
+        {stage === "failed" && outcome && (
           <div className="grid gap-3">
             <p className="text-body">
-              {draft.consentFailures >= MAX_ATTEMPTS
-                ? "That was the last try."
-                : `${MAX_ATTEMPTS - draft.consentFailures} ${MAX_ATTEMPTS - draft.consentFailures === 1 ? "try" : "tries"} left.`}
+              {outcome.match.passed
+                ? "Your face matched. One prompt has to pass too: follow it on camera and hold for a moment."
+                : "Your face has to match the photos. Face the camera in good light, without glasses or a hat if the photos have none."}
             </p>
-            {draft.consentFailures < MAX_ATTEMPTS && (
-              <Button onClick={() => void start()} className="justify-self-start">
-                Try the check again
-              </Button>
-            )}
+            <Button onClick={() => void start()} className="justify-self-start">
+              Try the check again
+            </Button>
           </div>
         )}
         {stage === "passed" && (

@@ -7,6 +7,7 @@ import { bestDistance } from "@/lib/identity/score";
 import {
   BASELINE_MS,
   CHALLENGE_MS,
+  checkPassed,
   verifyChallenge,
   verifyMatch,
   type Challenge,
@@ -96,5 +97,5 @@ export async function runWebcamCheck(options: {
     return verifyChallenge(challenge, baseline, samples.filter((s) => s.atMs >= from && s.atMs < from + CHALLENGE_MS));
   });
   const match = verifyMatch(samples);
-  return { passed: results.every((r) => r.passed) && match.passed, results, match, ...(clip ? { clip } : {}) };
+  return { passed: checkPassed(results, match), results, match, ...(clip ? { clip } : {}) };
 }

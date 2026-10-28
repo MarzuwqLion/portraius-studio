@@ -626,7 +626,7 @@ A character takes about two minutes to make: add photos, pass a short webcam con
    2. The browser confirms a face is present for each prompt, that head yaw changes on the turn prompts (face landmarks), and that the face in the clip matches the photos (descriptor distance under the threshold).
    3. The subject types their name and accepts: "I am the person in these photos, and I consent to a character of me being created in this app."
    4. The app writes a `ConsentRecord`. The clip is kept only if the user opts in.
-   5. Fail three times and the character can't be created from those photos. The message offers the "design from text" path instead.
+   5. The check passes on 2 of its 4 parts, one of them the face match: the face matches the photos and at least one prompt passes. A face that doesn't match never passes, however many prompts do. Tries are unlimited; a failed check says which part to fix and offers another try. (Marzuwq, October 27; it was all three prompts and the match, with three tries.)
 3. **Turnaround sheet.** One Nano Banana 2.1 call with every photo as inline image data draws a 16:9 composite at 2K. Four more calls draw the single views (front, three-quarter, profile, full body) using the photos plus the composite. Each view is scored against the photos; views under the threshold are flagged with a "redraw" button. The user can redraw any single view.
 4. **Describe.** Name, a short user-written description that gets inserted into prompts, tags, and an optional stock voice (P2).
 5. **Save.** Compute the mean face descriptor from the photos, write to IndexedDB, and offer "Export .portraius".
@@ -1255,7 +1255,7 @@ Every P0 feature has a pass/fail check below, backed by four test layers. Nothin
 | Feature | Passes when |
 | --- | --- |
 | Character create | 5 photos produce a sheet and 4 views in under 3 minutes; at least 4 of the 5 images score 80 or more on a designed character (re-checked on the sample character once Marzuwq provides it); export then import gives byte-identical `character.json` and files |
-| Consent | A different person on the webcam fails; all three prompts are verified; a locked import can't be used in any generation |
+| Consent | A different person on the webcam fails; the face match and at least one of the three prompts must pass, with unlimited tries; a locked import can't be used in any generation |
 | Image studio | With one character, at least 8 of 10 outputs score 80 or more; works with no cast; edit mode works |
 | Video studio | A final renders from the draft ID with no inputs re-sent; reloading mid-job resumes and completes the job |
 | Recast | On an 8 s clip, Motion Transfer keeps timing (checked side by side) with a median performer score of 70 or more; Object Swap changes only the target on all 3 test clips |

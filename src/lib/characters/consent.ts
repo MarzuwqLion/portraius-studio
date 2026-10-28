@@ -22,7 +22,6 @@ export const CHALLENGE_TEXT: Record<Challenge, string> = {
 export const CONSENT_STATEMENT =
   "I am the person in these photos, and I consent to a character of me being created in this app. I am 18 or older.";
 
-export const MAX_ATTEMPTS = 3;
 export const BASELINE_MS = 1500;
 export const CHALLENGE_MS = 4000;
 
@@ -56,7 +55,8 @@ export interface ChallengeResult {
 }
 
 // Three distinct prompts in random order, with at least one turn: a printed
-// photo can smile in a poster but can't turn its head.
+// photo can smile in a poster but can't turn its head. Since one prompt is
+// enough to pass (checkPassed), the turn is offered, not required.
 export function pickChallenges(random: () => number = Math.random): Challenge[] {
   const pool = [...CHALLENGE_POOL];
   for (let i = pool.length - 1; i > 0; i--) {
@@ -134,6 +134,17 @@ export function verifyMatch(frames: readonly FrameSample[]): MatchResult {
   return d < CONSENT_MAX_DISTANCE
     ? { passed: true, distance: d, score }
     : { passed: false, distance: d, score, reason: "The face on camera doesn't match the photos." };
+}
+
+// A check passes on 2 of its 4 parts, one of them the face match: the face
+// has to be the photos' (that's what consent rests on), and any one prompt
+// shows a live person turning, looking up, smiling or blinking. Tries are
+// unlimited (Marzuwq, October 27: three prompts out of three, three tries,
+// turned away people who were plainly themselves).
+export const PROMPTS_TO_PASS = 1;
+
+export function checkPassed(results: readonly ChallengeResult[], match: MatchResult): boolean {
+  return match.passed && results.filter((r) => r.passed).length >= PROMPTS_TO_PASS;
 }
 
 export function consentRecord(fields: { subjectName: string; challenge: Challenge[]; matchScore: number; keepClip: boolean }, now = new Date()): ConsentRecord {

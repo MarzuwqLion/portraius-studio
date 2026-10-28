@@ -33,8 +33,8 @@ To run the code yourself instead, see [Quick start](#quick-start).
   views, face data and the consent record. Export it, back it up, send it to someone you're making things with,
   import it on another machine, or open it in ComfyUI with the node pack. Elements (outfits, props, locations)
   use the same format.
-- **Consent is built in.** A character from photos needs a short webcam check (three random prompts, a head-turn
-  check and a face match against the photos) and the subject's typed name and 18+ statement. An import without a
+- **Consent is built in.** A character from photos needs a short webcam check (a face match against the photos
+  and at least one of three random prompts) and the subject's typed name and 18+ statement. An import without a
   consent record stays locked: viewable, never usable.
 - **An identity score on everything.** Each output with a cast member is scored 0 to 100 against that character's
   own references, in the browser with face-api (calibrated on 20 same-person and 20 different-person pairs). An
@@ -112,8 +112,9 @@ Every Generate button shows its price first: dollars for Comfy models, "Free · 
 Open **Cast** and choose how to make one:
 
 - **From your photos.** Add 3 to 10 clear photos of one person (you, or someone making their own character with
-  you). A short webcam check follows: three random prompts, a head turn and a face match against the photos,
-  then the person's typed name and an 18+ statement. Without it, a character can't be used in anything.
+  you). A short webcam check follows: three random prompts and a face match against the photos. The face has to
+  match and at least one prompt has to pass, and you can try as often as you need. Then the person's typed name and
+  an 18+ statement. Without it, a character can't be used in anything.
 - **Design from a description.** Describe an original person who isn't real (age, build, hair, skin, style).
   Pick one of four faces, then the app draws the turnaround sheet.
 - **An element.** An outfit, prop or location from 1 to 6 photos, saved like a character and usable in any shot.

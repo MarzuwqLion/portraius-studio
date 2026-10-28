@@ -30,7 +30,6 @@ export interface WizardDraft {
   photos: DraftPhoto[];
   consent?: ConsentRecord;
   consentClipBlobId?: string;
-  consentFailures: number;
   personDescription: string;     // design from text: what the candidates are drawn from
   candidateJobIds: string[];
   pickedCandidateJobId?: string;
@@ -58,7 +57,6 @@ export function newDraft(path: CreatePath): WizardDraft {
     step: 0,
     ...(path === "element" ? { elementType: "outfit" as const } : {}),
     photos: [],
-    consentFailures: 0,
     personDescription: "",
     candidateJobIds: [],
     compositeJobIds: [],

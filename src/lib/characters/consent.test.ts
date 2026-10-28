@@ -4,6 +4,7 @@ import { syntheticFace } from "../../../test/helpers/synthetic-face";
 import {
   CHALLENGE_POOL,
   CONSENT_STATEMENT,
+  checkPassed,
   consentRecord,
   pickChallenges,
   verifyChallenge,
@@ -90,6 +91,26 @@ describe("verifyMatch", () => {
 
   it("needs at least three readings", () => {
     expect(verifyMatch([{ atMs: 0, faceCount: 1, distance: 0.3 }]).passed).toBe(false);
+  });
+});
+
+describe("checkPassed", () => {
+  const prompt = (passed: boolean) => ({ challenge: "smile" as const, passed });
+  const matched = { passed: true, distance: 0.43, score: 94 };
+  const stranger = { passed: false, distance: 0.7, score: 40 };
+
+  it("passes on the face match and one prompt: 2 of 4", () => {
+    expect(checkPassed([prompt(true), prompt(false), prompt(false)], matched)).toBe(true);
+    expect(checkPassed([prompt(true), prompt(true), prompt(true)], matched)).toBe(true);
+  });
+
+  it("fails on the face match alone", () => {
+    expect(checkPassed([prompt(false), prompt(false), prompt(false)], matched)).toBe(false);
+  });
+
+  // Consent rests on the face being the photos', so prompts never make up for it.
+  it("fails a face that doesn't match, however many prompts pass", () => {
+    expect(checkPassed([prompt(true), prompt(true), prompt(true)], stranger)).toBe(false);
   });
 });
 
