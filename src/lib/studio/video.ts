@@ -52,6 +52,20 @@ export interface ReferenceClip {
 
 export const REFERENCE_CLIP_SEC: [number, number] = [2, 30];
 
+// A clip Seedance 2.5 takes as it is goes without a re-encode, which in the
+// browser takes minutes for a long, sharp clip: an MP4 within its 8.3
+// megapixels a frame (ComfyUI's Seedance limits) and the Worker's 100 MB.
+export const REFERENCE_CLIP_MAX_PIXELS = 8_295_044;
+export const REFERENCE_CLIP_MAX_BYTES = 100 * 1024 * 1024;
+export function clipUsableAsIs(file: Pick<Blob, "type" | "size">, info: { durationSec: number; width: number; height: number }): boolean {
+  return (
+    file.type === "video/mp4" &&
+    info.durationSec <= REFERENCE_CLIP_SEC[1] + 0.05 &&
+    info.width * info.height <= REFERENCE_CLIP_MAX_PIXELS &&
+    file.size <= REFERENCE_CLIP_MAX_BYTES
+  );
+}
+
 // Use references' own photos (October 29): images the visitor adds straight
 // to the shot, after the cast's references. Seedance 2.5 takes 30 reference
 // images, MiniMax H3 9.
@@ -144,12 +158,12 @@ async function clipBlob(clip: ReferenceClip): Promise<Blob> {
 }
 
 // H3's reference clip: a public link (Router takes no inline video), cut to
-// its 15 s. Hosted last, after everything that can refuse.
+// its 15 s and 1080p. Hosted last, after everything that can refuse.
 async function hostClipForH3(clip: ReferenceClip): Promise<{ url: string; uploadId: string }> {
   let blob = await clipBlob(clip);
-  if (clip.durationSec > H3_CLIP_MAX_SEC + 0.05) {
+  if (clip.durationSec > H3_CLIP_MAX_SEC + 0.05 || clip.height > 1080) {
     const { trimClip } = await import("@/lib/media/video-prep");
-    blob = await trimClip(blob, { startSec: 0, endSec: H3_CLIP_MAX_SEC, maxHeight: 1080 });
+    blob = await trimClip(blob, { startSec: 0, endSec: Math.min(clip.durationSec, H3_CLIP_MAX_SEC), maxHeight: 1080 });
   }
   const hosted = await uploadAsset(blob, { filePath: "reference.mp4", contentType: "video/mp4" });
   return { url: hosted.url, uploadId: hosted.id };

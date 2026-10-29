@@ -43,6 +43,7 @@ import {
   retrySilent,
   startVideo,
   takesReferences,
+  clipUsableAsIs,
   MAX_REFERENCE_PHOTOS,
   REFERENCE_CLIP_SEC,
   type ReferenceClip,
@@ -130,39 +131,47 @@ function ClipActions({ job, followUps, onContinue }: { job: Job; followUps: Job[
 // labels and rules included, fits well within this.
 const SEEDANCE_PROMPT_MAX = 20000;
 
-// Use references' reference clip: a blockout or simple 3D render, prepared
-// once when picked (its first 30 s, at most 1080p, no sound) and kept as an
-// upload. The video follows it for camera, timing and blocking.
+// Use references' reference clip: a blockout or simple 3D render, kept as an
+// upload. An MP4 Seedance takes as it is goes straight in; anything else is
+// re-encoded once in the browser (its first 30 s, at most 1080p, no sound),
+// with its progress shown here. The video follows it for camera, timing and blocking.
 function ReferenceClipField({
   id,
   clip,
+  progress,
   onChange,
   onProgress,
-  onError,
 }: {
   id: string;
   clip: ReferenceClip | undefined;
+  progress: number | undefined;
   onChange: (clip: ReferenceClip | undefined) => void;
   onProgress: (share: number | undefined) => void;
-  onError: (message: string | undefined) => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const url = useBlobUrl(clip?.blobId);
   const [cut, setCut] = useState(false);
+  const [error, setError] = useState<string>();
   const [min, max] = REFERENCE_CLIP_SEC;
+  const preparing = progress !== undefined;
 
   async function take(file: File) {
-    onError(undefined);
+    setError(undefined);
+    onProgress(0);
     try {
       const raw = await clipInfo(file);
       if (raw.durationSec < min) throw new Error(`A reference clip needs at least ${min} s.`);
-      onProgress(0);
+      if (clipUsableAsIs(file, raw)) {
+        onChange({ blobId: await storeClip(file), ...raw });
+        setCut(false);
+        return;
+      }
       const blob = await trimClip(file, { startSec: 0, endSec: Math.min(raw.durationSec, max), maxHeight: 1080 }, onProgress);
       const info = await clipInfo(blob);
       onChange({ blobId: await storeClip(blob), ...info });
       setCut(raw.durationSec > max + 0.05);
     } catch (err) {
-      onError((err as Error).message);
+      setError((err as Error).message || "That clip couldn't be read. Try an MP4.");
     } finally {
       onProgress(undefined);
     }
@@ -178,11 +187,22 @@ function ReferenceClipField({
           </p>
         </>
       )}
+      {preparing && (
+        <p className="text-control text-ink" role="status">
+          Preparing your clip{progress ? `, ${Math.round(progress * 100)}%` : ""}. Re-encoding a long, high-resolution clip in the browser can take a few
+          minutes.
+        </p>
+      )}
+      {error && (
+        <p className="text-control text-drift" role="alert">
+          {error}
+        </p>
+      )}
       <div className="flex gap-2">
-        <Button id={id} type="button" variant="secondary" size="sm" onClick={() => input.current?.click()}>
-          {clip ? "Replace clip" : "Add a reference clip"}
+        <Button id={id} type="button" variant="secondary" size="sm" disabled={preparing} onClick={() => input.current?.click()}>
+          {preparing ? "Preparing" : clip ? "Replace clip" : "Add a reference clip"}
         </Button>
-        {clip && (
+        {clip && !preparing && (
           <Button type="button" variant="ghost" size="sm" onClick={() => onChange(undefined)}>
             Remove
           </Button>
@@ -405,11 +425,11 @@ export function VideoScreen() {
   const local = isLocalModel(effective);
   const stillLocal = isLocalModel(stillModels.modelId);
   const waitingFor =
-    needsCast && !cast.length && !(mode === "references" && photos.length) ? (mode === "references" ? "Pick a character or add a photo" : "Pick a character")
+    mode === "references" && clipProgress !== undefined ? `Preparing the clip${clipProgress ? `, ${Math.round(clipProgress * 100)}%` : ""}`
+    : needsCast && !cast.length && !(mode === "references" && photos.length) ? (mode === "references" ? "Pick a character or add a photo" : "Pick a character")
     : mode === "image" && !sourceBlobId ? "Add a first frame"
     : !scene.trim() ? "Write a prompt"
     : mode === "references" && !takesReferences(effective) ? "Use references needs Comfy credits. Try Image, then animate."
-    : mode === "references" && clipProgress !== undefined ? `Preparing the clip, ${Math.round(clipProgress * 100)}%`
     : withClip && !clipRights ? "Confirm you made the clip or have the rights to use it"
     : (videoModels.option?.blocked ?? (mode === "still" ? stillModels.option?.blocked : undefined));
   const ready = !waitingFor;
@@ -479,12 +499,12 @@ export function VideoScreen() {
             <ReferenceClipField
               id={id}
               clip={clip}
+              progress={clipProgress}
               onChange={(next) => {
                 setClip(next);
                 setClipRights(false);
               }}
               onProgress={setClipProgress}
-              onError={setError}
             />
           )}
         </Field>
