@@ -102,6 +102,21 @@ describe("compileVideoPrompt", () => {
     expect(lines.at(-1)).toMatch(/soft/i);
   });
 
+  // Use references' own photos follow the cast's images (October 29).
+  it("labels your own photos after the cast's references", () => {
+    const one = compileVideoPrompt({ scene: "{lead} waits", cast: [lead], camera: {}, modelId: "byteplus/dreamina-seedance-2-5-260628", withReferences: true, extraImages: 1 });
+    expect(one.split("\n")[0]).toBe("Reference image 1 is the reference sheet for LEAD (Marcus). Reference image 2 is a photo of LEAD. Reference image 3 is an extra reference; the scene says what it shows.");
+    // Photos alone, no cast.
+    const three = compileVideoPrompt({ scene: "A harbour at dawn", cast: [], camera: {}, modelId: "byteplus/dreamina-seedance-2-5-260628", withReferences: true, extraImages: 3 });
+    expect(three.split("\n")[0]).toBe("Reference images 1 to 3 are extra references; the scene says what each one shows.");
+  });
+
+  it("sends the prompt exactly as written, with @mentions as names", () => {
+    const scene = "image_1 is {lead}'s sheet. video_1 sets the camera.\n{lead} walks to the kiosk.";
+    const prompt = compileVideoPrompt({ scene, cast: [lead], camera: { movement: "slow-push-in" }, modelId: "byteplus/dreamina-seedance-2-5-260628", withReferences: true, referenceClip: true, extraImages: 2, exact: true });
+    expect(prompt).toBe("image_1 is Marcus's sheet. video_1 sets the camera.\nMarcus walks to the kiosk.");
+  });
+
   it("adds no clip rules without a clip", () => {
     const prompt = compileVideoPrompt({ scene: "{lead} waits", cast: [lead], camera: {}, modelId: "byteplus/dreamina-seedance-2-5-260628", withReferences: true });
     expect(prompt).not.toContain("Reference video 1");

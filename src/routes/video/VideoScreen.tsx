@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { Shuffle } from "lucide-react";
+import { Shuffle, X } from "lucide-react";
 import { WorkScreen } from "@/components/shell/Screen";
 import { CameraPicker } from "@/components/studio/CameraPicker";
 import { CastPicker } from "@/components/studio/CastPicker";
@@ -24,7 +24,7 @@ import type { H3Input, VideoRatio } from "@/lib/registry/inputs";
 import { MODEL_IDS, isLocalModel, registryEntry } from "@/lib/registry/models";
 import { useFeatureModels } from "@/lib/session/engine";
 import { useBlobUrl, useCharacters, useGeneration } from "@/lib/store/hooks";
-import { isAnimatedCast, seedanceTakesCast, type CastPick } from "@/lib/studio/cast";
+import { isAnimatedCast, referenceCount, seedanceTakesCast, type CastPick } from "@/lib/studio/cast";
 import { clipInfo, trimClip } from "@/lib/media/video-prep";
 import { storeClip } from "@/lib/studio/recast";
 import { randomSeed } from "@/lib/studio/image";
@@ -43,6 +43,7 @@ import {
   retrySilent,
   startVideo,
   takesReferences,
+  MAX_REFERENCE_PHOTOS,
   REFERENCE_CLIP_SEC,
   type ReferenceClip,
   type VideoMode,
@@ -204,6 +205,74 @@ function ReferenceClipField({
   );
 }
 
+function PhotoThumb({ blobId, label, onRemove }: { blobId: string; label: string; onRemove: () => void }) {
+  const url = useBlobUrl(blobId);
+  return (
+    <div className="grid gap-1">
+      <Take src={url} alt={`Reference photo ${label}`} aspect="1 / 1" fit="cover" />
+      <div className="flex items-center justify-between gap-1">
+        <span className="font-display text-control font-semibold">{label}</span>
+        <Button type="button" variant="ghost" size="icon" onClick={onRemove} aria-label={`Remove ${label}`}>
+          <X />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Use references' own photos (October 29): up to 8 images added straight to
+// the shot, numbered after the cast's references so a prompt can name them.
+function ReferencePhotosField({
+  id,
+  photos,
+  first,
+  onChange,
+  onError,
+}: {
+  id: string;
+  photos: string[];
+  first: number;
+  onChange: (photos: string[]) => void;
+  onError: (message: string | undefined) => void;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+  const room = MAX_REFERENCE_PHOTOS - photos.length;
+  return (
+    <div className="grid gap-2">
+      {photos.length > 0 && (
+        <div className="grid grid-cols-3 gap-2">
+          {photos.map((blobId, i) => (
+            <PhotoThumb key={blobId} blobId={blobId} label={`image_${first + i}`} onRemove={() => onChange(photos.filter((p) => p !== blobId))} />
+          ))}
+        </div>
+      )}
+      {room > 0 && (
+        <Button id={id} type="button" variant="secondary" size="sm" className="justify-self-start" onClick={() => input.current?.click()}>
+          {photos.length ? `Add more (${room} left)` : "Add photos"}
+        </Button>
+      )}
+      <input
+        ref={input}
+        type="file"
+        multiple
+        accept="image/jpeg,image/png,image/webp"
+        className="sr-only"
+        aria-label="Upload reference photos"
+        tabIndex={-1}
+        onChange={(e) => {
+          const files = [...(e.target.files ?? [])].slice(0, room);
+          e.target.value = "";
+          onError(undefined);
+          void Promise.all(files.map(storeUpload)).then(
+            (ids) => onChange([...photos, ...ids]),
+            () => onError("One of those images couldn't be read."),
+          );
+        }}
+      />
+    </div>
+  );
+}
+
 export function VideoScreen() {
   const [params] = useSearchParams();
   const [mode, setMode] = useState<VideoMode>("text");
@@ -218,6 +287,8 @@ export function VideoScreen() {
   const [clip, setClip] = useState<ReferenceClip>();
   const [clipProgress, setClipProgress] = useState<number>();
   const [clipRights, setClipRights] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [exactPrompt, setExactPrompt] = useState(false);
   // 5 s keeps the default draft cheap (Decisions, October 21, U5, item 8).
   const [durationSec, setDurationSec] = useState(5);
   const [ratio, setRatio] = useState<VideoRatio>("16:9");
@@ -249,7 +320,23 @@ export function VideoScreen() {
   const characters = useCharacters();
   const castRecords = cast.map((c) => characters?.find((r) => r.id === c.characterId));
   const animatedCast = isAnimatedCast(castRecords);
-  const seedanceCast = seedanceTakesCast(castRecords);
+  // Your own photos keep the chosen model too, unless a real person from the vault is cast (October 29).
+  const seedanceCast = cast.length ? seedanceTakesCast(castRecords) : mode === "references" && photos.length > 0;
+  // Every input's label, as the request numbers them: the cast's references, then your photos, then the clip.
+  const castImages = castRecords.reduce((n, r) => n + (r ? referenceCount(r) : 0), 0);
+  const labels =
+    mode === "references"
+      ? [
+          ...castRecords.flatMap((r, i) => {
+            if (!r) return [];
+            const start = 1 + castRecords.slice(0, i).reduce((n, p) => n + (p ? referenceCount(p) : 0), 0);
+            const count = referenceCount(r);
+            return [`${count === 1 ? `image_${start}` : `image_${start}\u2013${start + count - 1}`} ${r.name}`];
+          }),
+          ...(photos.length ? [`${photos.length === 1 ? `image_${castImages + 1}` : `image_${castImages + 1}\u2013${castImages + photos.length}`} your photos`] : []),
+          ...(clip ? ["video_1 your clip"] : []),
+        ]
+      : [];
   const effective = modelFor({ mode, cast, model }, sourcePerson, animatedCast, seedanceCast);
   const routedForPeople = effective !== model;
   const spec = VIDEO_MODELS.find((m) => m.id === effective)!;
@@ -311,12 +398,14 @@ export function VideoScreen() {
     camera,
     stillModel: stillModels.modelId,
     ...(withClip ? { clip: withClip } : {}),
+    ...(mode === "references" && photos.length ? { photos } : {}),
+    ...(mode === "references" && exactPrompt ? { exactPrompt } : {}),
   };
   const needsCast = mode === "still" || mode === "references";
   const local = isLocalModel(effective);
   const stillLocal = isLocalModel(stillModels.modelId);
   const waitingFor =
-    needsCast && !cast.length ? "Pick a character"
+    needsCast && !cast.length && !(mode === "references" && photos.length) ? (mode === "references" ? "Pick a character or add a photo" : "Pick a character")
     : mode === "image" && !sourceBlobId ? "Add a first frame"
     : !scene.trim() ? "Write a prompt"
     : mode === "references" && !takesReferences(effective) ? "Use references needs Comfy credits. Try Image, then animate."
@@ -404,6 +493,27 @@ export function VideoScreen() {
         <label className="flex items-start gap-3 text-body">
           <Checkbox checked={clipRights} onCheckedChange={(v) => setClipRights(v === true)} className="mt-0.5" />
           <span>I made this clip or have the rights to use it.</span>
+        </label>
+      )}
+      {mode === "references" && (
+        <Field label="Reference photos (optional)" hint={`Up to ${MAX_REFERENCE_PHOTOS} more images for the shot: a character sheet, a prop, a place. Name them in the prompt by their label.`}>
+          {(id) => <ReferencePhotosField id={id} photos={photos} first={castImages + 1} onChange={setPhotos} onError={setError} />}
+        </Field>
+      )}
+      {labels.length > 0 && (
+        <p className="text-control text-ink-muted">
+          <span className="font-semibold text-ink">In your prompt:</span> {labels.join(" \u00b7 ")}
+        </p>
+      )}
+      {mode === "references" && (
+        <label className="flex items-start gap-3 text-body">
+          <Checkbox checked={exactPrompt} onCheckedChange={(v) => setExactPrompt(v === true)} className="mt-0.5" />
+          <span>
+            Send my prompt exactly as written
+            <span className="block text-control text-ink-muted">
+              Like a ComfyUI prompt: Portraius adds no labels, rules or camera picks, so say what each input is yourself (image_1, video_1).
+            </span>
+          </span>
         </label>
       )}
 

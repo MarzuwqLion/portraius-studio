@@ -4,7 +4,7 @@
 // frame when a final has none (Unknowns row 9).
 import { hasFace } from "@/lib/identity/embed";
 import { onJobDone, onRestart, retryJob, startJob, type JobInput } from "@/lib/jobs/runner";
-import { blobToBase64, drawToCanvas, prepareImage } from "@/lib/media/image-prep";
+import { blobToBase64, drawToCanvas, prepareImage, toInlineImage } from "@/lib/media/image-prep";
 import { lastFrame } from "@/lib/media/video-frames";
 import { isStylised, type CameraSelection } from "@/lib/prompts/camera";
 import { compileImagePrompt, compileVideoPrompt } from "@/lib/prompts/compile";
@@ -51,6 +51,12 @@ export interface ReferenceClip {
 }
 
 export const REFERENCE_CLIP_SEC: [number, number] = [2, 30];
+
+// Use references' own photos (October 29): images the visitor adds straight
+// to the shot, after the cast's references. Seedance 2.5 takes 30 reference
+// images, MiniMax H3 9.
+export const MAX_REFERENCE_PHOTOS = 8;
+const H3_MAX_IMAGES = 9;
 const H3_CLIP_MAX_SEC = 15;
 
 export interface VideoRequest {
@@ -68,6 +74,8 @@ export interface VideoRequest {
   remixOf?: string;       // a remix: the source recipe's hash (lib/recipes/share.ts)
   stillModel?: string;    // Image, then animate: what draws the still (Nano Banana 2.1 when unset)
   clip?: ReferenceClip;   // "references" mode: what the video follows
+  photos?: string[];      // "references" mode: the visitor's own reference photos (blob IDs), after the cast's
+  exactPrompt?: boolean;  // "references" mode: send the prompt exactly as written, ComfyUI-style
 }
 
 // final: a local final, which is a new render on Wan 14B rather than the
@@ -118,6 +126,17 @@ async function frameAspect(dataUriOrBlob: string): Promise<number> {
   return aspect;
 }
 
+async function photoImages(blobIds: readonly string[]): Promise<InlineImage[]> {
+  if (blobIds.length > MAX_REFERENCE_PHOTOS) throw new Error(`Use references takes ${MAX_REFERENCE_PHOTOS} photos of your own at most.`);
+  const images: InlineImage[] = [];
+  for (const id of blobIds) {
+    const row = await db.blobs.get(id);
+    if (!row) throw new Error("A reference photo is missing. Add it again.");
+    images.push(await toInlineImage(row.blob));
+  }
+  return images;
+}
+
 async function clipBlob(clip: ReferenceClip): Promise<Blob> {
   const row = await db.blobs.get(clip.blobId);
   if (!row) throw new Error("The reference clip is missing. Add it again.");
@@ -153,7 +172,18 @@ async function videoModelInput(
   if (withReferences && !takesReferences(request.model)) throw new Error("Use references needs Comfy credits: Wan can't take reference images. Try Image, then animate.");
   const clip = withReferences ? request.clip : undefined;
   const cast = await buildCast(request.cast);
-  const prompt = compileVideoPrompt({ scene: request.scene, cast: cast.members, camera: request.camera, modelId: request.model, withReferences, referenceClip: Boolean(clip) });
+  const photos = withReferences ? await photoImages(request.photos ?? []) : [];
+  const prompt = compileVideoPrompt({
+    scene: request.scene,
+    cast: cast.members,
+    camera: request.camera,
+    modelId: request.model,
+    withReferences,
+    referenceClip: Boolean(clip),
+    extraImages: photos.length,
+    exact: withReferences && request.exactPrompt === true,
+  });
+  const images = [...cast.images, ...photos];
   if (isLocalModel(request.model)) {
     const input: WanInput = {
       stage: "generate",
@@ -165,8 +195,9 @@ async function videoModelInput(
     };
     return { input, characterIds: cast.characterIds };
   }
-  const referenceImages = withReferences ? cast.images.map(dataUri) : undefined;
+  const referenceImages = withReferences ? images.map(dataUri) : undefined;
   if (request.model === MODEL_IDS.minimaxH3) {
+    if (images.length > H3_MAX_IMAGES) throw new Error(`MiniMax H3 takes ${H3_MAX_IMAGES} reference images; this shot has ${images.length}. Remove some, or render on Seedance.`);
     const hosted = clip ? await hostClipForH3(clip) : undefined;
     const uploads = hosted ? { uploads: [hosted.uploadId] } : {};
     const referenceVideos = hosted ? { referenceVideos: [hosted.url] } : {};
@@ -188,7 +219,7 @@ async function videoModelInput(
     prompt,
     ...(firstFrame ? { firstFrame } : { ratio: request.ratio }),
     // With a clip, Seedance takes its length from it (the adapter sends -1).
-    ...(withReferences ? await seedanceReferences(cast.images, clip) : {}),
+    ...(withReferences ? await seedanceReferences(images, clip) : {}),
     durationSec: request.durationSec,
     generateAudio: request.audio,
     seed: request.seed,
@@ -216,7 +247,9 @@ function stillAspect(ratio: VideoRatio): ImageAspectRatio {
 
 export async function startVideo(asked: VideoRequest): Promise<string> {
   const animatedCast = await castIsAnimated(asked.cast);
-  const seedanceCast = await castForSeedance(asked.cast);
+  // The visitor's own photos keep the chosen model too (October 29), unless a
+  // real person from the vault is in the cast.
+  const seedanceCast = asked.cast.length ? await castForSeedance(asked.cast) : Boolean(asked.photos?.length);
   const request = routed(asked, !animatedCast && asked.mode === "image" && (await blobHasPerson(asked.sourceBlobId)), animatedCast, seedanceCast);
   if (request.mode === "still") {
     const stillModel = imageModel({ modelId: request.stillModel });

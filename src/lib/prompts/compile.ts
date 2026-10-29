@@ -162,11 +162,26 @@ export const REFERENCE_CLIP_RULES =
   "Take how everyone and everything looks from the reference images, never from the blockout's shapes: render a finished, detailed scene. " +
   "Add no shots, beats or camera moves the blockout doesn't have, and show no game interface, crosshair or on-screen text from it.";
 
-export function compileVideoPrompt(input: PromptInput & { withReferences: boolean; referenceClip?: boolean }): string {
-  if (input.withReferences && input.cast.length) {
+// Use references' own photos (up to 8, October 29) follow the cast's images.
+function extraLine(first: number, count: number): string {
+  if (!count) return "";
+  return count === 1
+    ? `Reference image ${first} is an extra reference; the scene says what it shows.`
+    : `Reference images ${first} to ${first + count - 1} are extra references; the scene says what each one shows.`;
+}
+
+export function compileVideoPrompt(input: PromptInput & { withReferences: boolean; referenceClip?: boolean; extraImages?: number; exact?: boolean }): string {
+  // "Send my prompt exactly" (October 29): the visitor names every input
+  // themselves, as in a ComfyUI prompt, so nothing is added; @mentions read as names.
+  if (input.exact) {
+    const names = new Map(input.cast.map((m) => [m.slot.toLowerCase(), m.name]));
+    return input.scene.replace(SLOT, (_, slot: string) => names.get(slot.toLowerCase()) ?? slot).trim();
+  }
+  const extra = input.withReferences ? (input.extraImages ?? 0) : 0;
+  if (input.withReferences && (input.cast.length || extra)) {
     const cast = castBlock(input.cast, 1, "Reference image");
     return [
-      cast.legend.join(" "),
+      [...cast.legend, extraLine(cast.next, extra)].filter(Boolean).join(" "),
       input.referenceClip ? REFERENCE_CLIP_RULES : "",
       cast.locks.join(" "),
       descriptions(input.cast).join(" "),

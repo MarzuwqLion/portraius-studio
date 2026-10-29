@@ -65,6 +65,13 @@ export async function castForSeedance(picks: readonly CastPick[]): Promise<boole
   return seedanceTakesCast(await db.characters.bulkGet(picks.map((p) => p.characterId)));
 }
 
+// How many reference images a cast member sends in Use references, as
+// buildCast builds them: a sheet and a photo or front view for a person, one
+// image for an element or a person from their own reference.
+export function referenceCount(record: CharacterRecord): number {
+  return record.kind !== "person" || isFromReference(record.file) ? 1 : 2;
+}
+
 export interface CastBundle {
   members: CastMember[];
   images: InlineImage[];
