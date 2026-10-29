@@ -5,6 +5,7 @@ import type { CreatePath } from "@/lib/characters/draft";
 import { useFeatureModels } from "@/lib/session/engine";
 import { useKeyStore } from "@/lib/session/key";
 import { cn } from "@/lib/utils";
+import { ReferenceCharacter } from "./ReferenceCharacter";
 import { ConsentStep } from "./wizard/ConsentStep";
 import { DesignStep, PickStep } from "./wizard/DesignSteps";
 import { ElementPhotosStep } from "./wizard/ElementPhotosStep";
@@ -59,9 +60,13 @@ function Chooser() {
           <span className="text-panel font-semibold">Design from a description</span>
           <span className="text-body text-ink-muted">An original person who isn't real. No photos and no camera needed.</span>
         </Link>
-        <Link to="?from=element" className="grid gap-2 rounded-media border border-rule p-6 hover:bg-tint-hover md:col-span-2">
+        <Link to="?from=element" className="grid gap-2 rounded-media border border-rule p-6 hover:bg-tint-hover">
           <span className="text-panel font-semibold">An element</span>
           <span className="text-body text-ink-muted">An outfit, prop or location from 1 to 6 photos, saved like a character and used in any shot.</span>
+        </Link>
+        <Link to="?from=reference" className="grid gap-2 rounded-media border border-rule p-6 hover:bg-tint-hover">
+          <span className="text-panel font-semibold">Your own reference</span>
+          <span className="text-body text-ink-muted">A character sheet, concept art or location you made, used exactly as it is. For designed characters, not real people.</span>
         </Link>
       </div>
     </Screen>
@@ -136,6 +141,7 @@ function Wizard({ path }: { path: CreatePath }) {
 export function CharacterNewScreen() {
   const [params] = useSearchParams();
   const from = params.get("from");
+  if (from === "reference") return <ReferenceCharacter />;
   if (from !== "photos" && from !== "text" && from !== "element") return <Chooser />;
   // A key per path, so switching paths starts that path's own draft.
   return <Wizard key={from} path={from} />;

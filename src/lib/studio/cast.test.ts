@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { CharacterRecord } from "@/lib/types/records";
-import { castOfTake, hasNoPeople, isAnimatedCast } from "./cast";
+import { castOfTake, isAnimatedCast, seedanceTakesCast } from "./cast";
 
-const record = (kind: "person" | "element", appearance?: "real" | "animated") => ({ kind, file: { kind, ...(appearance ? { appearance } : {}) } }) as CharacterRecord;
+const record = (kind: "person" | "element", appearance?: "real" | "animated", sheetModel = "vertexai/gemini-nano-banana-2.1") =>
+  ({ kind, file: { kind, ...(appearance ? { appearance } : {}), sheet: { model: sheetModel } } }) as CharacterRecord;
 
 describe("isAnimatedCast", () => {
   it("is true only when every person is animated", () => {
@@ -16,13 +17,18 @@ describe("isAnimatedCast", () => {
   });
 });
 
-describe("hasNoPeople", () => {
-  it("is true only for a cast of elements", () => {
-    expect(hasNoPeople([record("element"), record("element")])).toBe(true);
-    expect(hasNoPeople([record("element"), record("person", "animated")])).toBe(false);
-    expect(hasNoPeople([])).toBe(false);
+describe("seedanceTakesCast", () => {
+  it("takes elements and people from the visitor's own reference sheets (October 29)", () => {
+    expect(seedanceTakesCast([record("element"), record("element")])).toBe(true);
+    expect(seedanceTakesCast([record("person", "real", "upload"), record("element")])).toBe(true);
+  });
+
+  it("leaves people a model drew, or from photos, to H3", () => {
+    expect(seedanceTakesCast([record("person", "real"), record("element")])).toBe(false);
+    expect(seedanceTakesCast([record("person", "real", "upload"), record("person", "real")])).toBe(false);
+    expect(seedanceTakesCast([])).toBe(false);
     // A cast member no longer in the vault might be anyone.
-    expect(hasNoPeople([record("element"), undefined])).toBe(false);
+    expect(seedanceTakesCast([record("element"), undefined])).toBe(false);
   });
 });
 

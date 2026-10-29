@@ -24,7 +24,7 @@ import type { H3Input, VideoRatio } from "@/lib/registry/inputs";
 import { MODEL_IDS, isLocalModel, registryEntry } from "@/lib/registry/models";
 import { useFeatureModels } from "@/lib/session/engine";
 import { useBlobUrl, useCharacters, useGeneration } from "@/lib/store/hooks";
-import { hasNoPeople, isAnimatedCast, type CastPick } from "@/lib/studio/cast";
+import { isAnimatedCast, seedanceTakesCast, type CastPick } from "@/lib/studio/cast";
 import { clipInfo, trimClip } from "@/lib/media/video-prep";
 import { storeClip } from "@/lib/studio/recast";
 import { randomSeed } from "@/lib/studio/image";
@@ -124,6 +124,10 @@ function ClipActions({ job, followUps, onContinue }: { job: Job; followUps: Job[
     </div>
   );
 }
+
+// Seedance accepts 40,000 characters (its schema); a long blockout prompt,
+// labels and rules included, fits well within this.
+const SEEDANCE_PROMPT_MAX = 20000;
 
 // Use references' reference clip: a blockout or simple 3D render, prepared
 // once when picked (its first 30 s, at most 1080p, no sound) and kept as an
@@ -245,7 +249,8 @@ export function VideoScreen() {
   const characters = useCharacters();
   const castRecords = cast.map((c) => characters?.find((r) => r.id === c.characterId));
   const animatedCast = isAnimatedCast(castRecords);
-  const effective = modelFor({ mode, cast, model }, sourcePerson, animatedCast, hasNoPeople(castRecords));
+  const seedanceCast = seedanceTakesCast(castRecords);
+  const effective = modelFor({ mode, cast, model }, sourcePerson, animatedCast, seedanceCast);
   const routedForPeople = effective !== model;
   const spec = VIDEO_MODELS.find((m) => m.id === effective)!;
 
@@ -403,7 +408,7 @@ export function VideoScreen() {
       )}
 
       <Field label="Prompt" hint="Type @ to put someone from your vault in the shot.">
-        {(id) => <PromptEditor id={id} value={scene} onChange={setScene} cast={cast} onAddCast={(pick) => setCast((c) => [...c, pick])} rows={4} maxLength={2000} placeholder="Type @ to add someone, then what happens: steps out of the rain into a lit doorway" />}
+        {(id) => <PromptEditor id={id} value={scene} onChange={setScene} cast={cast} onAddCast={(pick) => setCast((c) => [...c, pick])} rows={mode === "references" ? 8 : 4} maxLength={effective === MODEL_IDS.seedance ? SEEDANCE_PROMPT_MAX : 2000} placeholder="Type @ to add someone, then what happens: steps out of the rain into a lit doorway" />}
       </Field>
 
       {mode === "image" && (
@@ -433,7 +438,7 @@ export function VideoScreen() {
       )}
 
       {/* The picker and the takes agree: people always render on H3 (Decisions, October 21, item 9), unless the clip runs on the visitor's GPU. */}
-      <Field label="Model" hint={videoModels.option?.blocked ?? (local ? "Runs on your GPU, free." : animatedCast ? "Animated characters can render on Seedance or MiniMax H3." : "Real people in the shot render on MiniMax H3.")}>
+      <Field label="Model" hint={videoModels.option?.blocked ?? (local ? "Runs on your GPU, free." : animatedCast ? "Animated characters can render on Seedance or MiniMax H3." : mode === "references" && seedanceCast ? "Your own reference characters render on Seedance, through its library." : "Real people in the shot render on MiniMax H3.")}>
         {(id) =>
           routedForPeople ? (
             <Select id={id} value={effective} onChange={() => undefined} options={VIDEO_MODELS.filter((m) => m.id === effective).map((m) => ({ value: m.id, label: m.label }))} />

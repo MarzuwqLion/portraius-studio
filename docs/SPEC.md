@@ -136,6 +136,15 @@ Marzuwq reopened the October 19 open-weights decision so that someone who doesn'
 | 3 | Light accent text | `--accent-text` in Light becomes `#934F2C` (was `#A65C35`, 4.5:1 on proof with no margin). | Any tint under the glass took it below 4.5:1. |
 | 4 | Loading and fallbacks | The shader is its own chunk, loaded after the first paint and faded in. The CSS gradient drifts under it, and in its place where WebGL isn't available or the shader fails. Reduced motion holds the shader on one frame. The set and every take stay opaque Studio grey. | three.js is about 270 KB gzipped; nobody should wait for a backdrop. Why grey still holds. |
 
+### Decisions (October 29, your own references)
+
+| # | Decision | Answer | Why |
+| --- | --- | --- | --- |
+| 1 | Characters from your own reference | Cast and elements gets "Your own reference" (`#/characters/new?from=reference`): one image, a character sheet, concept art or a location, saved exactly as it is. It's the character's sheet and every view; nothing is drawn. A character is Real-looking or Animated; an element is a location, prop or outfit. The visitor ticks that it's an original character they made or have the rights to use, not a photo of a real person. The file is `origin: "designed"` with `sheet.model: "upload"`, so the format, imports, exports and Dexie don't change. Face data comes from the sheet's own faces (its face studies), so a real-looking character's takes are scored; an animated one's aren't. A real person still makes their own character from photos, with the webcam check. | Marzuwq, October 29: "allow reference images I supplied, for characters", to run the Blass Effect scene in Portraius as well as in ComfyUI. |
+| 2 | Seedance's library for references | Every Seedance reference image and reference clip goes through Seedance's per-account library (`seedanceLibraryAsset` in `lib/router/client.ts`), the way ComfyUI's Seedance 2.5 reference node sends them: hosted, registered, waited on until Active, then the hosted copy is deleted. The library dedupes by hash. The proxy answers the site's origin and localhost (CORS checked October 29). | Seedance refused Walt's sheet inline and rendered him from the library (docs/notes/seedance-virtual-library.md); the library also keeps the clip for the final. |
+| 3 | Routing | In Use references, a cast of elements and people from their own references keeps the chosen model, Seedance by default. A person from photos, or a designed person whose sheet a model drew, still sends the video to MiniMax H3, as do the other modes. Replaces part of the October 19 video decision for these characters only. | Tested October 29 with the Blass Effect sheets (Imani, Odette, the Night Quarter): rendered on a Seedance draft through the library. |
+| 4 | Long prompts | The Video studio's prompt takes up to 20,000 characters when the clip renders on Seedance (it accepts 40,000); 2,000 otherwise. | Blockout prompts with labels, beats and dialogue run long. |
+
 ### Defaults
 
 - **Stack:** Vite + React + TypeScript, built as a static site. Node 22 or newer for local dev and scripts.

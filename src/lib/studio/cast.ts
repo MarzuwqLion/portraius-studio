@@ -7,6 +7,7 @@ import type { InlineImage } from "@/lib/registry/inputs";
 import { isUsable, loadBundle } from "@/lib/store/characters";
 import { db } from "@/lib/store/db";
 import type { CharacterRecord } from "@/lib/types/records";
+import { isFromReference } from "@/lib/characters/reference";
 
 export interface CastPick {
   slot: string;
@@ -52,14 +53,16 @@ export async function castIsAnimated(picks: readonly CastPick[]): Promise<boolea
   return picks.length > 0 && isAnimatedCast(await db.characters.bulkGet(picks.map((p) => p.characterId)));
 }
 
-// A cast of elements only (outfits, props, locations): no person for
-// Seedance to refuse.
-export function hasNoPeople(records: readonly (CharacterRecord | undefined)[]): boolean {
-  return records.length > 0 && records.every((r) => r !== undefined && r.kind !== "person");
+// A cast Seedance takes in Use references through its library (Decisions,
+// October 29): elements, and people from the visitor's own reference sheets,
+// who are designed characters. A person from photos, a real person, or a
+// designed person whose sheet a model drew still goes to H3.
+export function seedanceTakesCast(records: readonly (CharacterRecord | undefined)[]): boolean {
+  return records.length > 0 && records.every((r) => r !== undefined && (r.kind !== "person" || isFromReference(r.file)));
 }
 
-export async function castHasNoPeople(picks: readonly CastPick[]): Promise<boolean> {
-  return hasNoPeople(await db.characters.bulkGet(picks.map((p) => p.characterId)));
+export async function castForSeedance(picks: readonly CastPick[]): Promise<boolean> {
+  return seedanceTakesCast(await db.characters.bulkGet(picks.map((p) => p.characterId)));
 }
 
 export interface CastBundle {
@@ -89,8 +92,11 @@ export async function buildCast(picks: readonly CastPick[], options: { withFront
       return blob;
     };
     const refs: { kind: ReferenceKind; blob: Blob }[] =
-      options.compact && record.kind === "person" ? [{ kind: view, blob: file(record.file.sheet.views[view]) }] : [{ kind: "sheet", blob: file(record.file.sheet.composite) }];
-    if (record.kind === "person" && !options.compact) {
+      options.compact && record.kind === "person" && !isFromReference(record.file)
+        ? [{ kind: view, blob: file(record.file.sheet.views[view]) }]
+        : [{ kind: "sheet", blob: file(record.file.sheet.composite) }];
+    // A reference sheet is one image: it goes once, whatever the model.
+    if (record.kind === "person" && !options.compact && !isFromReference(record.file)) {
       const photo = record.file.photos[0];
       refs.push(photo ? { kind: "photo", blob: file(photo.path) } : { kind: "front", blob: file(record.file.sheet.views.front) });
       if (options.withFront && photo) refs.push({ kind: "front", blob: file(record.file.sheet.views.front) });
@@ -111,7 +117,7 @@ export async function describeCast(picks: readonly CastPick[], options: { compac
     const record = records[i];
     if (!record) return [];
     const references: ReferenceKind[] =
-      record.kind !== "person" ? ["sheet"] : options.compact ? ["front"] : ["sheet", record.file.photos.length ? "photo" : "front"];
+      record.kind !== "person" || isFromReference(record.file) ? ["sheet"] : options.compact ? ["front"] : ["sheet", record.file.photos.length ? "photo" : "front"];
     return [{ ...memberOf(pick, record), references }];
   });
 }

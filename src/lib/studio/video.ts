@@ -8,16 +8,16 @@ import { blobToBase64, drawToCanvas, prepareImage } from "@/lib/media/image-prep
 import { lastFrame } from "@/lib/media/video-frames";
 import { isStylised, type CameraSelection } from "@/lib/prompts/camera";
 import { compileImagePrompt, compileVideoPrompt } from "@/lib/prompts/compile";
-import type { GenerateVideoInput, H3Input, ImageAspectRatio, RenderFinalInput, VideoRatio, WanInput } from "@/lib/registry/inputs";
+import type { GenerateVideoInput, H3Input, ImageAspectRatio, InlineImage, RenderFinalInput, VideoRatio, WanInput } from "@/lib/registry/inputs";
 import { DEFAULT_VIDEO_MODEL, MODEL_IDS, PEOPLE_VIDEO_MODEL, isLocalModel } from "@/lib/registry/models";
 import { WAN_BEST_DURATION, WAN_FAST_DURATION } from "@/lib/adapters/local/wan";
 import { ratioValue } from "@/lib/adapters/local/graph";
-import { uploadAsset } from "@/lib/router/client";
+import { seedanceLibraryAsset, uploadAsset } from "@/lib/router/client";
 import { db } from "@/lib/store/db";
 import { getSettings } from "@/lib/store/settings";
 import type { Job } from "@/lib/types/jobs";
 import type { GenerationAsset } from "@/lib/types/records";
-import { buildCast, castHasNoPeople, castIsAnimated, dataUri, type CastPick } from "./cast";
+import { buildCast, castForSeedance, castIsAnimated, dataUri, type CastPick } from "./cast";
 import { nearestRatio } from "./recast";
 import { imageModel, isCompact, randomSeed, tooManyImages } from "./image";
 
@@ -81,12 +81,13 @@ type VideoJobInput = JobInput & { request: VideoRequest; final?: true };
 // frame. Text to video keeps the chosen model, and so does a local model:
 // Wan refuses nobody. A cast whose people are all animated keeps the chosen
 // model too, Seedance by default, and a face in its first frame is theirs
-// (Marzuwq's decision, October 26); H3 stays one pick away. Use references
-// with only elements in the cast (no person, no first frame) keeps it too.
-export function modelFor(request: Pick<VideoRequest, "mode" | "cast" | "model">, firstFrameHasPerson: boolean, animatedCast = false, noPeople = false): VideoModel {
+// (Marzuwq's decision, October 26); H3 stays one pick away. In Use
+// references, a cast Seedance takes through its library (elements, and
+// people from the visitor's own reference sheets: October 29) keeps it too.
+export function modelFor(request: Pick<VideoRequest, "mode" | "cast" | "model">, firstFrameHasPerson: boolean, animatedCast = false, seedanceCast = false): VideoModel {
   if (isLocalModel(request.model)) return request.model;
   if (animatedCast && request.cast.length) return request.model;
-  if (noPeople && request.mode === "references") return request.model;
+  if (seedanceCast && request.mode === "references") return request.model;
   if ((request.mode === "still" || request.mode === "references") && request.cast.length) return PEOPLE_VIDEO_MODEL;
   if (request.mode === "image" && firstFrameHasPerson) return PEOPLE_VIDEO_MODEL;
   return request.model;
@@ -97,8 +98,8 @@ export async function blobHasPerson(blobId: string | undefined): Promise<boolean
   return row ? hasFace(await drawToCanvas(row.blob, 1024)) : false;
 }
 
-function routed(request: VideoRequest, person: boolean, animatedCast: boolean, noPeople: boolean): VideoRequest {
-  const model = modelFor(request, person, animatedCast, noPeople);
+function routed(request: VideoRequest, person: boolean, animatedCast: boolean, seedanceCast: boolean): VideoRequest {
+  const model = modelFor(request, person, animatedCast, seedanceCast);
   const [min, max] = VIDEO_MODELS.find((m) => m.id === model)!.duration;
   return { ...request, model, durationSec: Math.min(max, Math.max(min, request.durationSec)) };
 }
@@ -117,20 +118,31 @@ async function frameAspect(dataUriOrBlob: string): Promise<number> {
   return aspect;
 }
 
-// The reference clip as a public link (Router takes no inline video), cut to
-// H3's 15 s when it goes there. Hosted last, after everything that can refuse.
-async function hostClip(request: VideoRequest): Promise<{ url: string; uploadId: string } | undefined> {
-  const clip = request.mode === "references" ? request.clip : undefined;
-  if (!clip) return undefined;
+async function clipBlob(clip: ReferenceClip): Promise<Blob> {
   const row = await db.blobs.get(clip.blobId);
   if (!row) throw new Error("The reference clip is missing. Add it again.");
-  let blob = row.blob;
-  if (request.model === MODEL_IDS.minimaxH3 && clip.durationSec > H3_CLIP_MAX_SEC + 0.05) {
+  return new Blob([row.blob], { type: "video/mp4" });
+}
+
+// H3's reference clip: a public link (Router takes no inline video), cut to
+// its 15 s. Hosted last, after everything that can refuse.
+async function hostClipForH3(clip: ReferenceClip): Promise<{ url: string; uploadId: string }> {
+  let blob = await clipBlob(clip);
+  if (clip.durationSec > H3_CLIP_MAX_SEC + 0.05) {
     const { trimClip } = await import("@/lib/media/video-prep");
     blob = await trimClip(blob, { startSec: 0, endSec: H3_CLIP_MAX_SEC, maxHeight: 1080 });
   }
-  const hosted = await uploadAsset(new Blob([blob], { type: "video/mp4" }), { filePath: "reference.mp4", contentType: "video/mp4" });
+  const hosted = await uploadAsset(blob, { filePath: "reference.mp4", contentType: "video/mp4" });
   return { url: hosted.url, uploadId: hosted.id };
+}
+
+// Seedance's references go through its library, the way ComfyUI's Seedance
+// 2.5 reference node sends them: a realistic designed character gets through
+// there, and the library keeps its copy for the final (Decisions, October 29).
+async function seedanceReferences(images: InlineImage[], clip: ReferenceClip | undefined): Promise<{ referenceImages: string[]; referenceVideos?: string[] }> {
+  const referenceImages: string[] = [];
+  for (const image of images) referenceImages.push(await seedanceLibraryAsset(await (await fetch(dataUri(image))).blob(), "Image"));
+  return { referenceImages, ...(clip ? { referenceVideos: [await seedanceLibraryAsset(await clipBlob(clip), "Video")] } : {}) };
 }
 
 async function videoModelInput(
@@ -154,10 +166,10 @@ async function videoModelInput(
     return { input, characterIds: cast.characterIds };
   }
   const referenceImages = withReferences ? cast.images.map(dataUri) : undefined;
-  const hosted = await hostClip(request);
-  const uploads = hosted ? { uploads: [hosted.uploadId] } : {};
-  const referenceVideos = hosted ? { referenceVideos: [hosted.url] } : {};
   if (request.model === MODEL_IDS.minimaxH3) {
+    const hosted = clip ? await hostClipForH3(clip) : undefined;
+    const uploads = hosted ? { uploads: [hosted.uploadId] } : {};
+    const referenceVideos = hosted ? { referenceVideos: [hosted.url] } : {};
     // With a clip, H3 runs as long as the clip (up to 15 s), at the ratio nearest its shape.
     const input: H3Input = {
       stage: "generate",
@@ -175,14 +187,13 @@ async function videoModelInput(
     stage: "draft",
     prompt,
     ...(firstFrame ? { firstFrame } : { ratio: request.ratio }),
-    ...(referenceImages ? { referenceImages } : {}),
     // With a clip, Seedance takes its length from it (the adapter sends -1).
-    ...referenceVideos,
+    ...(withReferences ? await seedanceReferences(cast.images, clip) : {}),
     durationSec: request.durationSec,
     generateAudio: request.audio,
     seed: request.seed,
   };
-  return { input, characterIds: cast.characterIds, ...uploads };
+  return { input, characterIds: cast.characterIds };
 }
 
 async function startVideoJob(request: VideoRequest, firstFrame?: string, parentJobId?: string, final?: true): Promise<string> {
@@ -205,8 +216,8 @@ function stillAspect(ratio: VideoRatio): ImageAspectRatio {
 
 export async function startVideo(asked: VideoRequest): Promise<string> {
   const animatedCast = await castIsAnimated(asked.cast);
-  const noPeople = await castHasNoPeople(asked.cast);
-  const request = routed(asked, !animatedCast && asked.mode === "image" && (await blobHasPerson(asked.sourceBlobId)), animatedCast, noPeople);
+  const seedanceCast = await castForSeedance(asked.cast);
+  const request = routed(asked, !animatedCast && asked.mode === "image" && (await blobHasPerson(asked.sourceBlobId)), animatedCast, seedanceCast);
   if (request.mode === "still") {
     const stillModel = imageModel({ modelId: request.stillModel });
     const tooMany = tooManyImages(stillModel, request.cast.length, false);

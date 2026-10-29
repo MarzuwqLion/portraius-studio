@@ -339,6 +339,53 @@ export async function deleteAsset(id: string): Promise<void> {
   if (!response.ok && response.status !== 404) throw await httpError(response);
 }
 
+// ---- Seedance's library ----
+
+// Seedance's per-account library, which ComfyUI's Seedance 2.5 reference node
+// uses: Seedance takes a realistic designed person from it, where it refuses
+// the same image inline (docs/notes/seedance-virtual-library.md). The file is
+// hosted for the library to fetch, registered, and waited on until Active;
+// then the hosted copy goes. The library dedupes by hash, and so does this
+// session, so a character's sheet uploads once.
+const libraryAssets = new Map<string, string>();
+const LIBRARY_POLL_MS = 3000;
+const LIBRARY_WAIT_MS = 5 * 60_000;
+
+async function libraryCall(path: string, init: RequestInit = {}): Promise<Record<string, unknown>> {
+  const response = await fetch(`${config.routerBaseUrl}/proxy/seedance${path}`, {
+    ...init,
+    headers: { "Content-Type": "application/json", "X-API-Key": requireKey() },
+  });
+  if (!response.ok) throw await httpError(response);
+  return (await response.json()) as Record<string, unknown>;
+}
+
+export async function seedanceLibraryAsset(file: Blob, type: "Image" | "Video", signal?: AbortSignal): Promise<string> {
+  const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer())), (b) => b.toString(16).padStart(2, "0")).join("");
+  const known = libraryAssets.get(hash);
+  if (known) return known;
+  const hosted = await uploadAsset(file, { filePath: type === "Video" ? "reference.mp4" : "reference.jpg", contentType: file.type || (type === "Video" ? "video/mp4" : "image/jpeg"), signal });
+  try {
+    const created = await libraryCall("/virtual-library/assets", { method: "POST", body: JSON.stringify({ url: hosted.url, hash, asset_type: type }), signal });
+    const id = String(created.asset_id ?? "");
+    if (!id) throw appError("upload_failed", "Seedance's library didn't take the file. Retry it?", { retry: "manual" });
+    const started = Date.now();
+    for (;;) {
+      const asset = await libraryCall(`/assets/${encodeURIComponent(id)}`, { signal });
+      if (asset.status === "Active") break;
+      if (asset.status === "Failed") throw appError("upload_failed", "Seedance couldn't read that file. Try another image or clip.", { action: "edit_input" });
+      if (Date.now() - started > LIBRARY_WAIT_MS) throw appError("upload_failed", "Seedance's library is taking too long with this file. Retry it?", { retry: "manual" });
+      await new Promise((resolve) => setTimeout(resolve, LIBRARY_POLL_MS));
+    }
+    const uri = `asset://${id}`;
+    libraryAssets.set(hash, uri);
+    return uri;
+  } finally {
+    // The library keeps its own copy once the asset exists.
+    await deleteAsset(hosted.id).catch(() => undefined);
+  }
+}
+
 // ---- The visitor's ComfyUI ----
 
 export const DEFAULT_LOCAL_URL = local.DEFAULT_LOCAL_URL;

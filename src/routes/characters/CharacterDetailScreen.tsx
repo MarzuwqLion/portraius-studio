@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { jobImage, scoreImage } from "@/lib/characters/create";
 import { CONSENT_CLIP } from "@/lib/characters/format";
 import { applyRedraw, exportFile, setVoice, startRedraw } from "@/lib/characters/manage";
+import { isFromReference } from "@/lib/characters/reference";
 import { SHEET_PATHS, SHEET_VIEWS, viewAspect, viewLabel, type SheetView } from "@/lib/characters/sheet";
 import { useJobs } from "@/lib/jobs/hooks";
 import { saveFile } from "@/lib/library/library";
@@ -325,6 +326,7 @@ export function CharacterDetailScreen() {
   const { id } = useParams();
   const record = useCharacter(id);
   const composite = useBlobUrl(record ? record.blobIds[record.file.sheet.composite] : undefined);
+  const fromReference = record ? isFromReference(record.file) : false;
 
   if (record === undefined) return <Screen title="Character" />;
   if (record === null) {
@@ -356,15 +358,20 @@ export function CharacterDetailScreen() {
             {record.file.tags.length > 0 && <p className="text-control text-ink-muted">{record.file.tags.join(", ")}</p>}
           </div>
         )}
-        <Take src={composite} alt={`Turnaround sheet for ${record.name}`} aspect="16 / 9" className="max-w-5xl" />
-        <section className="grid gap-4">
-          <h2 className="text-panel font-semibold">Views</h2>
-          <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-4">
-            {SHEET_VIEWS.map((view) => (
-              <ViewPanel key={view} record={record} view={view} />
-            ))}
-          </div>
-        </section>
+        <Take src={composite} alt={`${fromReference ? "Reference" : "Turnaround sheet"} for ${record.name}`} aspect="16 / 9" className="max-w-5xl" />
+        {/* A reference character's one image is its sheet and every view: there's nothing to redraw. */}
+        {fromReference ? (
+          <p className="max-w-[70ch] text-control text-ink-muted">Your own reference, used as it is in every image and video.</p>
+        ) : (
+          <section className="grid gap-4">
+            <h2 className="text-panel font-semibold">Views</h2>
+            <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-4">
+              {SHEET_VIEWS.map((view) => (
+                <ViewPanel key={view} record={record} view={view} />
+              ))}
+            </div>
+          </section>
+        )}
         {record.file.consent && (
           <p className="max-w-[70ch] text-control text-ink-muted">
             Consent: {record.file.consent.subjectName} passed the webcam check on {new Date(record.file.consent.acceptedAt).toLocaleDateString()} (face match{" "}
