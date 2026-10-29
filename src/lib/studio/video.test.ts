@@ -28,6 +28,13 @@ describe("modelFor", () => {
     expect(modelFor({ mode: "still", cast: walt, model: MODEL_IDS.minimaxH3 }, false, true)).toBe(MODEL_IDS.minimaxH3);
   });
 
+  // Use references with only elements (a location, a prop): no person for Seedance to refuse.
+  it("keeps the chosen model for a cast of elements in Use references only", () => {
+    expect(modelFor({ mode: "references", cast: walt, model: MODEL_IDS.seedance }, false, false, true)).toBe(MODEL_IDS.seedance);
+    // Image, then animate draws a still first, which may have someone in it.
+    expect(modelFor({ mode: "still", cast: walt, model: MODEL_IDS.seedance }, false, false, true)).toBe(MODEL_IDS.minimaxH3);
+  });
+
   it("leaves an explicit H3 choice alone", () => {
     expect(modelFor({ mode: "text", cast: [], model: MODEL_IDS.minimaxH3 }, false)).toBe(MODEL_IDS.minimaxH3);
   });

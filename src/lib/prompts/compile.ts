@@ -86,6 +86,10 @@ function descriptions(cast: CastMember[]): string[] {
   return cast.filter((m) => m.description?.trim()).map((m) => `${role(m.slot)}: ${sentence(m.description!)}`);
 }
 
+const FRAMING = ["size", "angle", "lens", "aperture", "movement"] as const;
+const withoutFraming = (camera: CameraSelection): CameraSelection =>
+  Object.fromEntries(Object.entries(camera).filter(([group]) => !(FRAMING as readonly string[]).includes(group)));
+
 function cameraLine(input: PromptInput): string {
   return sentence(cameraPhrases(input.camera, input.modelId).join(", "));
 }
@@ -149,15 +153,26 @@ export function compileOneTakeShots(input: { shots: OneTakeShot[]; cast: CastMem
 
 // Video: with reference images the cast gets the same legend and lock; with a
 // first frame (or no cast) identity rides in the frame, so slots become names.
-export function compileVideoPrompt(input: PromptInput & { withReferences: boolean }): string {
+// A reference clip in Use references: a blockout or simple 3D render of the
+// scene that sets the camera, timing and blocking, while the reference images
+// set the look. The same rules as a hand-written blockout prompt.
+export const REFERENCE_CLIP_RULES =
+  "Reference video 1 is a rough version of this scene, a blockout or simple 3D render whose shapes stand in for the cast and the set. " +
+  "Follow it exactly for the camera path and framing, the timing and order of every beat, where each figure is and how it moves, and any lighting changes; its length is the clip's length. " +
+  "Take how everyone and everything looks from the reference images, never from the blockout's shapes: render a finished, detailed scene. " +
+  "Add no shots, beats or camera moves the blockout doesn't have, and show no game interface, crosshair or on-screen text from it.";
+
+export function compileVideoPrompt(input: PromptInput & { withReferences: boolean; referenceClip?: boolean }): string {
   if (input.withReferences && input.cast.length) {
     const cast = castBlock(input.cast, 1, "Reference image");
     return [
       cast.legend.join(" "),
+      input.referenceClip ? REFERENCE_CLIP_RULES : "",
       cast.locks.join(" "),
       descriptions(input.cast).join(" "),
       sentence(input.scene.replace(SLOT, (_, slot: string) => role(slot))),
-      cameraLine(input),
+      // The blockout decides framing and movement; the look still comes from the picks.
+      cameraLine(input.referenceClip ? { ...input, camera: withoutFraming(input.camera) } : input),
     ]
       .filter(Boolean)
       .join("\n");

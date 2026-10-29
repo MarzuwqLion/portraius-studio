@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CAMERA, LOOKS } from "@/lib/presets/load";
 import { CAMERA_GROUPS } from "@/lib/presets/schema";
 import { cameraPhrases } from "./camera";
-import { compileImagePrompt, compileOneTakeShots, compileVideoPrompt, slotsIn, type CastMember } from "./compile";
+import { REFERENCE_CLIP_RULES, compileImagePrompt, compileOneTakeShots, compileVideoPrompt, slotsIn, type CastMember } from "./compile";
 
 const NANO = "vertexai/gemini-nano-banana-2.1";
 const lead: CastMember = { slot: "lead", name: "Marcus", kind: "person", references: ["sheet", "photo"] };
@@ -82,6 +82,29 @@ describe("compileVideoPrompt", () => {
   it("gives reference images their own legend", () => {
     const prompt = compileVideoPrompt({ scene: "{lead} walks out of a diner", cast: [lead], camera: {}, modelId: "byteplus/dreamina-seedance-2-5-260628", withReferences: true });
     expect(prompt.split("\n")[0]).toBe("Reference image 1 is the reference sheet for LEAD (Marcus). Reference image 2 is a photo of LEAD.");
+  });
+
+  // A blockout or simple 3D render (Use references, reference clip): it sets
+  // camera, timing and blocking, so framing picks drop and the look stays.
+  it("follows a reference clip for camera and timing, keeping the look", () => {
+    const prompt = compileVideoPrompt({
+      scene: "{lead} crosses the bridge as the lights go out",
+      cast: [lead, outfit],
+      camera: { size: "MCU", movement: "slow-push-in", lighting: "soft-key" },
+      modelId: "byteplus/dreamina-seedance-2-5-260628",
+      withReferences: true,
+      referenceClip: true,
+    });
+    const lines = prompt.split("\n");
+    expect(lines[0]).toContain("Reference image 3 is the OUTFIT.");
+    expect(lines[1]).toBe(REFERENCE_CLIP_RULES);
+    expect(prompt).not.toMatch(/pushes in|close-up/i);
+    expect(lines.at(-1)).toMatch(/soft/i);
+  });
+
+  it("adds no clip rules without a clip", () => {
+    const prompt = compileVideoPrompt({ scene: "{lead} waits", cast: [lead], camera: {}, modelId: "byteplus/dreamina-seedance-2-5-260628", withReferences: true });
+    expect(prompt).not.toContain("Reference video 1");
   });
 });
 

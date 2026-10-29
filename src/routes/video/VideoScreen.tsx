@@ -24,7 +24,9 @@ import type { H3Input, VideoRatio } from "@/lib/registry/inputs";
 import { MODEL_IDS, isLocalModel, registryEntry } from "@/lib/registry/models";
 import { useFeatureModels } from "@/lib/session/engine";
 import { useBlobUrl, useCharacters, useGeneration } from "@/lib/store/hooks";
-import { isAnimatedCast, type CastPick } from "@/lib/studio/cast";
+import { hasNoPeople, isAnimatedCast, type CastPick } from "@/lib/studio/cast";
+import { clipInfo, trimClip } from "@/lib/media/video-prep";
+import { storeClip } from "@/lib/studio/recast";
 import { randomSeed } from "@/lib/studio/image";
 import { generationImageBlobId, storeUpload } from "@/lib/studio/uploads";
 import {
@@ -41,6 +43,8 @@ import {
   retrySilent,
   startVideo,
   takesReferences,
+  REFERENCE_CLIP_SEC,
+  type ReferenceClip,
   type VideoMode,
   type VideoModel,
   type VideoRequest,
@@ -121,6 +125,81 @@ function ClipActions({ job, followUps, onContinue }: { job: Job; followUps: Job[
   );
 }
 
+// Use references' reference clip: a blockout or simple 3D render, prepared
+// once when picked (its first 30 s, at most 1080p, no sound) and kept as an
+// upload. The video follows it for camera, timing and blocking.
+function ReferenceClipField({
+  id,
+  clip,
+  onChange,
+  onProgress,
+  onError,
+}: {
+  id: string;
+  clip: ReferenceClip | undefined;
+  onChange: (clip: ReferenceClip | undefined) => void;
+  onProgress: (share: number | undefined) => void;
+  onError: (message: string | undefined) => void;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+  const url = useBlobUrl(clip?.blobId);
+  const [cut, setCut] = useState(false);
+  const [min, max] = REFERENCE_CLIP_SEC;
+
+  async function take(file: File) {
+    onError(undefined);
+    try {
+      const raw = await clipInfo(file);
+      if (raw.durationSec < min) throw new Error(`A reference clip needs at least ${min} s.`);
+      onProgress(0);
+      const blob = await trimClip(file, { startSec: 0, endSec: Math.min(raw.durationSec, max), maxHeight: 1080 }, onProgress);
+      const info = await clipInfo(blob);
+      onChange({ blobId: await storeClip(blob), ...info });
+      setCut(raw.durationSec > max + 0.05);
+    } catch (err) {
+      onError((err as Error).message);
+    } finally {
+      onProgress(undefined);
+    }
+  }
+
+  return (
+    <div className="grid gap-2">
+      {clip && url && (
+        <>
+          <video src={url} muted loop playsInline autoPlay className="max-w-56 rounded-media border border-rule bg-seamless" aria-label="Reference clip" />
+          <p className="text-control text-ink-muted">
+            {Math.round(clip.durationSec)} s{cut ? `: the first ${max} s of your clip` : ""}. The video runs as long as this clip.
+          </p>
+        </>
+      )}
+      <div className="flex gap-2">
+        <Button id={id} type="button" variant="secondary" size="sm" onClick={() => input.current?.click()}>
+          {clip ? "Replace clip" : "Add a reference clip"}
+        </Button>
+        {clip && (
+          <Button type="button" variant="ghost" size="sm" onClick={() => onChange(undefined)}>
+            Remove
+          </Button>
+        )}
+      </div>
+      <input
+        ref={input}
+        type="file"
+        accept="video/mp4,video/quicktime,video/webm"
+        className="sr-only"
+        aria-label="Upload a reference clip"
+        tabIndex={-1}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (file) void take(file);
+        }}
+      />
+    </div>
+  );
+}
+
 export function VideoScreen() {
   const [params] = useSearchParams();
   const [mode, setMode] = useState<VideoMode>("text");
@@ -132,6 +211,9 @@ export function VideoScreen() {
   const [scene, setScene] = useState("");
   const [cast, setCast] = useState<CastPick[]>([]);
   const [sourceBlobId, setSourceBlobId] = useState<string>();
+  const [clip, setClip] = useState<ReferenceClip>();
+  const [clipProgress, setClipProgress] = useState<number>();
+  const [clipRights, setClipRights] = useState(false);
   // 5 s keeps the default draft cheap (Decisions, October 21, U5, item 8).
   const [durationSec, setDurationSec] = useState(5);
   const [ratio, setRatio] = useState<VideoRatio>("16:9");
@@ -161,8 +243,9 @@ export function VideoScreen() {
   // Real people go to H3 whatever is chosen: Seedance refuses them (M3
   // notes). A cast of animated characters keeps the chosen model.
   const characters = useCharacters();
-  const animatedCast = isAnimatedCast(cast.map((c) => characters?.find((r) => r.id === c.characterId)));
-  const effective = modelFor({ mode, cast, model }, sourcePerson, animatedCast);
+  const castRecords = cast.map((c) => characters?.find((r) => r.id === c.characterId));
+  const animatedCast = isAnimatedCast(castRecords);
+  const effective = modelFor({ mode, cast, model }, sourcePerson, animatedCast, hasNoPeople(castRecords));
   const routedForPeople = effective !== model;
   const spec = VIDEO_MODELS.find((m) => m.id === effective)!;
 
@@ -206,7 +289,24 @@ export function VideoScreen() {
     setDurationSec((d) => Math.min(max, Math.max(min, d)));
   }, [effective, durationSec]);
 
-  const request: VideoRequest = { mode, model: effective, scene, cast, ...(sourceBlobId ? { sourceBlobId } : {}), durationSec, ratio, audio, seed, h3Resolution, camera, stillModel: stillModels.modelId };
+  const withClip = mode === "references" && clip ? clip : undefined;
+  // With a reference clip the video runs as long as the clip: all of it on Seedance, its first 15 s on H3.
+  const clipSec = withClip ? Math.min(effective === MODEL_IDS.minimaxH3 ? 15 : REFERENCE_CLIP_SEC[1], Math.max(4, Math.round(withClip.durationSec))) : undefined;
+  const request: VideoRequest = {
+    mode,
+    model: effective,
+    scene,
+    cast,
+    ...(sourceBlobId ? { sourceBlobId } : {}),
+    durationSec,
+    ratio,
+    audio,
+    seed,
+    h3Resolution,
+    camera,
+    stillModel: stillModels.modelId,
+    ...(withClip ? { clip: withClip } : {}),
+  };
   const needsCast = mode === "still" || mode === "references";
   const local = isLocalModel(effective);
   const stillLocal = isLocalModel(stillModels.modelId);
@@ -215,6 +315,8 @@ export function VideoScreen() {
     : mode === "image" && !sourceBlobId ? "Add a first frame"
     : !scene.trim() ? "Write a prompt"
     : mode === "references" && !takesReferences(effective) ? "Use references needs Comfy credits. Try Image, then animate."
+    : mode === "references" && clipProgress !== undefined ? `Preparing the clip, ${Math.round(clipProgress * 100)}%`
+    : withClip && !clipRights ? "Confirm you made the clip or have the rights to use it"
     : (videoModels.option?.blocked ?? (mode === "still" ? stillModels.option?.blocked : undefined));
   const ready = !waitingFor;
   // Image, then animate is two calls: the 2K opening still, then the clip.
@@ -222,10 +324,10 @@ export function VideoScreen() {
     async () => [
       ...(mode === "still" ? [{ modelId: stillModels.modelId, input: { prompt: scene, references: [], aspectRatio: "16:9", size: "2K", quality: "best" } }] : []),
       effective === MODEL_IDS.minimaxH3
-        ? { modelId: effective, input: { stage: "generate", prompt: scene, durationSec, ratio, resolution: h3Resolution } }
-        : { modelId: effective, input: { stage: "draft", prompt: scene, durationSec, ratio, generateAudio: audio } },
+        ? { modelId: effective, input: { stage: "generate", prompt: scene, durationSec: clipSec ?? durationSec, ratio, resolution: h3Resolution } }
+        : { modelId: effective, input: { stage: "draft", prompt: scene, durationSec: clipSec ?? durationSec, ratio, generateAudio: audio } },
     ],
-    `${mode}:${effective}:${stillModels.modelId}:${durationSec}:${h3Resolution}:${audio}`,
+    `${mode}:${effective}:${stillModels.modelId}:${clipSec ?? durationSec}:${h3Resolution}:${audio}`,
   );
 
   async function generate() {
@@ -270,7 +372,35 @@ export function VideoScreen() {
           {registryEntry(stillModels.modelId)?.label ?? "Nano Banana 2.1"} draws the opening still with your cast, then the clip starts from it.
         </p>
       )}
-      {mode === "references" && <p className="text-control text-ink-muted">Your cast's sheets set who is in the shot and what they wear; the model frames the opening itself.</p>}
+      {mode === "references" && (
+        <p className="text-control text-ink-muted">
+          {withClip
+            ? "Your cast's sheets set how everyone and everything looks; the clip sets the camera, timing and who goes where."
+            : "Your cast's sheets set who is in the shot and what they wear; the model frames the opening itself."}
+        </p>
+      )}
+      {mode === "references" && (
+        <Field label="Reference clip (optional)" hint="A blockout or simple 3D render of the scene. In the prompt, say which shape is who: “the orange figure is @Lead”.">
+          {(id) => (
+            <ReferenceClipField
+              id={id}
+              clip={clip}
+              onChange={(next) => {
+                setClip(next);
+                setClipRights(false);
+              }}
+              onProgress={setClipProgress}
+              onError={setError}
+            />
+          )}
+        </Field>
+      )}
+      {withClip && (
+        <label className="flex items-start gap-3 text-body">
+          <Checkbox checked={clipRights} onCheckedChange={(v) => setClipRights(v === true)} className="mt-0.5" />
+          <span>I made this clip or have the rights to use it.</span>
+        </label>
+      )}
 
       <Field label="Prompt" hint="Type @ to put someone from your vault in the shot.">
         {(id) => <PromptEditor id={id} value={scene} onChange={setScene} cast={cast} onAddCast={(pick) => setCast((c) => [...c, pick])} rows={4} maxLength={2000} placeholder="Type @ to add someone, then what happens: steps out of the rain into a lit doorway" />}
@@ -347,12 +477,18 @@ export function VideoScreen() {
         </Field>
       )}
 
-      <Field label={`Duration: ${durationSec} s`}>
-        {(id) => <input id={id} type="range" min={spec.duration[0]} max={spec.duration[1]} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} className="w-full" />}
-      </Field>
+      {clipSec ? (
+        <p className="text-control text-ink-muted">
+          Length: {clipSec} s, from the clip{effective === MODEL_IDS.minimaxH3 && withClip!.durationSec > 15.05 ? " (MiniMax H3 takes its first 15 s)" : ""}.
+        </p>
+      ) : (
+        <Field label={`Duration: ${durationSec} s`}>
+          {(id) => <input id={id} type="range" min={spec.duration[0]} max={spec.duration[1]} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} className="w-full" />}
+        </Field>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
-        {(mode === "text" || mode === "references" || mode === "still") && (
+        {(mode === "text" || (mode === "references" && !withClip) || mode === "still") && (
           <Field label="Aspect ratio">{(id) => <Select id={id} value={ratio} onChange={(v) => v && setRatio(v)} options={RATIOS.map((r) => ({ value: r, label: r }))} />}</Field>
         )}
         {effective === MODEL_IDS.minimaxH3 && (

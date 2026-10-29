@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CharacterRecord } from "@/lib/types/records";
-import { castOfTake, isAnimatedCast } from "./cast";
+import { castOfTake, hasNoPeople, isAnimatedCast } from "./cast";
 
 const record = (kind: "person" | "element", appearance?: "real" | "animated") => ({ kind, file: { kind, ...(appearance ? { appearance } : {}) } }) as CharacterRecord;
 
@@ -13,6 +13,16 @@ describe("isAnimatedCast", () => {
     expect(isAnimatedCast([record("person")])).toBe(false);
     expect(isAnimatedCast([record("element")])).toBe(false);
     expect(isAnimatedCast([])).toBe(false);
+  });
+});
+
+describe("hasNoPeople", () => {
+  it("is true only for a cast of elements", () => {
+    expect(hasNoPeople([record("element"), record("element")])).toBe(true);
+    expect(hasNoPeople([record("element"), record("person", "animated")])).toBe(false);
+    expect(hasNoPeople([])).toBe(false);
+    // A cast member no longer in the vault might be anyone.
+    expect(hasNoPeople([record("element"), undefined])).toBe(false);
   });
 });
 

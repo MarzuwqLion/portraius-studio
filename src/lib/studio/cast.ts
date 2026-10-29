@@ -52,6 +52,16 @@ export async function castIsAnimated(picks: readonly CastPick[]): Promise<boolea
   return picks.length > 0 && isAnimatedCast(await db.characters.bulkGet(picks.map((p) => p.characterId)));
 }
 
+// A cast of elements only (outfits, props, locations): no person for
+// Seedance to refuse.
+export function hasNoPeople(records: readonly (CharacterRecord | undefined)[]): boolean {
+  return records.length > 0 && records.every((r) => r !== undefined && r.kind !== "person");
+}
+
+export async function castHasNoPeople(picks: readonly CastPick[]): Promise<boolean> {
+  return hasNoPeople(await db.characters.bulkGet(picks.map((p) => p.characterId)));
+}
+
 export interface CastBundle {
   members: CastMember[];
   images: InlineImage[];

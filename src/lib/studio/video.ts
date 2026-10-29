@@ -3,7 +3,7 @@
 // ComfyUI (spec: Local engine), Still first chaining, Continue, and the last
 // frame when a final has none (Unknowns row 9).
 import { hasFace } from "@/lib/identity/embed";
-import { onJobDone, retryJob, startJob, type JobInput } from "@/lib/jobs/runner";
+import { onJobDone, onRestart, retryJob, startJob, type JobInput } from "@/lib/jobs/runner";
 import { blobToBase64, drawToCanvas, prepareImage } from "@/lib/media/image-prep";
 import { lastFrame } from "@/lib/media/video-frames";
 import { isStylised, type CameraSelection } from "@/lib/prompts/camera";
@@ -12,11 +12,13 @@ import type { GenerateVideoInput, H3Input, ImageAspectRatio, RenderFinalInput, V
 import { DEFAULT_VIDEO_MODEL, MODEL_IDS, PEOPLE_VIDEO_MODEL, isLocalModel } from "@/lib/registry/models";
 import { WAN_BEST_DURATION, WAN_FAST_DURATION } from "@/lib/adapters/local/wan";
 import { ratioValue } from "@/lib/adapters/local/graph";
+import { uploadAsset } from "@/lib/router/client";
 import { db } from "@/lib/store/db";
 import { getSettings } from "@/lib/store/settings";
 import type { Job } from "@/lib/types/jobs";
 import type { GenerationAsset } from "@/lib/types/records";
-import { buildCast, castIsAnimated, dataUri, type CastPick } from "./cast";
+import { buildCast, castHasNoPeople, castIsAnimated, dataUri, type CastPick } from "./cast";
+import { nearestRatio } from "./recast";
 import { imageModel, isCompact, randomSeed, tooManyImages } from "./image";
 
 export type VideoMode = "text" | "still" | "references" | "image";
@@ -37,6 +39,20 @@ export const VIDEO_MODELS: { id: VideoModel; label: string; duration: [number, n
 export const takesReferences = (model: string) => !isLocalModel(model);
 export const DEFAULT_MODEL: VideoModel = DEFAULT_VIDEO_MODEL;
 
+// A reference clip for Use references: a blockout or simple 3D render the
+// video follows for camera, timing and blocking (Seedance 2.5 and MiniMax H3
+// both take a reference video). Prepared to at most 30 s and 1080p when
+// picked; H3 takes its first 15 s.
+export interface ReferenceClip {
+  blobId: string;
+  durationSec: number;
+  width: number;
+  height: number;
+}
+
+export const REFERENCE_CLIP_SEC: [number, number] = [2, 30];
+const H3_CLIP_MAX_SEC = 15;
+
 export interface VideoRequest {
   mode: VideoMode;
   model: VideoModel;
@@ -51,6 +67,7 @@ export interface VideoRequest {
   camera: CameraSelection;
   remixOf?: string;       // a remix: the source recipe's hash (lib/recipes/share.ts)
   stillModel?: string;    // Image, then animate: what draws the still (Nano Banana 2.1 when unset)
+  clip?: ReferenceClip;   // "references" mode: what the video follows
 }
 
 // final: a local final, which is a new render on Wan 14B rather than the
@@ -64,10 +81,12 @@ type VideoJobInput = JobInput & { request: VideoRequest; final?: true };
 // frame. Text to video keeps the chosen model, and so does a local model:
 // Wan refuses nobody. A cast whose people are all animated keeps the chosen
 // model too, Seedance by default, and a face in its first frame is theirs
-// (Marzuwq's decision, October 26); H3 stays one pick away.
-export function modelFor(request: Pick<VideoRequest, "mode" | "cast" | "model">, firstFrameHasPerson: boolean, animatedCast = false): VideoModel {
+// (Marzuwq's decision, October 26); H3 stays one pick away. Use references
+// with only elements in the cast (no person, no first frame) keeps it too.
+export function modelFor(request: Pick<VideoRequest, "mode" | "cast" | "model">, firstFrameHasPerson: boolean, animatedCast = false, noPeople = false): VideoModel {
   if (isLocalModel(request.model)) return request.model;
   if (animatedCast && request.cast.length) return request.model;
+  if (noPeople && request.mode === "references") return request.model;
   if ((request.mode === "still" || request.mode === "references") && request.cast.length) return PEOPLE_VIDEO_MODEL;
   if (request.mode === "image" && firstFrameHasPerson) return PEOPLE_VIDEO_MODEL;
   return request.model;
@@ -78,8 +97,8 @@ export async function blobHasPerson(blobId: string | undefined): Promise<boolean
   return row ? hasFace(await drawToCanvas(row.blob, 1024)) : false;
 }
 
-function routed(request: VideoRequest, person: boolean, animatedCast: boolean): VideoRequest {
-  const model = modelFor(request, person, animatedCast);
+function routed(request: VideoRequest, person: boolean, animatedCast: boolean, noPeople: boolean): VideoRequest {
+  const model = modelFor(request, person, animatedCast, noPeople);
   const [min, max] = VIDEO_MODELS.find((m) => m.id === model)!.duration;
   return { ...request, model, durationSec: Math.min(max, Math.max(min, request.durationSec)) };
 }
@@ -98,11 +117,31 @@ async function frameAspect(dataUriOrBlob: string): Promise<number> {
   return aspect;
 }
 
-async function videoModelInput(request: VideoRequest, firstFrame?: string): Promise<{ input: GenerateVideoInput | H3Input | WanInput; characterIds: string[] }> {
+// The reference clip as a public link (Router takes no inline video), cut to
+// H3's 15 s when it goes there. Hosted last, after everything that can refuse.
+async function hostClip(request: VideoRequest): Promise<{ url: string; uploadId: string } | undefined> {
+  const clip = request.mode === "references" ? request.clip : undefined;
+  if (!clip) return undefined;
+  const row = await db.blobs.get(clip.blobId);
+  if (!row) throw new Error("The reference clip is missing. Add it again.");
+  let blob = row.blob;
+  if (request.model === MODEL_IDS.minimaxH3 && clip.durationSec > H3_CLIP_MAX_SEC + 0.05) {
+    const { trimClip } = await import("@/lib/media/video-prep");
+    blob = await trimClip(blob, { startSec: 0, endSec: H3_CLIP_MAX_SEC, maxHeight: 1080 });
+  }
+  const hosted = await uploadAsset(new Blob([blob], { type: "video/mp4" }), { filePath: "reference.mp4", contentType: "video/mp4" });
+  return { url: hosted.url, uploadId: hosted.id };
+}
+
+async function videoModelInput(
+  request: VideoRequest,
+  firstFrame?: string,
+): Promise<{ input: GenerateVideoInput | H3Input | WanInput; characterIds: string[]; uploads?: string[] }> {
   const withReferences = request.mode === "references";
   if (withReferences && !takesReferences(request.model)) throw new Error("Use references needs Comfy credits: Wan can't take reference images. Try Image, then animate.");
+  const clip = withReferences ? request.clip : undefined;
   const cast = await buildCast(request.cast);
-  const prompt = compileVideoPrompt({ scene: request.scene, cast: cast.members, camera: request.camera, modelId: request.model, withReferences });
+  const prompt = compileVideoPrompt({ scene: request.scene, cast: cast.members, camera: request.camera, modelId: request.model, withReferences, referenceClip: Boolean(clip) });
   if (isLocalModel(request.model)) {
     const input: WanInput = {
       stage: "generate",
@@ -115,35 +154,43 @@ async function videoModelInput(request: VideoRequest, firstFrame?: string): Prom
     return { input, characterIds: cast.characterIds };
   }
   const referenceImages = withReferences ? cast.images.map(dataUri) : undefined;
+  const hosted = await hostClip(request);
+  const uploads = hosted ? { uploads: [hosted.uploadId] } : {};
+  const referenceVideos = hosted ? { referenceVideos: [hosted.url] } : {};
   if (request.model === MODEL_IDS.minimaxH3) {
+    // With a clip, H3 runs as long as the clip (up to 15 s), at the ratio nearest its shape.
     const input: H3Input = {
       stage: "generate",
       prompt,
-      ...(firstFrame ? { firstFrame } : { ratio: request.ratio }),
+      ...(firstFrame ? { firstFrame } : { ratio: clip ? nearestRatio(clip.width, clip.height) : request.ratio }),
       ...(referenceImages ? { referenceImages } : {}),
-      durationSec: request.durationSec,
+      ...referenceVideos,
+      durationSec: clip ? Math.min(H3_CLIP_MAX_SEC, Math.max(4, Math.round(clip.durationSec))) : request.durationSec,
       resolution: request.h3Resolution,
       seed: request.seed,
     };
-    return { input, characterIds: cast.characterIds };
+    return { input, characterIds: cast.characterIds, ...uploads };
   }
   const input: GenerateVideoInput = {
     stage: "draft",
     prompt,
     ...(firstFrame ? { firstFrame } : { ratio: request.ratio }),
     ...(referenceImages ? { referenceImages } : {}),
+    // With a clip, Seedance takes its length from it (the adapter sends -1).
+    ...referenceVideos,
     durationSec: request.durationSec,
     generateAudio: request.audio,
     seed: request.seed,
   };
-  return { input, characterIds: cast.characterIds };
+  return { input, characterIds: cast.characterIds, ...uploads };
 }
 
 async function startVideoJob(request: VideoRequest, firstFrame?: string, parentJobId?: string, final?: true): Promise<string> {
-  const { input, characterIds } = await videoModelInput(request, firstFrame);
+  const { input, characterIds, uploads } = await videoModelInput(request, firstFrame);
   const job = await startJob({
     kind: "video",
     modelId: request.model,
+    ...(uploads ? { uploads } : {}),
     input: { model: input, characterIds, prompt: request.scene, stylised: isStylised(request.camera), request, ...(final ? { final } : {}) } satisfies VideoJobInput,
     ...(parentJobId ? { parentJobId } : {}),
   });
@@ -158,7 +205,8 @@ function stillAspect(ratio: VideoRatio): ImageAspectRatio {
 
 export async function startVideo(asked: VideoRequest): Promise<string> {
   const animatedCast = await castIsAnimated(asked.cast);
-  const request = routed(asked, !animatedCast && asked.mode === "image" && (await blobHasPerson(asked.sourceBlobId)), animatedCast);
+  const noPeople = await castHasNoPeople(asked.cast);
+  const request = routed(asked, !animatedCast && asked.mode === "image" && (await blobHasPerson(asked.sourceBlobId)), animatedCast, noPeople);
   if (request.mode === "still") {
     const stillModel = imageModel({ modelId: request.stillModel });
     const tooMany = tooManyImages(stillModel, request.cast.length, false);
@@ -238,6 +286,8 @@ export async function retrySilent(jobId: string): Promise<string> {
   const input = job?.input as VideoJobInput | undefined;
   if (!job || !input?.request) throw new Error("That clip can't be retried.");
   const request = { ...input.request, audio: false };
+  // A reference clip's link went with the job, so it's hosted again.
+  if (job.uploads?.length) return startVideoJob(request, undefined, job.id);
   const model = { ...(input.model as GenerateVideoInput), generateAudio: false };
   return (await retryJob(jobId, { input: { ...input, model, request } })).id;
 }
@@ -303,6 +353,19 @@ export async function resumeChains(): Promise<void> {
   for (const job of stills) await afterJob(job);
 }
 
+// Retry of a clip with a reference clip: its link went when the job ended,
+// so the same request starts again with the clip hosted anew.
+async function restartClip(job: Job): Promise<Job | undefined> {
+  const request = (job.input as Partial<VideoJobInput>).request;
+  if (job.kind !== "video" || !request?.clip) return undefined;
+  return db.jobs.get(await startVideoJob(request, undefined, job.id));
+}
+
 export function registerVideoStudio(): () => void {
-  return onJobDone(afterJob);
+  const done = onJobDone(afterJob);
+  const restart = onRestart(restartClip);
+  return () => {
+    done();
+    restart();
+  };
 }
