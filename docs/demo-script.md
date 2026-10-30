@@ -1,35 +1,58 @@
-# Demo video script (2:00)
+# Demo video script (1:55)
 
 For the #OpenSourceHiggsfield submission. Comfy judges "the work, not your video editing": the demo shows the app
-working and explains how it was built, and Most Innovative also needs it to say why it's new. Record the app
-itself (Recast, Image, Video, the character page), not slides. Captions double as the voice-over.
+working and explains how it was built, and Most Innovative also needs it to say why it's new.
 
-| Time | On screen | Voice-over or caption |
-| --- | --- | --- |
-| 0:00 to 0:08 | A Recast side by side: the dancer, then your character doing the same moves, ending on the end card with its likeness score held on screen | "Every AI studio says it keeps your face. This one shows you the number. Portraius Studio, open source on Comfy." |
-| 0:08 to 0:22 | Cast: photos in, the webcam consent check (the face match, then one prompt passed), the turnaround sheet with a score on every view, Export file | "A character is a file you own: photos, sheet, face data and a consent record. Making one from someone's photos takes a webcam check of that person." |
-| 0:22 to 0:34 | Image: one preset, three takes, the likeness badge on each; then a take with no face marked Drifted and its automatic retry | "Every output is scored 0 to 100 against that person's own references, in the browser. Under 60, it retries on its own." |
-| 0:34 to 0:44 | Video: Image, then animate with the character on MiniMax H3, the score per frame and the lowest frame | "Wherever a real person is on screen, MiniMax H3 is the core video model: stills, takes, Recast and speaking lines." |
-| 0:44 to 1:06 | Blass Effect. Cast and elements, Your own reference: the Princess sheet saved as it is, Real-looking or Animated, the rights checkbox. Then Video, Use references: the cast, the blockout clip, the labels line (image_1 Princess · … · video_1 your clip), Send my prompt exactly as written, Generate. End on the blockout and the Seedance render side by side | "Bring your own world. These are sheets from my game, Blass Effect, saved as characters exactly as drawn. Give it a rough gameplay blockout and Seedance 2.5 keeps the camera and timing while the cast, sets and voices become a finished scene. Write the prompt the way you would in ComfyUI." |
-| 1:06 to 1:16 | Recast with your character picked from the vault and its score on the result, then Director: a shot that continues from the last frame, Export scene | "Recast and Director run on the same character file: put yourself into any clip you own, or shoot a scene shot by shot, every take scored." |
-| 1:16 to 1:32 | Settings: Use my ComfyUI, the 4090 detected, Never spend credits; the same Image run priced "Free · your GPU"; the likeness report table | "The same site runs on your own GPU with open-weight models, free, from GitHub Pages with nothing to install. And we measured which models keep a face best." |
-| 1:32 to 1:46 | `workflows/` and `workflows/local/` in the repo, one graph opened in ComfyUI; then the node pack: Load Portraius Character, Character Prompt, Identity Score | "Every graph the app runs ships as a ComfyUI workflow. The character file opens there too, with a node that scores identity on the app's scale." |
-| 1:46 to 2:00 | The likeness sheet on a phone, Share; then the repo URL and #OpenSourceHiggsfield | "Portable characters, consent, a likeness score on everything, your own worlds, your GPU or Comfy's. MIT licensed. Link below." |
+The cut is `demo-assets/out/portraius-demo-v2.mp4` (1:55, 1080p). It's silent except the Blass Effect render,
+which keeps its dialogue. The voice-over below is timed to it: about 150 words a minute, each line starting with
+its segment. A line that runs half a second long is fine; one that runs into the next block isn't.
 
-## Why it's innovative (say it in the video)
+## Voice-over
 
-- **It measures likeness.** Every output carries a 0 to 100 identity score against the character's own references,
-  with an automatic retry under 60. Other studios claim consistency; this one shows a number.
-- **Consent is built into the file format.** A character from photos can't exist without a webcam check of that
-  person, and the record travels inside the `.portraius` file.
-- **Blockout to final, with your own cast.** Your own character sheets and locations become characters as they
-  are, and a rough 3D blockout drives the camera and timing of the finished scene. Seedance's references go
-  through its library the way ComfyUI's node sends them, and the exact-prompt switch takes a ComfyUI-style prompt
-  with `image_1` to `video_1` labelled on screen.
-- **One character file, two worlds.** The same file runs the web app and loads in ComfyUI through the node pack,
-  and every graph the app runs is in `workflows/` for ComfyUI.
-- **A hosted site that runs on your GPU.** GitHub Pages talks straight to your own ComfyUI: no install, nothing
-  leaves your computer, and Comfy's models are there when you want them.
+| Time | On screen | Voice-over | Words |
+| --- | --- | --- | --- |
+| 0:00 to 0:11 | Recast: the dancer, then Walt doing the same moves; Walt's coffee Recast with Likeness 100 | "This is Recast: a clip you own, performed by your character. And every take comes back with a number. Likeness: one hundred, scored against the character's own photos." | 27 |
+| 0:11 to 0:14 | Title card | "Portraius Studio. Open source, built on Comfy." | 7 |
+| 0:14 to 0:32 | Cast: photos, the webcam consent check, all passed, face match 100 | "A character starts as three to ten photos, checked in your browser. Then a live webcam check: turn left, smile, turn right, and your face has to match the photos. No match, no character. The consent record travels inside the file." | 42 |
+| 0:32 to 0:47 | The turnaround sheet, every view scored, Export file, the likeness sheet and Share | "From those photos it draws a turnaround sheet and scores every view against you. Export it as a file you own. The likeness sheet puts your best shots and their scores in one picture, ready to post." | 37 |
+| 0:47 to 0:55 | Image: generating, the scored takes, one Drifted and its retry | "Put your character in any shot. Every image is scored zero to a hundred, and anything under sixty retries on its own." | 21 |
+| 0:55 to 1:06 | Video on H3, the take card with the lowest frame | "Then animate it on MiniMax H3, the core model wherever a real person is on screen. Every frame is scored, and the weakest one is flagged." | 25 |
+| 1:06 to 1:17 | Bring your own world; Use references; the blockout | "Now bring your own world. These are sheets from my game, Blass Effect. Give Seedance the cast, a rough gameplay blockout and a ComfyUI-style prompt…" | 25 |
+| 1:17 to 1:20 | The Seedance render begins, the blockout inset | "…same camera, same timing. A finished scene." Then stop and let the scene's dialogue play. | 7 |
+| 1:33 to 1:41 | Director: the shot list with scored takes, then the exported scene | "Director plans a whole scene, shot by shot, from the same character file. Every take scored, exported as one scene." | 20 |
+| 1:41 to 1:50 | Settings: Never spend credits; `workflows/` and `workflows/local/` | "Run open-weight models free on your own GPU, from the hosted site. Every graph ships as a ComfyUI workflow." | 19 |
+| 1:50 to 1:55 | End card | "Portraius Studio. Consent built in, likeness you can measure. MIT licensed, link below." | 13 |
+
+Mixing: from 1:17 to 1:33 the Blass render plays its own dialogue. Keep it at full level. If a voice-over line
+overlaps it, lower the scene audio by about 10 dB under the voice.
+
+## What the video has to land (Most Innovative + MiniMax H3)
+
+Each point is said aloud and shown on screen in the cut:
+
+- **It measures likeness.** Likeness 100 at 0:06, the scored views, the image scores with an automatic retry under
+  60, the per-frame score on H3, scored takes in Director. Other studios claim consistency; this one shows a number.
+- **Consent is part of the file format.** A character from photos can't exist without a webcam check of that
+  person, and the record travels inside the `.portraius` file (0:14 to 0:32). No other entry checks consent.
+- **Blockout to final, with your own cast.** Your own sheets become characters as they're drawn, and a rough 3D
+  blockout drives the camera and timing of the finished scene (1:06 to 1:33). The point is your own game's cast and
+  world, not "a video as a reference": haggs and toybox-director already show that part.
+- **MiniMax H3 is the core video model.** It renders every video with a real person in it and every Recast, and the
+  0:55 line says so. That carries the H3 bonus.
+- **Open and portable.** The hosted site runs on your own GPU, and every graph is a ComfyUI workflow in
+  `workflows/` (1:41 to 1:50).
+
+## Submission
+
+- **Categories:** Most Innovative, with the MiniMax H3 bonus. Every entry is also considered for Best Overall.
+- **Repo:** add the `open-source-higgsfield` topic and the website link before submitting.
+- **Description for the form:**
+  > Portraius Studio is an open-source AI film studio on Comfy that shows you the number: every image, video and
+  > Recast is scored 0 to 100 for likeness against the character's own photos, and anything under 60 retries on
+  > its own. Characters are portable files with a webcam consent check built in. Bring your own world: your own
+  > character sheets and a rough 3D blockout become a finished scene. Runs on Comfy's models or free on your own
+  > GPU, and every graph ships as a ComfyUI workflow. MIT licensed.
+- Keep the video under 2:00; the form rejects longer videos.
 
 ## Positioning (October 29)
 
@@ -37,29 +60,9 @@ Re-read the field on October 29, the day before the deadline. New entries since 
 PlateLock, Seam) go for Open Weights Only and the LTX bonus. The video leads with what only this entry has and
 spends little time on what the field already shows:
 
-- **Lead with:** the likeness number, the consent check on camera, the Blass Effect blockout beside its render,
-  one character file in the web app and in ComfyUI, and the hosted site running on your own GPU. No other entry
-  measures likeness or checks consent, and the others reach a local GPU only when you install and run the app
-  yourself.
+- **Lead with:** the likeness number, the consent check on camera, the Blass Effect blockout beside its render, and
+  the hosted site running on your own GPU. No other entry measures likeness or checks consent.
 - **Don't lead with:** character swap as such (Comfy's Openjutsu does it on MiniMax H3, and the judges built it),
-  "a video as a reference" as such (haggs rebuilds an edit from a reference video, and toybox-director blocks shots
-  with toys on a 3D stage), the number of models (other entries list 19 to 134), or prices before a run (another
-  entry shows them too). Recast is the opening shot because of the score on its end card, and the blockout segment
-  is about your own game's cast and world, not the clip.
+  "a video as a reference" as such, the number of models (other entries list 19 to 134), or prices before a run.
 - **Don't open with "Higgsfield promised to open source".** Comfy's blog post and at least one other entry's
   README already open that way.
-- **Categories:** each entry gets one main category plus one model bonus, and every entry is considered for Best
-  Overall. Enter Most Innovative with the MiniMax H3 bonus: H3 renders every video with a real person in it and
-  every Recast, so the 0:34 line names it as the core video model. The Blass Effect scene is on Seedance because
-  its cast comes from your own references, and the 0:44 line says so.
-
-## Checklist before recording
-
-- Your own character from photos (the sample character), with the consent check on camera.
-- A Recast with a high score for the opening, and its 9:16 export with the likeness on the end card.
-- The Blass Effect sheets saved as characters, the blockout recorded without the game's HUD (Seedance copies
-  interface it sees in the clip), and the finished render ready to play beside it, so the segment doesn't wait
-  on a generation.
-- ComfyUI started with [`launchers/run_portraius_live.bat`](../launchers/run_portraius_live.bat) (in the portable
-  folder) if you record against the live site.
-- Keep it under 2:00; the submission form rejects longer videos.
