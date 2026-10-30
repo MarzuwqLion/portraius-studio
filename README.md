@@ -143,6 +143,12 @@ file with the photos, sheet, face data and consent record) and **Delete characte
 character in, use **Import a .portraius file** on the Cast page; one without a consent record can be viewed but
 not used.
 
+**Example characters.** The Cast page offers three ready-made characters under **Examples**: **Marzuwq** (made
+from photos by the app's author, with consent on file, shared for anyone to use), **Priya** (designed,
+real-looking) and **An'Mei** (designed, animated). **Add to vault** copies one in. The files are in
+[`public/examples/`](public/examples), and they open in ComfyUI's **Load Portraius Character**
+too.
+
 ### 3. Images
 
 Open **Image**.
