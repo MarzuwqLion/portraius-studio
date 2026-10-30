@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { draftThumbBlobId } from "@/lib/characters/create";
 import { loadStartedDrafts, type WizardDraft } from "@/lib/characters/draft";
 import { ELEMENT_TYPE_LABEL } from "@/lib/characters/element-sheet";
+import { EXAMPLE_CHARACTERS, exampleThumbUrl, readExample } from "@/lib/characters/examples";
 import { THUMB } from "@/lib/characters/format";
 import { addImport, readImport, type PendingImport } from "@/lib/characters/manage";
 import { useBlobUrl, useCharacters } from "@/lib/store/hooks";
@@ -141,6 +142,57 @@ function ImportSummaryPanel({ pending, onDone }: { pending: PendingImport; onDon
   );
 }
 
+// Ready-made characters from public/examples/; one already in the
+// vault isn't offered again.
+function ExampleCharacters({ inVault }: { inVault: ReadonlySet<string> }) {
+  const [adding, setAdding] = useState<string>();
+  const [error, setError] = useState<string>();
+  const left = EXAMPLE_CHARACTERS.filter((e) => !inVault.has(e.id));
+  if (!left.length) return null;
+  return (
+    <section aria-labelledby="examples-heading" className="grid gap-4">
+      <div className="grid gap-1">
+        <h2 id="examples-heading" className="text-panel font-semibold">
+          Examples
+        </h2>
+        <p className="text-control text-ink-muted">Ready-made characters to try. Adding one copies it into your vault.</p>
+      </div>
+      <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {left.map((e) => (
+          <li key={e.id} className="grid gap-3 p-2">
+            <Take src={exampleThumbUrl(e)} alt={`${e.name}, front view`} aspect="4 / 5" fit="contain" />
+            <div className="grid gap-2">
+              <span className="text-panel font-semibold">{e.name}</span>
+              <span className="text-control text-ink-muted">{e.note}</span>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="justify-self-start"
+                disabled={adding !== undefined}
+                onClick={() => {
+                  setAdding(e.id);
+                  setError(undefined);
+                  readExample(e)
+                    .then(addImport)
+                    .catch((err: Error) => setError(err.message))
+                    .finally(() => setAdding(undefined));
+                }}
+              >
+                {adding === e.id ? "Adding…" : "Add to vault"}
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+      {error && (
+        <p className="text-control text-drift" role="alert">
+          {error}
+        </p>
+      )}
+    </section>
+  );
+}
+
 type Tab = "person" | "element";
 const TABS: { value: Tab; label: string }[] = [
   { value: "person", label: "People" },
@@ -158,6 +210,7 @@ export function CharactersScreen() {
   const shown = characters?.filter((c) => c.kind === tab) ?? [];
   const shownDrafts = drafts?.filter((d) => (d.path === "element") === (tab === "element")) ?? [];
   const count = (kind: Tab) => characters?.filter((c) => c.kind === kind).length ?? 0;
+  const inVault = new Set(characters?.map((c) => c.id));
 
   return (
     <Screen
@@ -180,16 +233,19 @@ export function CharactersScreen() {
     >
       {pending && <ImportSummaryPanel pending={pending} onDone={() => setPending(undefined)} />}
       {empty ? (
-        <div className="flex min-h-80 flex-col items-center justify-center gap-6 rounded-media bg-seamless p-8 text-center text-on-seamless">
-          <h2 className="font-display text-screen font-extrabold">Make your first character</h2>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/characters/new?from=photos" className={buttonVariants({ variant: "primary" })}>
-              From your photos
-            </Link>
-            <Link to="/characters/new?from=text" className={buttonVariants({ variant: "secondary", className: "border-on-seamless text-on-seamless" })}>
-              Design from a description
-            </Link>
+        <div className="grid gap-8">
+          <div className="flex min-h-80 flex-col items-center justify-center gap-6 rounded-media bg-seamless p-8 text-center text-on-seamless">
+            <h2 className="font-display text-screen font-extrabold">Make your first character</h2>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link to="/characters/new?from=photos" className={buttonVariants({ variant: "primary" })}>
+                From your photos
+              </Link>
+              <Link to="/characters/new?from=text" className={buttonVariants({ variant: "secondary", className: "border-on-seamless text-on-seamless" })}>
+                Design from a description
+              </Link>
+            </div>
           </div>
+          <ExampleCharacters inVault={inVault} />
         </div>
       ) : (
         <div className="grid gap-6">
@@ -232,6 +288,7 @@ export function CharactersScreen() {
               </div>
             )}
           </div>
+          {tab === "person" && <ExampleCharacters inVault={inVault} />}
         </div>
       )}
     </Screen>
