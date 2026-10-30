@@ -1,11 +1,12 @@
-# Demo video script (1:55)
+# Demo video script (1:58)
 
 For the #OpenSourceHiggsfield submission. Comfy judges "the work, not your video editing": the demo shows the app
 working and explains how it was built, and Most Innovative also needs it to say why it's new.
 
-The cut is `demo-assets/out/portraius-demo-v2.mp4` (1:55, 1080p). It's silent except the Blass Effect render,
-which keeps its dialogue. The voice-over below is timed to it: about 150 words a minute, each line starting with
-its segment. A line that runs half a second long is fine; one that runs into the next block isn't.
+The finished video is `demo-assets/out/portraius-demo-final.mp4` (1:58, 1080p): the cut with the recorded
+voice-over, normalised to -16 LUFS. The Blass Effect render plays muted, with the voice-over running longer over
+it. Each take starts just after its segment; the title, the workflows shot and the end card were lengthened to fit
+their takes. The lines below are the script as written; the recording changes a few words.
 
 ## Voice-over
 
@@ -18,13 +19,11 @@ its segment. A line that runs half a second long is fine; one that runs into the
 | 0:47 to 0:55 | Image: generating, the scored takes, one Drifted and its retry | "Put your character in any shot. Every image is scored zero to a hundred, and anything under sixty retries on its own." | 21 |
 | 0:55 to 1:06 | Video on H3, the take card with the lowest frame | "Then animate it on MiniMax H3, the core model wherever a real person is on screen. Every frame is scored, and the weakest one is flagged." | 25 |
 | 1:06 to 1:17 | Bring your own world; Use references; the blockout | "Now bring your own world. These are sheets from my game, Blass Effect. Give Seedance the cast, a rough gameplay blockout and a ComfyUI-style prompt…" | 25 |
-| 1:17 to 1:20 | The Seedance render begins, the blockout inset | "…same camera, same timing. A finished scene." Then stop and let the scene's dialogue play. | 7 |
+| 1:18 to 1:33 | The Seedance render (muted), the blockout inset | "…same camera, same timing. A finished scene." The recorded take runs longer here. | 7 |
 | 1:33 to 1:41 | Director: the shot list with scored takes, then the exported scene | "Director plans a whole scene, shot by shot, from the same character file. Every take scored, exported as one scene." | 20 |
 | 1:41 to 1:50 | Settings: Never spend credits; `workflows/` and `workflows/local/` | "Run open-weight models free on your own GPU, from the hosted site. Every graph ships as a ComfyUI workflow." | 19 |
 | 1:50 to 1:55 | End card | "Portraius Studio. Consent built in, likeness you can measure. MIT licensed, link below." | 13 |
 
-Mixing: from 1:17 to 1:33 the Blass render plays its own dialogue. Keep it at full level. If a voice-over line
-overlaps it, lower the scene audio by about 10 dB under the voice.
 
 ## What the video has to land (Most Innovative + MiniMax H3)
 

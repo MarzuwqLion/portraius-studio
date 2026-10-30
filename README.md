@@ -1,5 +1,10 @@
 # Portraius Studio
 
+### [▶ Open the live app: marzuwqlion.github.io/portraius-studio](https://marzuwqlion.github.io/portraius-studio/)
+
+Nothing to install. New here? Start with the [Tour](https://marzuwqlion.github.io/portraius-studio/#/tour): every
+feature, pre-made, with no key and no setup.
+
 Make a character once, from your own photos or a description, then put them in images, videos, recasts
 and scenes that still look like them, with a number that says how much.
 
@@ -44,6 +49,9 @@ To run the code yourself instead, see [Quick start](#quick-start).
   (the Cinema Studio rebuild) plans a scene as shots with camera and lens controls, an anchor still per shot,
   a clip per shot, and one stitched MP4. A shot can pick up from the last frame of the one before; Kling can shoot
   the whole scene as one quick take; Claude can draft the shot list from a logline.
+- **Bring your own world.** Your own character sheets and locations become characters exactly as drawn, and a
+  rough 3D blockout of a scene sets the camera and timing while Seedance 2.5 turns it into a finished shot with
+  your cast.
 - **Presets anyone can add.** Camera moves, looks, image, video and Recast presets are JSON files in `presets/`,
   checked on every pull request. Any result can be shared as a remix link that carries the recipe, never a face.
 - **Voices and lip sync.** Give a character one of 12 stock voices, write a line, and either lip-sync an existing
@@ -118,6 +126,9 @@ Open **Cast** and choose how to make one:
 - **Design from a description.** Describe an original person who isn't real (age, build, hair, skin, style).
   Pick one of four faces, then the app draws the turnaround sheet.
 - **An element.** An outfit, prop or location from 1 to 6 photos, saved like a character and usable in any shot.
+- **Your own reference.** A character sheet, concept art or location you made, saved and used exactly as it is,
+  marked **Real-looking** or **Animated**, after you confirm the image is yours to use. For designed characters,
+  not real people. In Video's **Use references** they render on Seedance 2.5 through its library.
 
 The **turnaround sheet** is one composite (front, three-quarter, profile, full body, four expressions) plus four
 single views. Each view gets a likeness score; **Redraw** any one you don't like. Then add a **name**, a
@@ -153,7 +164,10 @@ Open **Video** and choose a mode:
 
 - **Text**: a clip from a prompt alone.
 - **Image, then animate**: draws an opening still with your cast first, then animates it. Best for people.
-- **Use references**: the cast's sheets set who is in the shot (Comfy models only).
+- **Use references**: the cast's sheets set who is in the shot (Comfy models only). Add an optional **reference
+  clip** (a blockout or simple 3D render: it sets the camera, timing and who goes where) and up to 8 **reference
+  photos** (a sheet, a prop, a place). The labels to use in your prompt are listed under them (`image_1` …
+  `video_1`), and **Send my prompt exactly as written** sends a ComfyUI-style prompt with nothing added.
 - **Animate an image**: upload a first frame.
 
 Set the **model**, **duration**, **aspect ratio**, **seed** and **camera and look**. Without people, Seedance makes
